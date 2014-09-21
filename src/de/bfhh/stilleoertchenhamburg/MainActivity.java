@@ -3,7 +3,10 @@ package de.bfhh.stilleoertchenhamburg;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 
 import android.support.v4.app.FragmentActivity;
 import android.widget.TextView;
@@ -29,6 +32,10 @@ public class MainActivity extends FragmentActivity {
     
     private TextView latitude;
     private TextView longitude;
+    
+    final private LatLng HAMBURG = new LatLng(53.558, 9.927);
+    
+    private Marker personInNeedOfToilette;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -105,11 +112,17 @@ public class MainActivity extends FragmentActivity {
      * This should only be called once and when we are sure that {@link #mMap} is not null.
      */
     private void setUpMap() {
-        mMap.setMyLocationEnabled(true);        
+    	// need to turn this off so we can use our own icon
+        //mMap.setMyLocationEnabled(true); 
+    	personInNeedOfToilette = mMap.addMarker(new MarkerOptions()
+	    	.position(HAMBURG)
+	    	.icon(BitmapDescriptorFactory.fromResource(R.drawable.peeer)));
     }
     
     private void moveToLocation(Location loc){
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(loc.getLatitude(), loc.getLongitude()), 15));
+    	LatLng pos = new LatLng(loc.getLatitude(), loc.getLongitude());
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(pos, 15));
+        personInNeedOfToilette.setPosition(pos);
     }
     
     private class MyLocationListener implements LocationListener {
