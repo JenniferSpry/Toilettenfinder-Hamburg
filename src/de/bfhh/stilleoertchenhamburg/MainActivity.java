@@ -1,30 +1,67 @@
 package de.bfhh.stilleoertchenhamburg;
 
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
 
 import android.support.v4.app.FragmentActivity;
-import android.support.v7.app.ActionBarActivity;
+import android.widget.TextView;
+import android.widget.Toast;
+import android.content.Context;
+import android.content.Intent;
+import android.location.Criteria;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
-
-import android.app.Activity;
-import android.os.Bundle;
+import android.provider.Settings;
 
 public class MainActivity extends FragmentActivity {
     /**
      * Note that this may be null if the Google Play services APK is not available.
      */
     private GoogleMap mMap;
+    private LocationManager locationManager;
+    private MyLocationListener mylistener;
+    private Criteria criteria;
+    private String provider;
+    
+    private TextView latitude;
+    private TextView longitude;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        latitude = (TextView) findViewById(R.id.latitude);
+        longitude = (TextView) findViewById(R.id.longitude);
+        
         setUpMapIfNeeded();
+        
+	    // Get the location manager
+		locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+		// Define the criteria how to select the location provider
+		criteria = new Criteria();
+		criteria.setAccuracy(Criteria.ACCURACY_COARSE);	//default
+		
+		// get the best provider depending on the criteria
+		provider = locationManager.getBestProvider(criteria, false);
+	    
+		// the last known location of this provider
+		Location location = locationManager.getLastKnownLocation(provider);
+
+		mylistener = new MyLocationListener();
+	
+		if (location != null) {
+			mylistener.onLocationChanged(location);
+		} else {
+			// leads to the settings because there is no last known location
+			Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+			startActivity(intent);
+		}
+		// location updates: at least 1 meter and 200millsecs change
+		locationManager.requestLocationUpdates(provider, 200, 1, mylistener);
     }
 
     @Override
@@ -68,7 +105,40 @@ public class MainActivity extends FragmentActivity {
      * This should only be called once and when we are sure that {@link #mMap} is not null.
      */
     private void setUpMap() {
-        mMap.addMarker(new MarkerOptions().position(new LatLng(0, 0)).title("Marker"));
-        mMap.setMyLocationEnabled(true);
+        mMap.setMyLocationEnabled(true);        
     }
+    
+    private void moveToLocation(Location loc){
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(loc.getLatitude(), loc.getLongitude()), 15));
+    }
+    
+    private class MyLocationListener implements LocationListener {
+    	
+		  @Override
+		  public void onLocationChanged(Location location) {
+			// Initialize the location fields
+			  latitude.setText("Latitude: "+String.valueOf(location.getLatitude()));
+			  longitude.setText("Longitude: "+String.valueOf(location.getLongitude()));
+			  moveToLocation(location);
+		  }
+	
+		  @Override
+		  public void onStatusChanged(String provider, int status, Bundle extras) {
+			  Toast.makeText(MainActivity.this, provider + "'s status changed to "+status +"!",
+				        Toast.LENGTH_SHORT).show();
+		  }
+	
+		  @Override
+		  public void onProviderEnabled(String provider) {
+			  Toast.makeText(MainActivity.this, "Provider " + provider + " enabled!",
+		        Toast.LENGTH_SHORT).show();
+	
+		  }
+	
+		  @Override
+		  public void onProviderDisabled(String provider) {
+			  Toast.makeText(MainActivity.this, "Provider " + provider + " disabled!",
+		        Toast.LENGTH_SHORT).show();
+		  }
+	  }
 }
