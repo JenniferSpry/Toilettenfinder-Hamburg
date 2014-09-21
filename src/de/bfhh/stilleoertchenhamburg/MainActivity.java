@@ -9,6 +9,8 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import android.support.v4.app.FragmentActivity;
+import android.view.View;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.content.Context;
@@ -29,9 +31,12 @@ public class MainActivity extends FragmentActivity {
     private MyLocationListener mylistener;
     private Criteria criteria;
     private String provider;
+    private Location location;
     
     private TextView latitude;
     private TextView longitude;
+    
+    private ImageButton myLocationButton;
     
     final private LatLng HAMBURG = new LatLng(53.558, 9.927);
     
@@ -43,6 +48,9 @@ public class MainActivity extends FragmentActivity {
         setContentView(R.layout.activity_main);
         latitude = (TextView) findViewById(R.id.latitude);
         longitude = (TextView) findViewById(R.id.longitude);
+        //Button that will animate camera back to user position
+        myLocationButton = (ImageButton) findViewById(R.id.mylocation);
+        
         
         setUpMapIfNeeded();
         
@@ -56,8 +64,15 @@ public class MainActivity extends FragmentActivity {
 		provider = locationManager.getBestProvider(criteria, false);
 	    
 		// the last known location of this provider
-		Location location = locationManager.getLastKnownLocation(provider);
-
+		location = locationManager.getLastKnownLocation(provider);
+		
+		//Location Button Listener
+		myLocationButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+            	moveToLocation(location);
+            }
+        });
+		
 		mylistener = new MyLocationListener();
 	
 		if (location != null) {
@@ -93,11 +108,12 @@ public class MainActivity extends FragmentActivity {
      * method in {@link #onResume()} to guarantee that it will be called.
      */
     private void setUpMapIfNeeded() {
-        // Do a null check to confirm that we have not already instantiated the map.
+        // Do a null check to confirm that we have nfot already instantiated the map.
         if (mMap == null) {
             // Try to obtain the map from the SupportMapFragment.
             mMap = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map))
                     .getMap();
+           
             // Check if we were successful in obtaining the map.
             if (mMap != null) {
                 setUpMap();
@@ -121,7 +137,7 @@ public class MainActivity extends FragmentActivity {
     
     private void moveToLocation(Location loc){
     	LatLng pos = new LatLng(loc.getLatitude(), loc.getLongitude());
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(pos, 15));
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(pos, 15));
         personInNeedOfToilette.setPosition(pos);
     }
     

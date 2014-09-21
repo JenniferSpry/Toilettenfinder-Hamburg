@@ -36,5 +36,14 @@
         android:text="@string/longitude"
         android:textAppearance="?android:attr/textAppearanceMedium" />
 
+        <ImageButton
+            android:id="@+id/mylocation"
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_alignParentRight="true"
+            android:layout_below="@+id/latitude"
+            android:layout_marginRight="16dp"
+            android:src="@drawable/mylocation" />
     
 </RelativeLayout>
