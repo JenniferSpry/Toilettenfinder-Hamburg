@@ -2,8 +2,11 @@
 <resources>
 
     <string name="app_name">StilleOertchenHamburg</string>
-    <string name="action_settings">Einstellungen</string>
     <string name="latitude">Latitude</string>
     <string name="longitude">Logitude</string>
+    
+    <!-- Menu names -->
+    <string name="action_settings">Einstellungen</string>
+    <string name="menuBezirke">Bezirke Liste</string>
 
 </resources>

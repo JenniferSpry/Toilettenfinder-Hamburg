@@ -47,6 +47,14 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name="de.bfhh.stilleoertchenhamburg.BezirkeTestActivity"
+            android:label="@string/menuBezirke"
+            android:parentActivityName=".MainActivity" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".MainActivity" />
+        </activity>
         
         <!-- Goolge Maps API Key -->
 		<meta-data

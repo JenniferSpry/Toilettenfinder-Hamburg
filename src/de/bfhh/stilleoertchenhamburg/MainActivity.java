@@ -8,7 +8,9 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
-import android.support.v4.app.FragmentActivity;
+import android.support.v7.app.ActionBarActivity;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.TextView;
@@ -22,7 +24,7 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.provider.Settings;
 
-public class MainActivity extends FragmentActivity {
+public class MainActivity extends ActionBarActivity {
     /**
      * Note that this may be null if the Google Play services APK is not available.
      */
@@ -91,6 +93,28 @@ public class MainActivity extends FragmentActivity {
         super.onResume();
         setUpMapIfNeeded();
     }
+    
+    @Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		// Inflate the menu; this adds items to the action bar if it is present.
+		getMenuInflater().inflate(R.menu.main, menu);
+		return super.onCreateOptionsMenu(menu);
+	}
+	
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+	    // Handle presses on the action bar items
+	    switch (item.getItemId()) {
+	        case R.id.bezirke:
+	    		startActivity(new Intent(this, BezirkeTestActivity.class));
+	            return true;
+	        case R.id.action_settings:
+//	            openSettings();
+	            return true;
+	        default:
+	            return super.onOptionsItemSelected(item);
+	    }
+	}
 
     /**
      * Sets up the map if it is possible to do so (i.e., the Google Play services APK is correctly
