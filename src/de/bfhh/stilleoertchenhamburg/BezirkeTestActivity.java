@@ -22,6 +22,15 @@ public class BezirkeTestActivity extends ListActivity {
 
 	// Progress Dialog
 	private ProgressDialog pDialog;
+	
+	//Comment Steffi from http://developer.android.com/guide/topics/ui/dialogs.html 
+	/*Avoid ProgressDialog
+
+	Android includes another dialog class called ProgressDialog that shows a 
+	dialog with a progress bar. However, if you need to indicate loading or 
+	indeterminate progress, you should instead follow the design guidelines 
+	for Progress & Activity and use a ProgressBar in your layout.
+	*/
 
 	// Creating JSON Parser object
 	JSONParser jParser = new JSONParser();
