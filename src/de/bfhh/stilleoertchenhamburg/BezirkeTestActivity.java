@@ -3,6 +3,7 @@ package de.bfhh.stilleoertchenhamburg;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Properties;
 
 import org.apache.http.NameValuePair;
 import org.json.JSONArray;
@@ -11,14 +12,25 @@ import org.json.JSONObject;
 
 import android.app.ListActivity;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.ListAdapter;
-import android.widget.ListView;
 import android.widget.SimpleAdapter;
 
+/**
+ * TODO: Vernünftige Fehlermeldung, wenn die Daten nicht kommen
+ * @author Jenne
+ *
+ */
+
 public class BezirkeTestActivity extends ListActivity {
+	
+	// to load config.properties
+	private AssetsPropertyReader assetsPropertyReader;
+    private Context context;
+    private Properties properties;
 
 	// Progress Dialog
 	private ProgressDialog pDialog;
@@ -28,8 +40,6 @@ public class BezirkeTestActivity extends ListActivity {
 
 	ArrayList<HashMap<String, String>> bezirkeList;
 
-	// url to get all bezirke list
-	private static String url_get_bezirke = "http://bfhhtestapi.jenniferspry.com/get_bezirke.php";
 
 	// JSON Node names
 	private static final String TAG_SUCCESS = "success";
@@ -44,6 +54,11 @@ public class BezirkeTestActivity extends ListActivity {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.bezirketest);
+		
+		// load properties
+		context = this;
+        assetsPropertyReader = new AssetsPropertyReader(context);
+        properties = assetsPropertyReader.getProperties("config.properties");
 
 		// Hashmap for ListView
 		bezirkeList = new ArrayList<HashMap<String, String>>();
@@ -77,10 +92,10 @@ public class BezirkeTestActivity extends ListActivity {
 			// Building Parameters
 			List<NameValuePair> params = new ArrayList<NameValuePair>();
 			// getting JSON string from URL
-			JSONObject json = jParser.makeHttpRequest(url_get_bezirke, "GET", params);
+			String url = properties.getProperty("BasePath") + properties.getProperty("URLBezirke");
+			JSONObject json = jParser.makeHttpRequest(url, "GET", params);
 			
-			// Check your log cat for JSON reponse
-			Log.d("Alle Bezirke: ", json.toString());
+			//Log.d("Alle Bezirke: ", json.toString());
 
 			try {
 				// Checking for SUCCESS TAG
