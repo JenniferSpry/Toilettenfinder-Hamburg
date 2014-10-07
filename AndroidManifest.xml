@@ -48,6 +48,15 @@
             </intent-filter>
         </activity>
         
+        <activity
+            android:name="de.bfhh.stilleoertchenhamburg.ActivityImpressum"
+            android:label="@string/menu_impressum"
+            android:parentActivityName=".MainActivity" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".MainActivity" />
+        </activity>
+        
         <!-- Goolge Maps API Key -->
 		<meta-data
 		     android:name="com.google.android.maps.v2.API_KEY"

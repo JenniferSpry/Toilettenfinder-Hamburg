@@ -8,7 +8,6 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
-import android.support.v4.app.FragmentActivity;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.TextView;
@@ -22,7 +21,7 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.provider.Settings;
 
-public class MainActivity extends FragmentActivity {
+public class MainActivity extends ActivityMenuBase {
     /**
      * Note that this may be null if the Google Play services APK is not available.
      */
@@ -85,6 +84,7 @@ public class MainActivity extends FragmentActivity {
 		// location updates: at least 1 meter and 200millsecs change
 		locationManager.requestLocationUpdates(provider, 200, 1, mylistener);
     }
+    
 
     @Override
     protected void onResume() {
