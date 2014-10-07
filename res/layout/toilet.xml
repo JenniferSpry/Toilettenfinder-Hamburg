@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical" >
+    
+    <!--name -->
+    <TextView
+        android:id="@+id/toilet_name"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"/>
+
+
+    <!-- LAT Label -->
+    <TextView
+        android:id="@+id/latitude"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="6dip"
+        android:paddingLeft="6dip"
+        android:textSize="17dip"
+        android:textStyle="bold" />
+    
+    <!-- LONG Label -->
+    <!--  <TextView
+        android:id="@+id/longitude"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="6dip"
+        android:paddingLeft="6dip"
+        android:textSize="17dip"
+        android:textStyle="bold" /> -->
+
+</LinearLayout>
