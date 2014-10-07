@@ -38,14 +38,24 @@
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
         <!--  <uses-library android:name="com.google.android.maps" /> -->
+        
+        <!--  Splash screen Activity -->
         <activity
-            android:name=".MainActivity"
+            android:name=".SplashScreen"
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+        
+        <!-- Main Activity -->
+        <activity
+            android:name=".MainActivity"
+            android:label="@string/app_name" 
+            android:screenOrientation="portrait"
+            android:theme="@android:style/Theme.Black.NoTitleBar" >
         </activity>
         
         <!-- Goolge Maps API Key -->
