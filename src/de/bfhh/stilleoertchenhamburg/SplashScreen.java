@@ -30,7 +30,8 @@ public class SplashScreen extends ListActivity {
 	ArrayList<HashMap<String, String>> toiletList;
 
 	// url to get all bezirke list
-	private static String url_get_toilets = "http://bf-hh.de/httpdocs/androidAPI/db_toilets.php";
+	//private static String url_get_toilets = "http://bf-hh.de/httpdocs/androidAPI/db_toilets_new.php";
+	private static String url_get_toilets = "http://barrierefreieshamburg.de/androidAPI/db_toilets.php";
 
 	// JSON Node names
 	private static final String TAG_SUCCESS = "success";
