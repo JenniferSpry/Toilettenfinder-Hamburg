@@ -11,13 +11,17 @@ import org.json.JSONObject;
 
 import android.app.Activity;
 import android.app.ListActivity;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.widget.ListAdapter;
 import android.widget.SimpleAdapter;
+import android.widget.Toast;
  
 public class SplashScreen extends ListActivity {
  
@@ -47,6 +51,29 @@ public class SplashScreen extends ListActivity {
 	
     // Splash screen timer
     private static int SPLASH_TIME_OUT = 3000;
+    
+    private BroadcastReceiver receiver = new BroadcastReceiver() {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+          Bundle bundle = intent.getExtras();
+          if (bundle != null) {
+            double lat = bundle.getDouble(LocationUpdateService.LAT);
+            double lng = bundle.getDouble(LocationUpdateService.LNG);
+            int resultCode = bundle.getInt(LocationUpdateService.RESULT);
+            //int resultCode = bundle.getInt(LocationUpdateService.RESULT);
+            if (resultCode == RESULT_OK) {
+              Toast.makeText(SplashScreen.this,
+                  "Location successfully received.  LAT: " + Double.valueOf(lat) + ", LNG: " + Double.valueOf(lng),
+                  Toast.LENGTH_LONG).show();
+            } else {
+              Toast.makeText(SplashScreen.this, "Location not received. Error",
+                  Toast.LENGTH_LONG).show();
+              
+            }
+          }
+        }
+      };
  
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,34 +84,22 @@ public class SplashScreen extends ListActivity {
         toiletList = new ArrayList<HashMap<String, String>>();
         
      // Loading products in Background Thread
-     	new LoadAllToilets().execute();
+     	//new LoadAllToilets().execute();
      	
-     	
-        /*new Handler().postDelayed(new Runnable() {
- 
-            /*
-             * Showing splash screen with a timer. This will be useful when you
-             * want to show case your app logo / company
-             */
-        /*
-            @Override
-            public void run() {
-                // This method will be executed once the timer is over
-                // Start your app main activity
-                Intent i = new Intent(SplashScreen.this, MainActivity.class);
-                startActivity(i);
- 
-                // close this activity
-                finish();
-            }
-        }, SPLASH_TIME_OUT);
-        */
+     	//start service with Intent to get User current position
+     	Intent intent = new Intent(this, LocationUpdateService.class);
+        // add infos for the service which action to 
+        intent.putExtra(LocationUpdateService.ACTION, "userLocation");
+        startService(intent);
+
     }
     
+    @Override
+    protected void onResume(){
+    	super.onResume();
+        registerReceiver(receiver, new IntentFilter(LocationUpdateService.ACTION));
+    }
     
-    
-    
- 
     
     class LoadAllToilets extends AsyncTask<Void, Void, Void> {
 
@@ -103,9 +118,11 @@ public class SplashScreen extends ListActivity {
 		protected Void doInBackground(Void... arg0) {
 			// Building Parameters
 			List<NameValuePair> params = new ArrayList<NameValuePair>();
-			// getting JSON string from URL
 			
-			/* FEHLER: Der zurückgelieferte String von PHP ist kein JSON sondern die HTML Seite*/
+			
+			//add 
+			
+			// getting JSON string from URL
 			JSONObject json = jParser.makeHttpRequest(url_get_toilets, "GET", params);
 			
 			// Check your log cat for JSON reponse

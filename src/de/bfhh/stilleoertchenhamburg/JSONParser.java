@@ -85,8 +85,8 @@ public class JSONParser {
 			}
 			is.close();
 			json = sb.toString();
-			//json = json.substring(5);
-			json = json.substring(json.indexOf("{"), json.lastIndexOf("}") + 1); //returns Google Analytics (depr) JS 
+
+			json = json.substring(json.indexOf("{"), json.lastIndexOf("}") + 1); //still needed? 
 			Log.d("Alle Toiletten: ", json.toString());
 		} catch (Exception e) {
 			Log.e("Buffer Error", "Error converting result " + e.toString());
