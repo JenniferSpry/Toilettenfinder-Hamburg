@@ -66,6 +66,18 @@ public class SplashScreen extends ListActivity {
               Toast.makeText(SplashScreen.this,
                   "Location successfully received.  LAT: " + Double.valueOf(lat) + ", LNG: " + Double.valueOf(lng),
                   Toast.LENGTH_LONG).show();
+              // After completing http call
+              // will close this activity and lauch main activity
+              Intent i = new Intent(SplashScreen.this, MainActivity.class);
+              //can i send the whole location from locationUpdateService to SplashScreen to MainActivity?
+              //can i send an arraylist of Toilets (extends POI) from LocationUpdateService (via intent.putExtra("ToiletList", ArrayList<Toilet>) http://stackoverflow.com/questions/2736389/how-to-pass-object-from-one-activity-to-another-in-android/2736612#2736612 
+              //public ArrayList<T> getParcelableArrayListExtra (String name)-> make POI implements Parcelable
+              i.putExtra("lat", lat); //send lat and long to main activity
+              i.putExtra("lng", lng);
+              startActivity(i); //start main activity
+   
+              // close this activity
+              finish();
             } else {
               Toast.makeText(SplashScreen.this, "Location not received. Error",
                   Toast.LENGTH_LONG).show();
@@ -100,6 +112,11 @@ public class SplashScreen extends ListActivity {
         registerReceiver(receiver, new IntentFilter(LocationUpdateService.ACTION));
     }
     
+    @Override
+    protected void onPause() {
+      super.onPause();
+      unregisterReceiver(receiver);
+    }
     
     class LoadAllToilets extends AsyncTask<Void, Void, Void> {
 

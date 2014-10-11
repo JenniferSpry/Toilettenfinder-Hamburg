@@ -25,6 +25,7 @@ public class LocationUpdateService extends IntentService {
 		
 	}
 	
+	//*****What if bestLocation is null??? ****
 	private Location getLastKnownLocation() {   
 		mlocationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
 	    List<String> providers = mlocationManager.getProviders(true);
@@ -54,7 +55,7 @@ public class LocationUpdateService extends IntentService {
 				
 			}else{
 				result = Activity.RESULT_CANCELED;
-				publishUserLocation(null, result); //send an intent broadcast with the current location
+				publishUserLocation(null, result); //send an intent broadcast with invalid location
 			}
 		}
 	}

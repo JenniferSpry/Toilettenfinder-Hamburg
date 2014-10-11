@@ -54,6 +54,7 @@ public class MainActivity extends FragmentActivity {
         
         setUpMapIfNeeded();
         
+        /*
 	    // Get the location manager
 		locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 		// Define the criteria how to select the location provider
@@ -64,7 +65,17 @@ public class MainActivity extends FragmentActivity {
 		provider = locationManager.getBestProvider(criteria, false);
 	    
 		// the last known location of this provider
-		location = locationManager.getLastKnownLocation(provider);
+		location = locationManager.getLastKnownLocation(provider); */
+        
+        //get the Intent that was sent from SplashScreen class
+        Intent i = getIntent();
+        Bundle bundle = i.getExtras();
+        
+        location = new Location("");//empty provider string
+        double lat = bundle.getDouble("lat");
+        double lng = bundle.getDouble("lng");
+        location.setLatitude(lat);
+        location.setLongitude(lng);
 		
 		//Location Button Listener
 		myLocationButton.setOnClickListener(new View.OnClickListener() {
@@ -83,7 +94,9 @@ public class MainActivity extends FragmentActivity {
 			startActivity(intent);
 		}
 		// location updates: at least 1 meter and 200millsecs change
-		locationManager.requestLocationUpdates(provider, 200, 1, mylistener);
+		
+		//WHERE TO UPDATE LOCATIONS FROM??
+		//locationManager.requestLocationUpdates(provider, 200, 1, mylistener);
     }
 
     @Override
