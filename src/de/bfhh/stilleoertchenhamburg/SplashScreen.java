@@ -53,31 +53,49 @@ public class SplashScreen extends ListActivity {
     private static int SPLASH_TIME_OUT = 3000;
     
     private BroadcastReceiver receiver = new BroadcastReceiver() {
-
+    	private double lat = 0.0;
+    	private double lng = 0.0;
+    	
         @Override
         public void onReceive(Context context, Intent intent) {
           Bundle bundle = intent.getExtras();
           if (bundle != null) {
-            double lat = bundle.getDouble(LocationUpdateService.LAT);
-            double lng = bundle.getDouble(LocationUpdateService.LNG);
+            lat = bundle.getDouble(LocationUpdateService.LAT);
+            lng = bundle.getDouble(LocationUpdateService.LNG);
             int resultCode = bundle.getInt(LocationUpdateService.RESULT);
-            //int resultCode = bundle.getInt(LocationUpdateService.RESULT);
+
             if (resultCode == RESULT_OK) {
               Toast.makeText(SplashScreen.this,
                   "Location successfully received.  LAT: " + Double.valueOf(lat) + ", LNG: " + Double.valueOf(lng),
                   Toast.LENGTH_LONG).show();
-              // After completing http call
-              // will close this activity and lauch main activity
-              Intent i = new Intent(SplashScreen.this, MainActivity.class);
+              
+
               //can i send the whole location from locationUpdateService to SplashScreen to MainActivity?
               //can i send an arraylist of Toilets (extends POI) from LocationUpdateService (via intent.putExtra("ToiletList", ArrayList<Toilet>) http://stackoverflow.com/questions/2736389/how-to-pass-object-from-one-activity-to-another-in-android/2736612#2736612 
               //public ArrayList<T> getParcelableArrayListExtra (String name)-> make POI implements Parcelable
-              i.putExtra("lat", lat); //send lat and long to main activity
-              i.putExtra("lng", lng);
-              startActivity(i); //start main activity
+
+              
+              // After receiving position from LocationUpdateService
+              // will close this activity and lauch main activity
+              // wait 3 seconds to show the logo, otherwise SplashScreen will not be seen
+              new Handler().postDelayed(new Runnable() {
+            	  @Override
+            	  public void run() {
+	            	  // This method will be executed once the timer is over
+	            	  // Start your app main activity
+	            	  Intent i = new Intent(SplashScreen.this, MainActivity.class);
+	            	  i.putExtra("lat", lat); //send lat and long to main activity
+	                  i.putExtra("lng", lng);
+	            	  startActivity(i);
+	            	  
+	            	  // close this activity
+	            	  finish();
+            	  }
+              }, SPLASH_TIME_OUT);
+              
    
               // close this activity
-              finish();
+              //finish();
             } else {
               Toast.makeText(SplashScreen.this, "Location not received. Error",
                   Toast.LENGTH_LONG).show();
@@ -118,12 +136,12 @@ public class SplashScreen extends ListActivity {
       unregisterReceiver(receiver);
     }
     
-    class LoadAllToilets extends AsyncTask<Void, Void, Void> {
+   /* class LoadAllToilets extends AsyncTask<Void, Void, Void> {
 
 		/**
 		 * Before starting background thread Show Progress Dialog
 		 * */
-		@Override
+	/*	@Override
 		protected void onPreExecute() {
 			super.onPreExecute();
 			
@@ -132,7 +150,7 @@ public class SplashScreen extends ListActivity {
 		/**
 		 * getting All toilets from url
 		 * */
-		protected Void doInBackground(Void... arg0) {
+	/*	protected Void doInBackground(Void... arg0) {
 			// Building Parameters
 			List<NameValuePair> params = new ArrayList<NameValuePair>();
 			
@@ -184,18 +202,18 @@ public class SplashScreen extends ListActivity {
 
 			return null;
 		}
-
+*/
 		/**
 		 * After completing background task Dismiss the progress dialog
 		 * **/
-		protected void onPostExecute(Void result) {
+	/*	protected void onPostExecute(Void result) {
 			// updating UI from Background Thread
 			runOnUiThread(new Runnable() {
 				public void run() {
 					/**
 					 * Updating parsed JSON data into ListView
 					 * */
-					ListAdapter adapter = new SimpleAdapter(
+		/*			ListAdapter adapter = new SimpleAdapter(
 							SplashScreen.this, toiletList,
 							R.layout.toilet, new String[] { 
 									TAG_NAME, TAG_LAT },
@@ -217,9 +235,9 @@ public class SplashScreen extends ListActivity {
             // close this activity
             finish();
 			*/
-		}
+	/*	}
 
-	}
+	}*/
  
 }
 

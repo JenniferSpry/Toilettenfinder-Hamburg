@@ -95,7 +95,7 @@ public class MainActivity extends FragmentActivity {
 		}
 		// location updates: at least 1 meter and 200millsecs change
 		
-		//WHERE TO UPDATE LOCATIONS FROM??
+		//WHERE TO UPDATE LOCATIONS FROM?? -> inner class locationListener in LocationUpdateService a la  http://stackoverflow.com/questions/14478179/background-service-with-location-listener-in-android
 		//locationManager.requestLocationUpdates(provider, 200, 1, mylistener);
     }
 

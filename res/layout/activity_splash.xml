@@ -10,7 +10,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
-        android:src="@drawable/bfhh_logo_png" />
+        android:src="@drawable/bfhh_logo_png_medium" />
  
     <TextView
         android:layout_width="fill_parent"

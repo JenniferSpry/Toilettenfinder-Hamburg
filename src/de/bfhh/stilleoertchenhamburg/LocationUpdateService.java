@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationManager;
+import android.util.Log;
 
 public class LocationUpdateService extends IntentService {
 	
@@ -55,6 +56,7 @@ public class LocationUpdateService extends IntentService {
 				
 			}else{
 				result = Activity.RESULT_CANCELED;
+				Log.d("current user location is null", action);
 				publishUserLocation(null, result); //send an intent broadcast with invalid location
 			}
 		}
@@ -62,8 +64,10 @@ public class LocationUpdateService extends IntentService {
 	
 	private void publishUserLocation(Location location, int result){
 		Intent intent = new Intent(ACTION);
-	    intent.putExtra(LAT, location.getLatitude());
-	    intent.putExtra(LNG, location.getLongitude());
+		if(location != null){
+		    intent.putExtra(LAT, location.getLatitude());
+		    intent.putExtra(LNG, location.getLongitude());
+		}
 	    intent.putExtra(RESULT, result);
 	    sendBroadcast(intent);
 	}
