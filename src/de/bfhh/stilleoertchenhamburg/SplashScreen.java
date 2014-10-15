@@ -1,5 +1,6 @@
 package de.bfhh.stilleoertchenhamburg;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -34,7 +35,6 @@ public class SplashScreen extends ListActivity {
 	ArrayList<HashMap<String, String>> toiletList;
 
 	// url to get all bezirke list
-	//private static String url_get_toilets = "http://bf-hh.de/httpdocs/androidAPI/db_toilets_new.php";
 	private static String url_get_toilets = "http://barrierefreieshamburg.de/androidAPI/db_toilets.php";
 
 	// JSON Node names
@@ -59,51 +59,90 @@ public class SplashScreen extends ListActivity {
         @Override
         public void onReceive(Context context, Intent intent) {
           Bundle bundle = intent.getExtras();
-          if (bundle != null) {
-            lat = bundle.getDouble(LocationUpdateService.LAT);
-            lng = bundle.getDouble(LocationUpdateService.LNG);
-            int resultCode = bundle.getInt(LocationUpdateService.RESULT);
+          String action = intent.getAction();
+          if(action.equals("toiletLocation")){
+        	  //toiletList = intent.getParcelableExtra("poiList");
+        	  toiletList = (ArrayList<HashMap<String,String>>) intent.getSerializableExtra("poiList");
+        	  int resultCode = bundle.getInt(LocationUpdateService.RESULT);
+        	  if (resultCode == RESULT_OK) {
+	        	  
+        		  runOnUiThread(new Runnable() {
+	  				 public void run() {
+	  					/**
+	  					 * Updating parsed JSON data into ListView
+	  					 * */
+        		  	ListAdapter adapter = new SimpleAdapter(
+	  							SplashScreen.this, toiletList,
+	  							R.layout.toilet, new String[] { 
+	  									TAG_NAME, TAG_LAT },
+	  							new int[] { R.id.toilet_name, R.id.latitude });
+	  					// updating listview
+	  					setListAdapter(adapter);
+	  				 }
+	  				 
+	  			   });
+	        	  
+	        	  // After receiving the ArrayList from LocationUpdateService
+	              // will close this activity and lauch main activity
+	              // wait 3 seconds to show the logo, otherwise SplashScreen will not be seen
+	              new Handler().postDelayed(new Runnable() {
+	            	  @Override
+	            	  public void run() {
+		            	  // This method will be executed once the timer is over
+		            	  // Start your app main activity
+		            	  Intent i = new Intent(SplashScreen.this, MainActivity.class);
+		            	  i.putExtra("poiList", (Serializable) toiletList); //send lat and long to main activity
 
-            if (resultCode == RESULT_OK) {
-              Toast.makeText(SplashScreen.this,
-                  "Location successfully received.  LAT: " + Double.valueOf(lat) + ", LNG: " + Double.valueOf(lng),
-                  Toast.LENGTH_LONG).show();
-              
-
-              //can i send the whole location from locationUpdateService to SplashScreen to MainActivity?
-              //can i send an arraylist of Toilets (extends POI) from LocationUpdateService (via intent.putExtra("ToiletList", ArrayList<Toilet>) http://stackoverflow.com/questions/2736389/how-to-pass-object-from-one-activity-to-another-in-android/2736612#2736612 
-              //public ArrayList<T> getParcelableArrayListExtra (String name)-> make POI implements Parcelable
-
-              
-              // After receiving position from LocationUpdateService
-              // will close this activity and lauch main activity
-              // wait 3 seconds to show the logo, otherwise SplashScreen will not be seen
-              new Handler().postDelayed(new Runnable() {
-            	  @Override
-            	  public void run() {
-	            	  // This method will be executed once the timer is over
-	            	  // Start your app main activity
-	            	  Intent i = new Intent(SplashScreen.this, MainActivity.class);
-	            	  i.putExtra("lat", lat); //send lat and long to main activity
-	                  i.putExtra("lng", lng);
-	            	  startActivity(i);
-	            	  
-	            	  // close this activity
-	            	  finish();
-            	  }
-              }, SPLASH_TIME_OUT);
-              
-   
-              // close this activity
-              //finish();
-            } else {
-              Toast.makeText(SplashScreen.this, "Location not received. Error",
-                  Toast.LENGTH_LONG).show();
-              
-            }
-          }
+		            	  startActivity(i);
+		            	  
+		            	  // close this activity
+		            	  finish();
+	            	  }
+	              }, SPLASH_TIME_OUT);
+        	  }
+          }else{
+	          if (bundle != null) {
+	            lat = bundle.getDouble(LocationUpdateService.LAT);
+	            lng = bundle.getDouble(LocationUpdateService.LNG);
+	            int resultCode = bundle.getInt(LocationUpdateService.RESULT);
+	
+	            if (resultCode == RESULT_OK) {
+	              Toast.makeText(SplashScreen.this,
+	                  "Location successfully received.  LAT: " + Double.valueOf(lat) + ", LNG: " + Double.valueOf(lng),
+	                  Toast.LENGTH_LONG).show();
+	              
+	
+	              //can i send the whole location from locationUpdateService to SplashScreen to MainActivity?
+	              //can i send an arraylist of Toilets (extends POI) from LocationUpdateService (via intent.putExtra("ToiletList", ArrayList<Toilet>) http://stackoverflow.com/questions/2736389/how-to-pass-object-from-one-activity-to-another-in-android/2736612#2736612 
+	              //public ArrayList<T> getParcelableArrayListExtra (String name)-> make POI implements Parcelable
+	
+	              
+	              // After receiving position from LocationUpdateService
+	              // will close this activity and lauch main activity
+	              // wait 3 seconds to show the logo, otherwise SplashScreen will not be seen
+	              new Handler().postDelayed(new Runnable() {
+	            	  @Override
+	            	  public void run() {
+		            	  // This method will be executed once the timer is over
+		            	  // Start your app main activity
+		            	  Intent i = new Intent(SplashScreen.this, MainActivity.class);
+		            	  i.putExtra("lat", lat); //send lat and long to main activity
+		                  i.putExtra("lng", lng);
+		            	  startActivity(i);
+		            	  
+		            	  // close this activity
+		            	  finish();
+	            	  }
+	              }, SPLASH_TIME_OUT);
+	              
+	            } else {
+	              Toast.makeText(SplashScreen.this, "Location not received. Error",
+	                  Toast.LENGTH_LONG).show();
+	            }
+	          }
+           }
         }
-      };
+    };
  
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -119,15 +158,17 @@ public class SplashScreen extends ListActivity {
      	//start service with Intent to get User current position
      	Intent intent = new Intent(this, LocationUpdateService.class);
         // add infos for the service which action to 
-        intent.putExtra(LocationUpdateService.ACTION, "userLocation");
+        intent.putExtra(LocationUpdateService.POIACTION, "toiletLocation");
         startService(intent);
+        
+        //Intent intent2 = new Intent(this.LocationUpdateService.class);
 
     }
     
     @Override
     protected void onResume(){
     	super.onResume();
-        registerReceiver(receiver, new IntentFilter(LocationUpdateService.ACTION));
+        registerReceiver(receiver, new IntentFilter(LocationUpdateService.POIACTION));
     }
     
     @Override

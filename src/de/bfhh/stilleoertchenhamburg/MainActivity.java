@@ -1,5 +1,9 @@
 package de.bfhh.stilleoertchenhamburg;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map.Entry;
+
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
@@ -41,6 +45,10 @@ public class MainActivity extends FragmentActivity {
     final private LatLng HAMBURG = new LatLng(53.558, 9.927);
     
     private Marker personInNeedOfToilette;
+	private ArrayList<HashMap<String, String>> toiletList;
+	private ArrayList<MarkerOptions> markerList;
+	
+	private ArrayList<String> keyNames;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,11 +79,74 @@ public class MainActivity extends FragmentActivity {
         Intent i = getIntent();
         Bundle bundle = i.getExtras();
         
+        toiletList = (ArrayList<HashMap<String,String>>) i.getSerializableExtra("poiList");
+        markerList = new ArrayList<MarkerOptions>();
+        
+       //default userLocation
+        double userLat = HAMBURG.latitude;
+        double userLng = HAMBURG.longitude;
+        
+        //parse through toiletList and set markers
+        for(int j = 0; j < toiletList.size(); j++){
+        	HashMap<String,String> hMap = toiletList.get(j);
+        	 double lat = HAMBURG.latitude;
+             double lng = HAMBURG.longitude;
+             int id;
+             String name = "name";
+             String adr;
+             String descr;
+             MarkerOptions marker = new MarkerOptions();
+            
+        	for (Entry<String, String> entry : hMap.entrySet()) {
+        		String keyName = entry.getKey();
+        		
+        		if(j == toiletList.size() - 1){ //the last Hashmap has user Coordinates
+        			switch (keyName){
+        				case "userLatitude":
+        					userLat = Double.valueOf(entry.getValue());
+        					break;
+        				case "userLongitude":
+        					userLng = Double.valueOf(entry.getValue());
+        					break;
+        			}
+        		}               
+ 
+                switch (keyName){
+                	case "id":
+                		id = Integer.valueOf(entry.getValue());
+                		break;
+                	case "name":
+                		name = entry.getValue();
+                		break;
+                	case "address":
+                		adr = entry.getValue();
+                		break;
+                	case "description":
+                		descr = entry.getValue();
+                		break;
+                	case "latitude":
+                		lat = Double.valueOf(entry.getValue());
+                		break;
+                	case "longitude":
+                		lng = Double.valueOf(entry.getValue());
+                		break;
+                }
+            }//end for
+        	marker.position(new LatLng(lat, lng)).title(name);
+            // adding marker
+            mMap.addMarker(marker);
+            markerList.add(marker);
+        		      	
+        }
+        
+        
+        
         location = new Location("");//empty provider string
-        double lat = bundle.getDouble("lat");
-        double lng = bundle.getDouble("lng");
-        location.setLatitude(lat);
-        location.setLongitude(lng);
+        //double lat = bundle.getDouble("lat");
+        //double lng = bundle.getDouble("lng");
+
+        location.setLatitude(userLat);
+        location.setLongitude(userLng);
 		
 		//Location Button Listener
 		myLocationButton.setOnClickListener(new View.OnClickListener() {
