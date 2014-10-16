@@ -64,7 +64,10 @@ public class JSONParser {
 				String paramString = URLEncodedUtils.format(params, "utf-8");
 				url += "?" + paramString;
 				HttpGet httpGet = new HttpGet(url);
-
+				
+				httpGet.setHeader("Accept", "application/json"); // or application/jsonrequest
+				httpGet.setHeader("Content-Type", "application/json");
+				
 				HttpResponse httpResponse = httpClient.execute(httpGet);
 				HttpEntity httpEntity = httpResponse.getEntity();
 				is = httpEntity.getContent();
@@ -89,6 +92,9 @@ public class JSONParser {
 			}
 			is.close();
 			json = sb.toString();
+
+			json = json.substring(json.indexOf("{"), json.lastIndexOf("}") + 1); //still needed? 
+			Log.d("Alle Toiletten: ", json.toString());
 		} catch (Exception e) {
 			Log.e("Buffer Error", "Error converting result " + e.toString());
 		}
