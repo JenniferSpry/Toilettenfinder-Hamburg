@@ -2,10 +2,8 @@ package de.bfhh.stilleoertchenhamburg;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Properties;
 
-import org.apache.http.NameValuePair;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -18,7 +16,6 @@ import com.android.volley.toolbox.JsonArrayRequest;
 import android.app.ListActivity;
 import android.app.ProgressDialog;
 import android.content.Context;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.ListAdapter;
@@ -40,6 +37,15 @@ public class BezirkeTestActivity extends ListActivity {
 
 	// Progress Dialog
 	private ProgressDialog pDialog;
+	
+	//Comment Steffi from http://developer.android.com/guide/topics/ui/dialogs.html 
+	/*Avoid ProgressDialog
+
+	Android includes another dialog class called ProgressDialog that shows a 
+	dialog with a progress bar. However, if you need to indicate loading or 
+	indeterminate progress, you should instead follow the design guidelines 
+	for Progress & Activity and use a ProgressBar in your layout.
+	*/
 
 	ArrayList<HashMap<String, String>> bezirkeList;
 	
@@ -144,7 +150,6 @@ public class BezirkeTestActivity extends ListActivity {
 		// Adding request to request queue
 		AppController.getInstance().addToRequestQueue(req);
 	}
-
 
 	private void showpDialog() {
         if (!pDialog.isShowing())
