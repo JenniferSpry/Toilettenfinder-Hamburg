@@ -21,6 +21,12 @@ import org.json.JSONObject;
 
 import android.util.Log;
 
+/**
+ * FIXME: Vielleicht umschreiben als Hilfsklasse zum JSON Parsen
+ * @author Jenne
+ *
+ */
+
 public class JSONParser {
 
 	static InputStream is = null;

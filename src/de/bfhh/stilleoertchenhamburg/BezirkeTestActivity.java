@@ -10,6 +10,11 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.VolleyLog;
+import com.android.volley.toolbox.JsonArrayRequest;
+
 import android.app.ListActivity;
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -18,6 +23,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.ListAdapter;
 import android.widget.SimpleAdapter;
+import android.widget.Toast;
 
 /**
  * TODO: Vernünftige Fehlermeldung, wenn die Daten nicht kommen
@@ -35,15 +41,13 @@ public class BezirkeTestActivity extends ListActivity {
 	// Progress Dialog
 	private ProgressDialog pDialog;
 
-	// Creating JSON Parser object
-	JSONParser jParser = new JSONParser();
-
 	ArrayList<HashMap<String, String>> bezirkeList;
+	
+	private static String TAG = BezirkeTestActivity.class.getSimpleName();
+	private String jsonResponse;
 
 
 	// JSON Node names
-	private static final String TAG_SUCCESS = "success";
-	private static final String TAG_BEZIRKE = "bezirke";
 	private static final String TAG_BEZIRK_ID = "bezirk_id";
 	private static final String TAG_NAME = "name";
 
@@ -55,64 +59,48 @@ public class BezirkeTestActivity extends ListActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.bezirketest);
 		
+		Log.d(TAG, "loading bezirketest");
+		
 		// load properties
 		context = this;
         assetsPropertyReader = new AssetsPropertyReader(context);
         properties = assetsPropertyReader.getProperties("config.properties");
+        
+        pDialog = new ProgressDialog(this);
+        pDialog.setMessage("Please wait...");
+        pDialog.setCancelable(false);
 
 		// Hashmap for ListView
 		bezirkeList = new ArrayList<HashMap<String, String>>();
 
-		// Loading products in Background Thread
-		new LoadAllBezirke().execute();
+		makeJsonArrayRequest();
 	}
-
+	
 	/**
-	 * Background Async Task to Load all product by making HTTP Request
-	 * */
-	class LoadAllBezirke extends AsyncTask<String, String, String> {
+	 * Method to make json array request where response starts with [
+	 * */
+	private void makeJsonArrayRequest() {
 
-		/**
-		 * Before starting background thread Show Progress Dialog
-		 * */
-		@Override
-		protected void onPreExecute() {
-			super.onPreExecute();
-			pDialog = new ProgressDialog(BezirkeTestActivity.this);
-			pDialog.setMessage("Bezirke werden geladen, bitte warten...");
-			pDialog.setIndeterminate(false);
-			pDialog.setCancelable(false);
-			pDialog.show();
-		}
-
-		/**
-		 * getting All bezirke from url
-		 * */
-		protected String doInBackground(String... args) {
-			// Building Parameters
-			List<NameValuePair> params = new ArrayList<NameValuePair>();
-			// getting JSON string from URL
-			String url = properties.getProperty("BasePath") + properties.getProperty("URLBezirke");
-			JSONObject json = jParser.makeHttpRequest(url, "GET", params);
-			
-			//Log.d("Alle Bezirke: ", json.toString());
-
-			try {
-				// Checking for SUCCESS TAG
-				int success = json.getInt(TAG_SUCCESS);
-
-				if (success == 1) {
-					// products found
-					// Getting Array of bezirke
-					bezirke = json.getJSONArray(TAG_BEZIRKE);
-
-					// looping through All bezirke
-					for (int i = 0; i < bezirke.length(); i++) {
-						JSONObject c = bezirke.getJSONObject(i);
-
-						// Storing each json item in variable
-						String id = c.getString(TAG_BEZIRK_ID);
-						String name = c.getString(TAG_NAME);
+		showpDialog();
+	
+		String url = properties.getProperty("BasePath") + properties.getProperty("URLBezirke");
+		
+		JsonArrayRequest req = new JsonArrayRequest(url,
+			new Response.Listener<JSONArray>() {
+				@Override
+				public void onResponse(JSONArray response) {
+					Log.d(TAG, response.toString());
+				
+				try {
+					// Parsing json array response
+					// loop through each json object
+					jsonResponse = "";
+					for (int i = 0; i < response.length(); i++) {
+					
+						JSONObject bezirk = (JSONObject) response.get(i);
+						
+						String id = bezirk.getString(TAG_BEZIRK_ID);
+						String name = bezirk.getString(TAG_NAME);
 
 						// creating new HashMap
 						HashMap<String, String> map = new HashMap<String, String>();
@@ -124,26 +112,7 @@ public class BezirkeTestActivity extends ListActivity {
 						// adding HashList to ArrayList
 						bezirkeList.add(map);
 					}
-				} 
-			} catch (JSONException e) {
-				e.printStackTrace();
-			}
-
-			return null;
-		}
-
-		/**
-		 * After completing background task Dismiss the progress dialog
-		 * **/
-		protected void onPostExecute(String file_url) {
-			// dismiss the dialog after getting all products
-			pDialog.dismiss();
-			// updating UI from Background Thread
-			runOnUiThread(new Runnable() {
-				public void run() {
-					/**
-					 * Updating parsed JSON data into ListView
-					 * */
+					
 					ListAdapter adapter = new SimpleAdapter(
 							BezirkeTestActivity.this, bezirkeList,
 							R.layout.bezirk, new String[] { TAG_BEZIRK_ID,
@@ -151,10 +120,40 @@ public class BezirkeTestActivity extends ListActivity {
 							new int[] { R.id.bezirk_id, R.id.bezirk });
 					// updating listview
 					setListAdapter(adapter);
+					
+				} catch (JSONException e) {
+					e.printStackTrace();
+					Toast.makeText(getApplicationContext(),
+						"Error: " + e.getMessage(),
+						Toast.LENGTH_LONG).show();
 				}
-			});
-
-		}
-
+				
+				hidepDialog();
+			}
+		}, new Response.ErrorListener() {
+			@Override
+			public void onErrorResponse(VolleyError error) {
+				VolleyLog.d(TAG, "Error: " + error.getMessage());
+				Toast.makeText(getApplicationContext(),
+					error.getMessage(), Toast.LENGTH_SHORT).show();
+					hidepDialog();
+				}
+			}
+		);
+	
+		// Adding request to request queue
+		AppController.getInstance().addToRequestQueue(req);
 	}
+
+
+	private void showpDialog() {
+        if (!pDialog.isShowing())
+            pDialog.show();
+    }
+ 
+    private void hidepDialog() {
+        if (pDialog.isShowing())
+            pDialog.dismiss();
+    }
+
 }
