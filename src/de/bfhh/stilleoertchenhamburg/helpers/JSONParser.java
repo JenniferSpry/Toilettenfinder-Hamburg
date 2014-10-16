@@ -1,4 +1,4 @@
-package de.bfhh.stilleoertchenhamburg;
+package de.bfhh.stilleoertchenhamburg.helpers;
 
 import java.io.BufferedReader;
 import java.io.IOException;

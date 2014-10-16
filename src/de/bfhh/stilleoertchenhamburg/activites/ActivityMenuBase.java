@@ -1,5 +1,8 @@
-package de.bfhh.stilleoertchenhamburg;
+package de.bfhh.stilleoertchenhamburg.activites;
 
+import de.bfhh.stilleoertchenhamburg.R;
+import de.bfhh.stilleoertchenhamburg.R.id;
+import de.bfhh.stilleoertchenhamburg.R.menu;
 import android.content.Intent;
 import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
@@ -24,7 +27,7 @@ public class ActivityMenuBase extends ActionBarActivity {
 	    // Handle presses on the action bar items
 	    switch (item.getItemId()) {
 		    case R.id.menu_start:
-	    		startActivity(new Intent(this, MainActivity.class));
+	    		startActivity(new Intent(this, ActivityMain.class));
 	            return true;
 	        case R.id.menu_impressum:
 	    		startActivity(new Intent(this, ActivityImpressum.class));

@@ -1,4 +1,4 @@
-package de.bfhh.stilleoertchenhamburg;
+package de.bfhh.stilleoertchenhamburg.activites;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -12,6 +12,12 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.VolleyLog;
 import com.android.volley.toolbox.JsonArrayRequest;
+
+import de.bfhh.stilleoertchenhamburg.AppController;
+import de.bfhh.stilleoertchenhamburg.R;
+import de.bfhh.stilleoertchenhamburg.R.id;
+import de.bfhh.stilleoertchenhamburg.R.layout;
+import de.bfhh.stilleoertchenhamburg.helpers.AssetsPropertyReader;
 
 import android.app.ListActivity;
 import android.app.ProgressDialog;

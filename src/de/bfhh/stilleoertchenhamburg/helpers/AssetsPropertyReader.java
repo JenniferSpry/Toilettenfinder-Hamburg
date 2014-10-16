@@ -1,4 +1,4 @@
-package de.bfhh.stilleoertchenhamburg;
+package de.bfhh.stilleoertchenhamburg.helpers;
 
 /**
  * http://khurramitdeveloper.blogspot.de/2013/07/properties-file-in-android.html

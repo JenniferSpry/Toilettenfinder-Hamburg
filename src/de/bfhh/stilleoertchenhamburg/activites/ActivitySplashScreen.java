@@ -1,4 +1,4 @@
-package de.bfhh.stilleoertchenhamburg;
+package de.bfhh.stilleoertchenhamburg.activites;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -9,6 +9,12 @@ import org.apache.http.NameValuePair;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import de.bfhh.stilleoertchenhamburg.LocationUpdateService;
+import de.bfhh.stilleoertchenhamburg.R;
+import de.bfhh.stilleoertchenhamburg.R.id;
+import de.bfhh.stilleoertchenhamburg.R.layout;
+import de.bfhh.stilleoertchenhamburg.helpers.JSONParser;
 
 import android.app.Activity;
 import android.app.ListActivity;
@@ -24,7 +30,7 @@ import android.widget.ListAdapter;
 import android.widget.SimpleAdapter;
 import android.widget.Toast;
  
-public class SplashScreen extends ListActivity {
+public class ActivitySplashScreen extends ListActivity {
  
 	ArrayList<String> names;
 	ArrayList<String> latitudes, longitudes;
@@ -72,7 +78,7 @@ public class SplashScreen extends ListActivity {
 	  					 * Updating parsed JSON data into ListView
 	  					 * */
         		  	ListAdapter adapter = new SimpleAdapter(
-	  							SplashScreen.this, toiletList,
+	  							ActivitySplashScreen.this, toiletList,
 	  							R.layout.toilet, new String[] { 
 	  									TAG_NAME, TAG_LAT },
 	  							new int[] { R.id.toilet_name, R.id.latitude });
@@ -90,7 +96,7 @@ public class SplashScreen extends ListActivity {
 	            	  public void run() {
 		            	  // This method will be executed once the timer is over
 		            	  // Start your app main activity
-		            	  Intent i = new Intent(SplashScreen.this, MainActivity.class);
+		            	  Intent i = new Intent(ActivitySplashScreen.this, ActivityMain.class);
 		            	  i.putExtra("poiList", (Serializable) toiletList); //send lat and long to main activity
 
 		            	  startActivity(i);
@@ -107,7 +113,7 @@ public class SplashScreen extends ListActivity {
 	            int resultCode = bundle.getInt(LocationUpdateService.RESULT);
 	
 	            if (resultCode == RESULT_OK) {
-	              Toast.makeText(SplashScreen.this,
+	              Toast.makeText(ActivitySplashScreen.this,
 	                  "Location successfully received.  LAT: " + Double.valueOf(lat) + ", LNG: " + Double.valueOf(lng),
 	                  Toast.LENGTH_LONG).show();
 	              
@@ -125,7 +131,7 @@ public class SplashScreen extends ListActivity {
 	            	  public void run() {
 		            	  // This method will be executed once the timer is over
 		            	  // Start your app main activity
-		            	  Intent i = new Intent(SplashScreen.this, MainActivity.class);
+		            	  Intent i = new Intent(ActivitySplashScreen.this, ActivityMain.class);
 		            	  i.putExtra("lat", lat); //send lat and long to main activity
 		                  i.putExtra("lng", lng);
 		            	  startActivity(i);
@@ -136,7 +142,7 @@ public class SplashScreen extends ListActivity {
 	              }, SPLASH_TIME_OUT);
 	              
 	            } else {
-	              Toast.makeText(SplashScreen.this, "Location not received. Error",
+	              Toast.makeText(ActivitySplashScreen.this, "Location not received. Error",
 	                  Toast.LENGTH_LONG).show();
 	            }
 	          }

@@ -1,4 +1,4 @@
-package de.bfhh.stilleoertchenhamburg;
+package de.bfhh.stilleoertchenhamburg.models;
 
 import java.util.HashMap;
 

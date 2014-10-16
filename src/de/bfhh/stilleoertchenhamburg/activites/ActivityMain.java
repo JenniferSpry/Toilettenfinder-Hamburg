@@ -1,4 +1,4 @@
-package de.bfhh.stilleoertchenhamburg;
+package de.bfhh.stilleoertchenhamburg.activites;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -11,6 +11,11 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+
+import de.bfhh.stilleoertchenhamburg.R;
+import de.bfhh.stilleoertchenhamburg.R.drawable;
+import de.bfhh.stilleoertchenhamburg.R.id;
+import de.bfhh.stilleoertchenhamburg.R.layout;
 
 import android.view.View;
 import android.widget.ImageButton;
@@ -25,7 +30,7 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.provider.Settings;
 
-public class MainActivity extends ActivityMenuBase {
+public class ActivityMain extends ActivityMenuBase {
     /**
      * Note that this may be null if the Google Play services APK is not available.
      */
@@ -238,20 +243,20 @@ public class MainActivity extends ActivityMenuBase {
 	
 		  @Override
 		  public void onStatusChanged(String provider, int status, Bundle extras) {
-			  Toast.makeText(MainActivity.this, provider + "'s status changed to "+status +"!",
+			  Toast.makeText(ActivityMain.this, provider + "'s status changed to "+status +"!",
 				        Toast.LENGTH_SHORT).show();
 		  }
 	
 		  @Override
 		  public void onProviderEnabled(String provider) {
-			  Toast.makeText(MainActivity.this, "Provider " + provider + " enabled!",
+			  Toast.makeText(ActivityMain.this, "Provider " + provider + " enabled!",
 		        Toast.LENGTH_SHORT).show();
 	
 		  }
 	
 		  @Override
 		  public void onProviderDisabled(String provider) {
-			  Toast.makeText(MainActivity.this, "Provider " + provider + " disabled!",
+			  Toast.makeText(ActivityMain.this, "Provider " + provider + " disabled!",
 		        Toast.LENGTH_SHORT).show();
 		  }
 	  }

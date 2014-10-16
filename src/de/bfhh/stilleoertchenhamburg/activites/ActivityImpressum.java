@@ -1,5 +1,7 @@
-package de.bfhh.stilleoertchenhamburg;
+package de.bfhh.stilleoertchenhamburg.activites;
 
+import de.bfhh.stilleoertchenhamburg.R;
+import de.bfhh.stilleoertchenhamburg.R.layout;
 import android.os.Bundle;
 
 public class ActivityImpressum extends ActivityMenuBase {

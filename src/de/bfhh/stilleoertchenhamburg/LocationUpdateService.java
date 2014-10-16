@@ -11,6 +11,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import de.bfhh.stilleoertchenhamburg.helpers.JSONParser;
+
 import android.app.Activity;
 import android.app.IntentService;
 import android.app.Service;

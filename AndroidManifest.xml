@@ -46,7 +46,7 @@
         
         <!--  Splash screen Activity -->
         <activity
-            android:name=".SplashScreen"
+            android:name="de.bfhh.stilleoertchenhamburg.activites.ActivitySplashScreen"
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -55,18 +55,18 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="de.bfhh.stilleoertchenhamburg.BezirkeTestActivity"
+            android:name="de.bfhh.stilleoertchenhamburg.activites.BezirkeTestActivity"
             android:label="@string/menu_bezirke"
-            android:parentActivityName=".MainActivity" >
+            android:parentActivityName="de.bfhh.stilleoertchenhamburg.activites.ActivityMain" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".MainActivity" />
         </activity>
         
         <activity
-            android:name="de.bfhh.stilleoertchenhamburg.ActivityImpressum"
+            android:name="de.bfhh.stilleoertchenhamburg.activites.ActivityImpressum"
             android:label="@string/menu_impressum"
-            android:parentActivityName=".MainActivity" >
+            android:parentActivityName="de.bfhh.stilleoertchenhamburg.activites.ActivityMain" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".MainActivity" />
@@ -74,7 +74,7 @@
 
         <!-- Main Activity -->
         <activity
-            android:name=".MainActivity"
+            android:name="de.bfhh.stilleoertchenhamburg.activites.ActivityMain"
             android:label="@string/app_name" >
         </activity>
         
