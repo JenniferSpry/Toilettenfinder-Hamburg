@@ -36,7 +36,7 @@
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
-        android:theme="@style/Theme.AppCompat" 
+        android:theme="@style/AppTheme"
         android:name="de.bfhh.stilleoertchenhamburg.AppController" >
         <!--  <uses-library android:name="com.google.android.maps" /> -->
         <service 
@@ -71,15 +71,11 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".MainActivity" />
         </activity>
-        
 
         <!-- Main Activity -->
         <activity
             android:name=".MainActivity"
-            android:label="@string/app_name" 
-            android:screenOrientation="portrait"
-            android:theme="@android:style/Theme.Black.NoTitleBar" >
-
+            android:label="@string/app_name" >
         </activity>
         
         <!-- Goolge Maps API Key -->
