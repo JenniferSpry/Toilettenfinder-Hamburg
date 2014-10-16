@@ -1,23 +1,35 @@
 package de.bfhh.stilleoertchenhamburg;
 
+import java.util.Properties;
+
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.Volley;
 
+import de.bfhh.stilleoertchenhamburg.helpers.AssetsPropertyReader;
+
 import android.app.Application;
+import android.content.Context;
 import android.text.TextUtils;
 
 public class AppController extends Application {
+	
+	// to load config.properties
+	private AssetsPropertyReader assetsPropertyReader;
+	private Properties properties;
+    private Context context;
 
-	public static final String TAG = AppController.class.getSimpleName();
-	  
+	public static final String TAG = AppController.class.getSimpleName();  
     private RequestQueue mRequestQueue;
-  
     private static AppController mInstance;
   
     @Override
     public void onCreate() {
         super.onCreate();
+        context = this;
+        assetsPropertyReader = new AssetsPropertyReader(context);
+        properties = assetsPropertyReader.getProperties("config.properties");
+        
         mInstance = this;
     }
   
@@ -47,5 +59,9 @@ public class AppController extends Application {
         if (mRequestQueue != null) {
             mRequestQueue.cancelAll(tag);
         }
+    }
+    
+    public String getBezirkeURL(){
+    	return properties.getProperty("BasePath") + properties.getProperty("URLBezirke");
     }
 }

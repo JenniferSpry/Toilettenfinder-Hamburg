@@ -2,8 +2,6 @@ package de.bfhh.stilleoertchenhamburg.activites;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Properties;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -15,13 +13,8 @@ import com.android.volley.toolbox.JsonArrayRequest;
 
 import de.bfhh.stilleoertchenhamburg.AppController;
 import de.bfhh.stilleoertchenhamburg.R;
-import de.bfhh.stilleoertchenhamburg.R.id;
-import de.bfhh.stilleoertchenhamburg.R.layout;
-import de.bfhh.stilleoertchenhamburg.helpers.AssetsPropertyReader;
-
 import android.app.ListActivity;
 import android.app.ProgressDialog;
-import android.content.Context;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.ListAdapter;
@@ -35,11 +28,6 @@ import android.widget.Toast;
  */
 
 public class BezirkeTestActivity extends ListActivity {
-	
-	// to load config.properties
-	private AssetsPropertyReader assetsPropertyReader;
-    private Context context;
-    private Properties properties;
 
 	// Progress Dialog
 	private ProgressDialog pDialog;
@@ -55,9 +43,7 @@ public class BezirkeTestActivity extends ListActivity {
 
 	ArrayList<HashMap<String, String>> bezirkeList;
 	
-	private static String TAG = BezirkeTestActivity.class.getSimpleName();
 	private String jsonResponse;
-
 
 	// JSON Node names
 	private static final String TAG_BEZIRK_ID = "bezirk_id";
@@ -70,14 +56,7 @@ public class BezirkeTestActivity extends ListActivity {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.bezirketest);
-		
-		Log.d(TAG, "loading bezirketest");
-		
-		// load properties
-		context = this;
-        assetsPropertyReader = new AssetsPropertyReader(context);
-        properties = assetsPropertyReader.getProperties("config.properties");
-        
+				        
         pDialog = new ProgressDialog(this);
         pDialog.setMessage("Please wait...");
         pDialog.setCancelable(false);
@@ -95,13 +74,12 @@ public class BezirkeTestActivity extends ListActivity {
 
 		showpDialog();
 	
-		String url = properties.getProperty("BasePath") + properties.getProperty("URLBezirke");
+		String url = AppController.getInstance().getBezirkeURL();
 		
 		JsonArrayRequest req = new JsonArrayRequest(url,
 			new Response.Listener<JSONArray>() {
 				@Override
 				public void onResponse(JSONArray response) {
-					Log.d(TAG, response.toString());
 				
 				try {
 					// Parsing json array response
@@ -145,7 +123,7 @@ public class BezirkeTestActivity extends ListActivity {
 		}, new Response.ErrorListener() {
 			@Override
 			public void onErrorResponse(VolleyError error) {
-				VolleyLog.d(TAG, "Error: " + error.getMessage());
+				VolleyLog.d("Error: " + error.getMessage());
 				Toast.makeText(getApplicationContext(),
 					error.getMessage(), Toast.LENGTH_SHORT).show();
 					hidepDialog();
