@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">StilleOertchenHamburg</string>
+    <string name="app_name">Toilettenfinder Hamburg</string>
 
     <!-- Menu names -->
     <string name="menu_start">Karte</string>
@@ -16,7 +16,11 @@
     <string name="impressum_adresse">Kolberger Weg 3 • 21465 Reinbek</string>
     <string name="impressum_vorsitz">Vorsitzender: Louis F. Maywald</string>
     <string name="impressum_gericht">Vereinsregister Kreis Stormarn, Aktenzeichen: VR 3427 HL</string>
-
-    <color name="black">#000000</color>
+    
+    <!-- bf-hh -->
+    <string name="long_link">www.barrierefreieshamburg.de</string>
+    
+    <!-- Image descriptions -->
+    <string name="image_logo">Logo</string>
 
 </resources>
