@@ -139,10 +139,8 @@ public class ActivityMain extends ActivityMenuBase {
         	marker.position(new LatLng(lat, lng)).title(name);
             // adding marker
             mMap.addMarker(marker);
-            markerList.add(marker);
-        		      	
+            markerList.add(marker);   	
         }
-        
         
         
         location = new Location("");//empty provider string

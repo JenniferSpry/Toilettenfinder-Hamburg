@@ -64,4 +64,14 @@ public class AppController extends Application {
     public String getBezirkeURL(){
     	return properties.getProperty("BasePath") + properties.getProperty("URLBezirke");
     }
+    
+    public String getStoresURL(String lat, String lung, String radius){
+    	return properties.getProperty("BasePath") + 
+    			properties.getProperty("URLStores")
+    			+ "?kategorie=127"
+    			+ "&lat=" + lat
+                + "&long=" + lung
+                + "&status=" + 1
+                + "&radius=" + radius;
+    }
 }

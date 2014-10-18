@@ -56,7 +56,7 @@ public class ActivitySplashScreen extends ListActivity {
 	JSONArray toilets = null;
 	
     // Splash screen timer
-    private static int SPLASH_TIME_OUT = 3000;
+    private static int SPLASH_TIME_OUT = 1000;
     
     private BroadcastReceiver receiver = new BroadcastReceiver() {
     	private double lat = 0.0;

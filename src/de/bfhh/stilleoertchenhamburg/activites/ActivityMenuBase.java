@@ -1,8 +1,6 @@
 package de.bfhh.stilleoertchenhamburg.activites;
 
 import de.bfhh.stilleoertchenhamburg.R;
-import de.bfhh.stilleoertchenhamburg.R.id;
-import de.bfhh.stilleoertchenhamburg.R.menu;
 import android.content.Intent;
 import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
@@ -32,8 +30,8 @@ public class ActivityMenuBase extends ActionBarActivity {
 	        case R.id.menu_impressum:
 	    		startActivity(new Intent(this, ActivityImpressum.class));
 	            return true;
-	        case R.id.menu_bezirke:
-	    		startActivity(new Intent(this, BezirkeTestActivity.class));
+	        case R.id.menu_test:
+	    		startActivity(new Intent(this, ToiletTestActivity.class));
 	            return true;
 	        default:
 	            return super.onOptionsItemSelected(item);

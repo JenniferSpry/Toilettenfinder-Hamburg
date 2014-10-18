@@ -20,7 +20,6 @@ public class POI implements Parcelable{
 	
 	private final int id; //ID from DB
 	private final String name;
-	private final int state;
 	private final double lat;
 	private final double lng;
 	private final String address;
@@ -30,9 +29,8 @@ public class POI implements Parcelable{
 	private float distanceToUser; //distance to user's current position in meters
 	
 
-	public POI(int id, String name, int state, double lat, double lng, String address, String description){
+	public POI(int id, String name, double lat, double lng, String address, String description){
 		this.id = id;
-		this.state = state;
 		this.name = name;
 		this.lat = lat;
 		this.lng = lng;
@@ -50,10 +48,6 @@ public class POI implements Parcelable{
 	
 	public String getName() {
 		return name;
-	}
-
-	public int getState() {
-		return state;
 	}
 	
 	public double getLat(){

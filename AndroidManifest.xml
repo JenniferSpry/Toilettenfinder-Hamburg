@@ -55,8 +55,8 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="de.bfhh.stilleoertchenhamburg.activites.BezirkeTestActivity"
-            android:label="@string/menu_bezirke"
+            android:name="de.bfhh.stilleoertchenhamburg.activites.ToiletTestActivity"
+            android:label="@string/menu_test"
             android:parentActivityName="de.bfhh.stilleoertchenhamburg.activites.ActivityMain" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"

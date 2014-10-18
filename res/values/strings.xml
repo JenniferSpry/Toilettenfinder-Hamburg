@@ -6,7 +6,7 @@
     <!-- Menu names -->
     <string name="menu_start">Karte</string>
     <string name="menu_impressum">Impressum</string>
-    <string name="menu_bezirke">Bezirke Liste</string>  
+    <string name="menu_test">Test Toi-Liste</string>  
     
     <string name="latitude">Latitude</string>
     <string name="longitude">Logitude</string>
@@ -18,7 +18,5 @@
     <string name="impressum_gericht">Vereinsregister Kreis Stormarn, Aktenzeichen: VR 3427 HL</string>
 
     <color name="black">#000000</color>
-
-
 
 </resources>

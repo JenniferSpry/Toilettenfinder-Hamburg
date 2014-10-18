@@ -15,9 +15,9 @@
         app:showAsAction="never"/>
     
     <item
-        android:id="@+id/menu_bezirke"
+        android:id="@+id/menu_test"
         android:orderInCategory="100"
-        android:title="@string/menu_bezirke"
+        android:title="@string/menu_test"
         app:showAsAction="never"/>
 
 </menu>
