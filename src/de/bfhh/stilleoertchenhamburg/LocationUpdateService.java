@@ -65,8 +65,6 @@ public class LocationUpdateService extends Service {
 	}
 	
 	@Override
-	
-	//protected void onHandleIntent(Intent intent) {
 	public int onStartCommand(Intent intent, int flags, int startId){
 		// In this method the 
 		String action = intent.getStringExtra(POIACTION); //@TODO: add action static string in activities
@@ -116,7 +114,7 @@ public class LocationUpdateService extends Service {
 		Location userLocation = getLastKnownLocation();
 		String url = AppController.getInstance().getStoresURL(
 				String.valueOf(userLocation.getLatitude()), 
-				String.valueOf(userLocation.getLatitude()), "70");
+				String.valueOf(userLocation.getLongitude()), "70");
 		
 		JsonArrayRequest req = new JsonArrayRequest(url,
 			new Response.Listener<JSONArray>() {
@@ -189,8 +187,9 @@ public class LocationUpdateService extends Service {
 //                headers.put("apiKey", "xxxxxxxxxxxxxxx");
 //                return headers;
 //            }
-	};
+		};
 	
+		Log.d("REQUEST", req.toString());
 		AppController.getInstance().addToRequestQueue(req);
 	}
 	
