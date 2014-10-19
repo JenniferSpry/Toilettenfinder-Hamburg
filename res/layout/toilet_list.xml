@@ -4,6 +4,8 @@
     android:layout_height="match_parent"
     android:orientation="vertical" >
     
+    <!-- Splash screen List -->
+    
 	<ListView
         android:id="@android:id/list"
         android:layout_width="fill_parent"

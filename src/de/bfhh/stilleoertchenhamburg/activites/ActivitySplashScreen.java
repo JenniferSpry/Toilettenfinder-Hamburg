@@ -81,7 +81,7 @@ public class ActivitySplashScreen extends ListActivity {
 	  							ActivitySplashScreen.this, toiletList,
 	  							R.layout.toilet, new String[] { 
 	  									TAG_NAME, TAG_LAT },
-	  							new int[] { R.id.toilet_name, R.id.latitude });
+	  							new int[] { R.id.toilet_name, R.id.toilet_description });
 	  					// updating listview
 	  					setListAdapter(adapter);
 	  				 }

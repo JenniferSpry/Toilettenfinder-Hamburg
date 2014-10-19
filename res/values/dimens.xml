@@ -8,5 +8,11 @@
     <dimen name="splash_headline_text">25sp</dimen>
     <dimen name="splash_logo_width">200dp</dimen>
     <dimen name="splash_link_text">20sp</dimen>
+    
+    <!-- toilet item styles -->
+    <dimen name="toilet_item_border_width">1dp</dimen>
+    <dimen name="toilet_item_corner_radius">10dp</dimen>
+    
+    <dimen name="toilet_text">15sp</dimen>
 
 </resources>

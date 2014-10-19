@@ -45,12 +45,17 @@ public class AdapterToiletList extends BaseAdapter {
                     .getSystemService(Activity.LAYOUT_INFLATER_SERVICE);
             convertView = mInflater.inflate(R.layout.toilet, null);
         }
-
-        TextView txtTitle = (TextView) convertView.findViewById(R.id.toilet_name);
-
+        
         POI poi = pois.get(position);
-        // setting the image resource and title
-        txtTitle.setText(poi.getName());
+
+        TextView txtName = (TextView) convertView.findViewById(R.id.toilet_name);
+        txtName.setText(poi.getName());
+        
+        TextView txtDescription = (TextView) convertView.findViewById(R.id.toilet_description);
+        txtDescription.setText(poi.getDescription());
+        
+        TextView txtAdress = (TextView) convertView.findViewById(R.id.toilet_adress);
+        txtAdress.setText(poi.getAddress());
 
         return convertView;
     }
