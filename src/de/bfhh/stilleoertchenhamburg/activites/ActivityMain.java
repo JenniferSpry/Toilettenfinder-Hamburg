@@ -205,6 +205,7 @@ public class ActivityMain extends ActivityMenuBase {
     
     private void moveToLocation(Location loc){
     	LatLng pos = new LatLng(loc.getLatitude(), loc.getLongitude());
+    	personInNeedOfToilette.setPosition(pos);
     	//somehow set zoom dynamically, so that all toilets are seen
     	CameraUpdate cu = getBoundsOnMap();
         //this block has to be here because the map layout might not
@@ -245,7 +246,7 @@ public class ActivityMain extends ActivityMenuBase {
     	    }
     	}
     	
-        personInNeedOfToilette.setPosition(pos);
+        
     }
     
     private CameraUpdate getBoundsOnMap(){
@@ -253,6 +254,9 @@ public class ActivityMain extends ActivityMenuBase {
         for (MarkerOptions m : markerList) {
             builder.include(m.getPosition());
         }
+        //also add peeer, in case there is only toilets on one side, 
+        //he / she doesn't get left out of the map view :)
+        builder.include(personInNeedOfToilette.getPosition());
         LatLngBounds bounds = builder.build();
 
         return CameraUpdateFactory.newLatLngBounds(bounds,

@@ -1,5 +1,7 @@
 package de.bfhh.stilleoertchenhamburg.activites;
 
+import com.google.android.gms.maps.model.LatLng;
+
 import de.bfhh.stilleoertchenhamburg.LocationUpdateService;
 import de.bfhh.stilleoertchenhamburg.POIUpdateService;
 import de.bfhh.stilleoertchenhamburg.R;
@@ -36,6 +38,8 @@ public class ActivitySplashScreen extends ListActivity {
 	private static final String TAG_RESULT = "result";
 	private static final String TAG_USERLOCATION = "userLocation";
 	private static final String TAG_POIUPDATE = "POIUpdate";
+	
+	final private LatLng HAMBURG = new LatLng(53.558, 9.927); //standard position in HH
 	
     // Splash screen timeout
     private static int SPLASH_TIME_OUT = 2000;
@@ -82,9 +86,11 @@ public class ActivitySplashScreen extends ListActivity {
 			            	  }
 			              }, SPLASH_TIME_OUT);
 			              
-		            } else {
+		            } else { //if RESULT_CANCELLED, then no location was received from locationManager in LocationUpdateService
 		            	  Toast.makeText(ActivitySplashScreen.this, "Last user location not received. Standard Location is set",
 		            		  Toast.LENGTH_LONG).show();
+		            	  //start with Hamburg standard location
+		            	  startPOIUpdateService(resultCode, lat, lng);
 		            }
 	          }
            }
