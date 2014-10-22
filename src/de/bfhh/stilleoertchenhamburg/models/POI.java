@@ -75,11 +75,14 @@ public class POI implements Parcelable{
 	public void setDistanceToUser(Location userLocation){
 		this.distanceToUser = this.location.distanceTo(userLocation);
 	}
-	
-	public float getDistanceToUser(Location userLocation){
+	//returns distance to user in meters (float)
+	public float getDistanceToUser(){
 		return distanceToUser;
 	}
-
+	//returns distance to user in meters (int)
+	public int getDistanceToUserInt(){
+		return (int) distanceToUser;
+	}
 
 	@Override
 	public int describeContents() {

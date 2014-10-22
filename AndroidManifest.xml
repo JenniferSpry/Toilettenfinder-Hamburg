@@ -36,10 +36,15 @@
         android:theme="@style/AppTheme"
         android:name="de.bfhh.stilleoertchenhamburg.AppController" >
         <!--  <uses-library android:name="com.google.android.maps" /> -->
+        <!-- Location Service -->
         <service 
             android:name=".LocationUpdateService" 
             android:enabled="true"
             android:exported="false" /> <!-- lets no other applications use our service -->
+        <!-- POI Update IntentService -->
+        <service android:name=".POIUpdateService" 
+            android:enabled="true"
+            android:exported="false" />
         
         <!--  Splash screen Activity -->
         <activity

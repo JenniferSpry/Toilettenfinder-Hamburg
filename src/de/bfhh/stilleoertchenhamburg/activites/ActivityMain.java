@@ -2,7 +2,7 @@ package de.bfhh.stilleoertchenhamburg.activites;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map.Entry;
+import java.util.List;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -12,48 +12,103 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import de.bfhh.stilleoertchenhamburg.LocationUpdateService;
+import de.bfhh.stilleoertchenhamburg.POIController;
+import de.bfhh.stilleoertchenhamburg.POIUpdateService;
 import de.bfhh.stilleoertchenhamburg.R;
 import de.bfhh.stilleoertchenhamburg.R.drawable;
 import de.bfhh.stilleoertchenhamburg.R.id;
 import de.bfhh.stilleoertchenhamburg.R.layout;
+import de.bfhh.stilleoertchenhamburg.models.POI;
 
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.location.Criteria;
+import android.content.IntentFilter;
 import android.location.Location;
 import android.location.LocationListener;
-import android.location.LocationManager;
 import android.os.Bundle;
+import android.os.Handler;
 import android.provider.Settings;
 
+
+/*
+ * This activity is started by POIUpdateService after the IntentService 
+ * has finished its task of retrieving a list of POI from the bf-hh server via JSON.
+ * This list is also sent to this activity via the starting Intent, as well as
+ * the user's current position (retrieved by LocationUpdateService).
+ * 
+ * 
+ */
+
 public class ActivityMain extends ActivityMenuBase {
-    /**
-     * Note that this may be null if the Google Play services APK is not available.
-     */
+
     private GoogleMap mMap;
-    private LocationManager locationManager;
     private MyLocationListener mylistener;
-    private Criteria criteria;
-    private String provider;
-    private Location location;
-    
+    private Location userLocation;
     private TextView latitude;
     private TextView longitude;
     
-    private ImageButton myLocationButton;
+    private POIController poiController; //class that handles Broadcast, methods return List<POI>
     
-    final private LatLng HAMBURG = new LatLng(53.558, 9.927);
+    private ImageButton myLocationButton; //Button to get back to current user location on map
     
-    private Marker personInNeedOfToilette;
-	private ArrayList<HashMap<String, String>> toiletList;
+    final private LatLng HAMBURG = new LatLng(53.558, 9.927); //standard position in HH
+    
+    private Marker personInNeedOfToilette; //person's marker
+	private ArrayList<HashMap<String, String>> toiletList; //POI received from POIUpdateService
 	private ArrayList<MarkerOptions> markerList;
 	
 	private ArrayList<String> keyNames;
+	
+	private double userLat, userLng;
+	
+    //not really used right now, but will be needed later
+    public static class POIReceiver extends BroadcastReceiver {
 
+        private final Handler handler; // Handler used to execute code on the UI thread
+		private ActivityMain main;
+
+        public POIReceiver(Handler handler) {
+            this.handler = handler;
+        }
+        
+        void setMainActivityHandler(ActivityMain main){
+            this.main = main;
+        }
+
+        @Override
+        public void onReceive(final Context context, Intent intent) {
+        	Bundle bundle = intent.getExtras();
+            String action = intent.getAction();
+            if(action.equals("toiletLocation")){//action sent by POIUpdateService
+            	
+            //TODO: How to check whether this typecast worked?
+          	  //get POI List
+            ArrayList<HashMap<String, String>> poiList = (ArrayList<HashMap<String,String>>) intent.getSerializableExtra("poiList");
+          	  if( poiList != null && bundle.getInt(POIUpdateService.RESULT) == RESULT_OK ){
+          		  //create poiController Object
+          		  final POIController pc = new POIController(poiList);
+          		  main.setPOIController(pc);
+          		  
+          		  // Post the UI updating code to our Handler
+                  handler.post(new Runnable() {
+                      @Override
+                      public void run() {
+                         main.updateMarkers(pc);
+                      }
+                  });
+          	  }
+            }        
+        }
+    }
+	
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -63,104 +118,58 @@ public class ActivityMain extends ActivityMenuBase {
         //Button that will animate camera back to user position
         myLocationButton = (ImageButton) findViewById(R.id.mylocation);
         
-        
-        setUpMapIfNeeded();
-        
-        /*
-	    // Get the location manager
-		locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-		// Define the criteria how to select the location provider
-		criteria = new Criteria();
-		criteria.setAccuracy(Criteria.ACCURACY_COARSE);	//default
-		
-		// get the best provider depending on the criteria
-		provider = locationManager.getBestProvider(criteria, false);
-	    
-		// the last known location of this provider
-		location = locationManager.getLastKnownLocation(provider); */
-        
-        //get the Intent that was sent from SplashScreen class
+        //TODO: is it good to register receiver in oncreate() ??
+        //Register Receiver for POI Updates
+        POIReceiver poiReceiver = new POIReceiver(new Handler());
+        poiReceiver.setMainActivityHandler(this);
+        registerReceiver(poiReceiver, new IntentFilter("toiletLocation"));
+     
+        //Get the Intent that was sent from POIUpdateService
         Intent i = getIntent();
         Bundle bundle = i.getExtras();
-        
-        toiletList = (ArrayList<HashMap<String,String>>) i.getSerializableExtra("poiList");
-        markerList = new ArrayList<MarkerOptions>();
-        
-       //default userLocation
-        double userLat = HAMBURG.latitude;
-        double userLng = HAMBURG.longitude;
-        
-        //parse through toiletList and set markers
-        for(int j = 0; j < toiletList.size(); j++){
-        	HashMap<String,String> hMap = toiletList.get(j);
-        	 double lat = HAMBURG.latitude;
-             double lng = HAMBURG.longitude;
-             int id;
-             String name = "name";
-             String adr;
-             String descr;
-             MarkerOptions marker = new MarkerOptions();
+        if(bundle != null){
+        	if(bundle.getDouble("latitude") != 0.0 && bundle.getDouble("longitude") != 0.0){
+        		//set user Position
+            	setUserLocation(bundle.getDouble("latitude"),bundle.getDouble("longitude"));
+        	}
+        	
+            //userLat = bundle.getDouble("latitude"); //make final string in parent class
+            //userLng = bundle.getDouble("longitude"); 
+            int result = bundle.getInt("result");
+            if(result == Activity.RESULT_CANCELED){
+            	Log.d("MainActivity:", "Activity.RESULT_CANCELED: standard lat and lng");
+            }
+            //get the toiletList
+            toiletList = (ArrayList<HashMap<String,String>>) i.getSerializableExtra("poiList");
             
-        	for (Entry<String, String> entry : hMap.entrySet()) {
-        		String keyName = entry.getKey();
-        		
-        		if(j == toiletList.size() - 1){ //the last Hashmap has user Coordinates
-        			switch (keyName){
-        				case "userLatitude":
-        					userLat = Double.valueOf(entry.getValue());
-        					break;
-        				case "userLongitude":
-        					userLng = Double.valueOf(entry.getValue());
-        					break;
-        			}
-        		}               
- 
-                switch (keyName){
-                	case "id":
-                		id = Integer.valueOf(entry.getValue());
-                		break;
-                	case "name":
-                		name = entry.getValue();
-                		break;
-                	case "address":
-                		adr = entry.getValue();
-                		break;
-                	case "description":
-                		descr = entry.getValue();
-                		break;
-                	case "latitude":
-                		lat = Double.valueOf(entry.getValue());
-                		break;
-                	case "longitude":
-                		lng = Double.valueOf(entry.getValue());
-                		break;
-                }
-            }//end for
-        	marker.position(new LatLng(lat, lng)).title(name);
-            // adding marker
-            mMap.addMarker(marker);
-            markerList.add(marker);   	
+            //set up POIController with list of toilets received from POIUpdateService
+            setPOIController(new POIController(toiletList));
+            
+            //set up Google Map with current user position
+            setUpMapIfNeeded();
+            
+            //set/update map markers
+            updateMarkers(poiController);
         }
         
         
-        location = new Location("");//empty provider string
-        //double lat = bundle.getDouble("lat");
-        //double lng = bundle.getDouble("lng");
-
-        location.setLatitude(userLat);
-        location.setLongitude(userLng);
 		
 		//Location Button Listener
 		myLocationButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-            	moveToLocation(location);
+            	//If the location is not west of Africa, chances are, it is right.
+            	//So move camera to it.
+            	if( userLocation.getLatitude() != 0.0  &&  userLocation.getLongitude() != 0.0 ){
+            		moveToLocation(userLocation);
+            	}
             }
         });
 		
+		//needed?
 		mylistener = new MyLocationListener();
 	
-		if (location != null) {
-			mylistener.onLocationChanged(location);
+		if (userLocation != null) {
+			mylistener.onLocationChanged(userLocation);
 		} else {
 			// leads to the settings because there is no last known location
 			Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
@@ -172,13 +181,63 @@ public class ActivityMain extends ActivityMenuBase {
 		//locationManager.requestLocationUpdates(provider, 200, 1, mylistener);
     }
     
-
+    @Override
+    protected void onStart(){
+    	super.onStart();
+    }
+    
     @Override
     protected void onResume() {
         super.onResume();
         setUpMapIfNeeded();
     }
     
+    private void setUserLocation(double lat, double lng){
+    	userLat = lat;
+    	userLng = lng;
+    	//set user Location
+        userLocation = new Location("");//empty provider string
+        userLocation.setLatitude(lat);
+        userLocation.setLongitude(lng);
+    }
+    
+    private void setPOIController(POIController pc){
+    	poiController = pc;
+    }
+    
+    // Update / set markers on Google Map
+    private void updateMarkers(POIController poiController){
+    	List<POI> closestTen = new ArrayList<POI>(); //list with closest ten POI to user position
+    	List<POI> allPOI = new ArrayList<POI>();
+    	markerList = new ArrayList<MarkerOptions>(); //markers for those POI
+    	//check whether the broadcast was received
+    	if(poiController != null ){
+	        if(poiController.poiReceived() )
+	        {
+	        	//propagate the user position to all POI and set their distance to user in meters
+	        	poiController.setDistancePOIToUser(userLat, userLng);
+	        	//get closest ten POI
+	        	closestTen = poiController.getClosestTenPOI();
+	        	//get all POI
+	        	allPOI = poiController.getAllPOI();
+	        	
+	        	//add markers to the map  for the ten closest POI
+	        	for(int i = 0; i < closestTen.size(); i++){
+	        		MarkerOptions marker = new MarkerOptions();
+	        		POI poi = closestTen.get(i);
+	        		marker.position(new LatLng(poi.getLat(), poi.getLng())).title(poi.getName());
+	                // adding marker
+	                mMap.addMarker(marker);
+	                markerList.add(marker); 
+	        	}
+	        }
+	        else
+	        {
+	        	//TODO: Toast
+	        	Log.d("ActivityMain.onStart()", "POIController has not received Broadcast");
+	        }
+    	}
+    }
 
     /**
      * Sets up the map if it is possible to do so (i.e., the Google Play services APK is correctly
@@ -219,7 +278,7 @@ public class ActivityMain extends ActivityMenuBase {
     	// need to turn this off so we can use our own icon
         //mMap.setMyLocationEnabled(true); 
     	personInNeedOfToilette = mMap.addMarker(new MarkerOptions()
-	    	.position(HAMBURG)
+	    	.position(new LatLng(userLat, userLng))
 	    	.icon(BitmapDescriptorFactory.fromResource(R.drawable.peeer)));
     }
     

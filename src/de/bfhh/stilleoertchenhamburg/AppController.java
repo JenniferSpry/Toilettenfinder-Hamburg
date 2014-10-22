@@ -65,13 +65,13 @@ public class AppController extends Application {
     	return properties.getProperty("BasePath") + properties.getProperty("URLBezirke");
     }
     
-    public String getStoresURL(String lat, String lung, String radius){
+    public String getStoresURL(String lat, String lng, String radius){
     	return properties.getProperty("BasePath") + 
     			properties.getProperty("URLStores")
-    			+ "?kategorie=127"
+    			+ "?kategorie=127" //category ID for toilets
     			+ "&lat=" + lat
-                + "&long=" + lung
-                + "&status=" + 1
+                + "&long=" + lng
+                + "&status=" + 1 //only get validated POI
                 + "&radius=" + radius;
     }
 }

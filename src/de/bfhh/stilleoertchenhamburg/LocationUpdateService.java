@@ -12,12 +12,17 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.VolleyLog;
 import com.android.volley.toolbox.JsonArrayRequest;
+import com.google.android.gms.maps.model.LatLng;
+
+import de.bfhh.stilleoertchenhamburg.activites.ActivityMain;
+import de.bfhh.stilleoertchenhamburg.activites.ActivitySplashScreen;
 
 import android.app.Activity;
 import android.app.Service;
 import android.content.Intent;
 import android.location.Location;
 import android.location.LocationManager;
+import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
 
@@ -37,16 +42,22 @@ public class LocationUpdateService extends Service {
 	public static final String RESULT = "result";
 	
 	private LocationManager mlocationManager;
+	
+	final private LatLng HAMBURG = new LatLng(53.558, 9.927);
+	private Location userLocation;
 		
 	JSONArray toilets = null;// products JSONArray
 	
-	private ArrayList<HashMap<String, String>> poiList; 
+	private ArrayList<HashMap<String, String>> poiList;
+	private long SPLASH_TIME_OUT = 1000; 
+
 	
 	public LocationUpdateService() {
 		super();
 	}
 	
 	//*****What if bestLocation is null??? ****
+	
 	private Location getLastKnownLocation() {   
 		mlocationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
 	    List<String> providers = mlocationManager.getProviders(true);
@@ -67,33 +78,106 @@ public class LocationUpdateService extends Service {
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId){
 		// In this method the 
-		String action = intent.getStringExtra(POIACTION); //@TODO: add action static string in activities
-		if(action.equals("userLocation")){//a user's location update was requested from an activity
-			Location currentLoc = getLastKnownLocation();
-			if(currentLoc != null){
-				result = Activity.RESULT_OK;
-				publishUserLocation(currentLoc, result); //send an intent broadcast with the current location
-				
-			}else{
-				result = Activity.RESULT_CANCELED;
-				Log.d("current user location is null", action);
-				publishUserLocation(null, result); //send an intent broadcast with invalid location
-			}
-		}else if(action.equals("toiletLocation")){
+		
+				String action = intent.getStringExtra(USERACTION); //@TODO: add action static string in activities
+				if(action.equals("userLocation")){//a user's location update was requested from an activity
+					userLocation = getLastKnownLocation();
+					if(userLocation != null){
+						result = Activity.RESULT_OK;
+						//sends Broadcast with location
+						/*new Thread(new Runnable(){
+							@Override
+						    public void run() { */
+								publishUserLocation(); //send an intent broadcast with the current location
+						/*	}
+						}).start(); */
+					}else{
+						
+						publishUserLocation(); //send an intent broadcast with invalid location
+					}
+				}//other action for location update maybe?
+			
+		
+		/*
+		 else if(action.equals("toiletLocation")){ //KOMMT RAUS -> POIUpdateService
 			//send 
 			makeJsonArrayRequest();
+			//start MainActivity from IntentService POIUpdateService after JSONArrayRequest
 		}
+		*/
 		return super.onStartCommand(intent, flags, startId);
 	}
+
+
+	private void publishUserLocation(){
+			final Location location = getCurrentUserLocation();
+	        //Start Axtivity main
+			if(location != null){
+			/*
+				Intent i = new Intent(getApplicationContext(), ActivityMain.class);
+		  	  	i.putExtra(LAT, location.getLatitude());
+		  	  	i.putExtra(LNG, location.getLongitude());
+		  	  	//putExtra contentprovider at some point
+		  	  	i.putExtra(RESULT, result);
+		  	  	i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+		  	  	getApplicationContext().startActivity(i); //start Main Activity
+		  	 */
+		  	  	
+		  	  	//start POIUpdateService in new Thread
+				/*
+				new Thread(new Runnable(){
+					@Override
+				    public void run() {
+				   */
+				    	int result;
+						double lat, lng;
+						
+						
+				// 2)
+						//Send Boradcast back to ActivitySplashScreen
+						Intent intent = new Intent(USERACTION);
+						
+						lat = location.getLatitude();
+						lng = location.getLongitude();
+						result = Activity.RESULT_OK;
+						
+						intent.putExtra(LAT, lat);
+						intent.putExtra(LNG, lng);
+						intent.putExtra(RESULT, result);
+						sendBroadcast(intent);
+						
+				/*
+				    	Intent poiIntent = new Intent(getApplicationContext(), POIUpdateService.class);
+				     	poiIntent.putExtra(LAT, lat);
+				     	poiIntent.putExtra(LNG, lng);
+			  	  	//putExtra contentprovider at some point
+				     	poiIntent.putExtra(RESULT, result);
+				        // add action info 
+				        poiIntent.putExtra(POIUpdateService.POIACTION, "POIUpdate");//POIACTIOn = null in debugger
+				        startService(poiIntent);
+				        //WHY IS SERVICE NOT STARTED???
+				         
+				         */
+				 /*   }
+				}).start(); */
+	  	  	}
+
+  	  	
+		
+		//wait till timeout is done, then start main activity with location info
+	    /*new Handler().postDelayed(new Runnable() {
+	    	
+      	  	@Override
+      	  	public void run() {
+          	  	// This method will be executed once the timer is over
+      	  		
+      	  	}
+        }, SPLASH_TIME_OUT);*/
+	    
+	}
 	
-	private void publishUserLocation(Location location, int result){
-		Intent intent = new Intent(USERACTION);
-		if(location != null){
-		    intent.putExtra(LAT, location.getLatitude());
-		    intent.putExtra(LNG, location.getLongitude());
-		}
-	    intent.putExtra(RESULT, result);
-	    sendBroadcast(intent);
+	private Location getCurrentUserLocation(){
+		return userLocation;
 	}
 
 	@Override
@@ -107,9 +191,10 @@ public class LocationUpdateService extends Service {
 	    super.onDestroy();
 	    Log.e(TAG, "in onDestroy in LocationService class");
 	    //mlocManager.removeUpdates(mlocListener);
-
+	    //stopSelf();
 	}
 	
+/*
 	private void makeJsonArrayRequest() {
 		Location userLocation = getLastKnownLocation();
 		String url = AppController.getInstance().getStoresURL(
@@ -192,6 +277,6 @@ public class LocationUpdateService extends Service {
 		Log.d("REQUEST", req.toString());
 		AppController.getInstance().addToRequestQueue(req);
 	}
-	
+*/
 	
 }
