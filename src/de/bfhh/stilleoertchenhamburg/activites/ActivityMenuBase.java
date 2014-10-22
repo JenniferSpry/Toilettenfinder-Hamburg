@@ -15,10 +15,6 @@ import android.view.MenuItem;
 
 public class ActivityMenuBase extends ActionBarActivity {
 	
-	private POIController poiController; //class that handles Broadcast, methods return List<POI>
-	private Location userLocation;
-	private double userLat, userLng;
-	
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.
@@ -30,20 +26,25 @@ public class ActivityMenuBase extends ActionBarActivity {
 	public boolean onOptionsItemSelected(MenuItem item) {
 	    // Handle presses on the action bar items
 	    switch (item.getItemId()) {
-		    case android.R.id.home: //if user clicks on the icon (home button), this activity is closed
+	    	//if user clicks on the app icon (home button), current activity is closed
+		    case android.R.id.home: 
 	            this.finish();
 	            return true;
 		    case R.id.menu_start:
-		    	Intent i = new Intent(this, ActivityMain.class);
+		    	Intent map = new Intent(this, ActivityMain.class);
 		    	//set flag for intent to get activity from stack if it's already running
-		    	i.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-	    		startActivity(i);
+		    	map.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+	    		startActivity(map);
 	            return true;
 	        case R.id.menu_impressum:
-	    		startActivity(new Intent(getApplicationContext(), ActivityImpressum.class));
+	        	Intent impressum = new Intent(getApplicationContext(), ActivityImpressum.class);
+	        	impressum.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+	    		startActivity(impressum);
 	            return true;
 	        case R.id.menu_test:
-	    		startActivity(new Intent(this, ToiletTestActivity.class));
+	        	Intent testToiletList = new Intent(this, ToiletTestActivity.class);
+	        	testToiletList.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+	    		startActivity(testToiletList);
 	            return true;
 	        default:
 	            return super.onOptionsItemSelected(item);
