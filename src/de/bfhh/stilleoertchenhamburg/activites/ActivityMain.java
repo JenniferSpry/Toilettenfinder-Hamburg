@@ -4,11 +4,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.GoogleMap.OnCameraChangeListener;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
@@ -23,16 +27,20 @@ import de.bfhh.stilleoertchenhamburg.models.POI;
 
 import android.util.Log;
 import android.view.View;
+import android.view.ViewTreeObserver.OnGlobalLayoutListener;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.Fragment;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.location.Location;
 import android.location.LocationListener;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.Settings;
@@ -68,6 +76,8 @@ public class ActivityMain extends ActivityMenuBase {
 	private ArrayList<String> keyNames;
 	
 	private double userLat, userLng;
+	
+	private LatLngBounds.Builder builder;
 	
     //not really used right now, but will be needed later
     public static class POIReceiver extends BroadcastReceiver {
@@ -130,7 +140,7 @@ public class ActivityMain extends ActivityMenuBase {
         if(bundle != null){
         	if(bundle.getDouble("latitude") != 0.0 && bundle.getDouble("longitude") != 0.0){
         		//set user Position
-            	setUserLocation(bundle.getDouble("latitude"),bundle.getDouble("longitude"));
+            	setUserLocation(bundle.getDouble("latitude"), bundle.getDouble("longitude"));
         	}
         	
             //userLat = bundle.getDouble("latitude"); //make final string in parent class
@@ -152,7 +162,19 @@ public class ActivityMain extends ActivityMenuBase {
             updateMarkers(poiController);
         }
         
-        
+        mMap.setOnCameraChangeListener(new OnCameraChangeListener() {
+
+            @Override
+            public void onCameraChange(CameraPosition arg0) {
+                // Move camera.
+            	CameraUpdate cu = getBoundsOnMap();
+            	//mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(builder.build(), 10));
+            	mMap.moveCamera(cu);
+                // Remove listener to prevent position reset on camera move.
+            	mMap.setOnCameraChangeListener(null);
+            }
+
+        });
 		
 		//Location Button Listener
 		myLocationButton.setOnClickListener(new View.OnClickListener() {
@@ -179,6 +201,63 @@ public class ActivityMain extends ActivityMenuBase {
 		
 		//WHERE TO UPDATE LOCATIONS FROM?? -> inner class locationListener in LocationUpdateService a la  http://stackoverflow.com/questions/14478179/background-service-with-location-listener-in-android
 		//locationManager.requestLocationUpdates(provider, 200, 1, mylistener);
+    }
+    
+    private void moveToLocation(Location loc){
+    	LatLng pos = new LatLng(loc.getLatitude(), loc.getLongitude());
+    	//somehow set zoom dynamically, so that all toilets are seen
+    	CameraUpdate cu = getBoundsOnMap();
+        //this block has to be here because the map layout might not
+    	//have initialized yet, therefore we can't get bounding box with padding when our map
+    	//has width = 0. In that case we wait until the Fragment holding our
+    	//map has been initialized, and when it's time call animateCamera() again.
+    	
+    	
+    	/*
+    	 * More info here: http://stackoverflow.com/questions/14828217/android-map-v2-zoom-to-show-all-the-markers
+    	 * and here: http://stackoverflow.com/questions/13692579/movecamera-with-cameraupdatefactory-newlatlngbounds-crashes
+    	 */
+    	try{
+    		mMap.animateCamera(cu);
+    	} catch (IllegalStateException e) {
+    	    // fragment layout with map not yet initialized
+    	    final View mapView = getSupportFragmentManager()
+    	       .findFragmentById(R.id.map).getView();
+    	    if (mapView.getViewTreeObserver().isAlive()) {
+    	        mapView.getViewTreeObserver().addOnGlobalLayoutListener(
+    	        new OnGlobalLayoutListener() {
+    	            @SuppressWarnings("deprecation")
+    	            @SuppressLint("NewApi")
+    	            // We check which build version we are using.
+    	            @Override
+    	            public void onGlobalLayout() {
+    	                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) { //below API Level 16 ?
+    	                    mapView.getViewTreeObserver()
+    	                        .removeGlobalOnLayoutListener(this);
+    	                } else {
+    	                    mapView.getViewTreeObserver()
+    	                        .removeOnGlobalLayoutListener(this);
+    	                }
+    	                CameraUpdate c = getBoundsOnMap();
+    	                mMap.animateCamera(c);
+    	            }
+    	        });
+    	    }
+    	}
+    	
+        personInNeedOfToilette.setPosition(pos);
+    }
+    
+    private CameraUpdate getBoundsOnMap(){
+    	builder = new LatLngBounds.Builder();
+        for (MarkerOptions m : markerList) {
+            builder.include(m.getPosition());
+        }
+        LatLngBounds bounds = builder.build();
+
+        return CameraUpdateFactory.newLatLngBounds(bounds,
+                30);
+    	
     }
     
     @Override
@@ -282,12 +361,7 @@ public class ActivityMain extends ActivityMenuBase {
 	    	.icon(BitmapDescriptorFactory.fromResource(R.drawable.peeer)));
     }
     
-    private void moveToLocation(Location loc){
-    	LatLng pos = new LatLng(loc.getLatitude(), loc.getLongitude());
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(pos, 15));
-        personInNeedOfToilette.setPosition(pos);
-    }
-    
+
     private class MyLocationListener implements LocationListener {
     	
 		  @Override
