@@ -160,6 +160,18 @@ public class LocationUpdateService extends Service {
 				         */
 				 /*   }
 				}).start(); */
+	  	  	}else{
+	  	  		//no location received
+		  	  	Intent intent = new Intent(USERACTION);
+				
+				double lat = HAMBURG.latitude;
+				double lng = HAMBURG.longitude;
+				result = Activity.RESULT_CANCELED;
+				
+				intent.putExtra(LAT, lat);
+				intent.putExtra(LNG, lng);
+				intent.putExtra(RESULT, result);
+				sendBroadcast(intent);
 	  	  	}
 
   	  	
@@ -191,7 +203,7 @@ public class LocationUpdateService extends Service {
 	    super.onDestroy();
 	    Log.e(TAG, "in onDestroy in LocationService class");
 	    //mlocManager.removeUpdates(mlocListener);
-	    //stopSelf();
+	    stopSelf();
 	}
 	
 /*

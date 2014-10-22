@@ -83,7 +83,7 @@ public class ActivitySplashScreen extends ListActivity {
 			              }, SPLASH_TIME_OUT);
 			              
 		            } else {
-		            	  Toast.makeText(ActivitySplashScreen.this, "Location not received. Error",
+		            	  Toast.makeText(ActivitySplashScreen.this, "Last user location not received. Standard Location is set",
 		            		  Toast.LENGTH_LONG).show();
 		            }
 	          }
