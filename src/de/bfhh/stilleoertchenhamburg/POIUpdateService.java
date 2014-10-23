@@ -74,6 +74,11 @@ public class POIUpdateService extends IntentService{
 	//start Main Activity with extras: userLat, userLng, result and poiList
 	private void startMainActivity(int result, double userLat, double userLng){      
 		
+		//send broadcast to ActivitySplash, so it can terminate itself
+  	  	Intent i2 = new Intent(POIACTION_OK);
+  	  	sendBroadcast(i2);
+		
+  	  	//start main activity
         Intent i = new Intent(getApplicationContext(), ActivityMain.class);
         i.putExtra("poiList",(Serializable) poiList);
         i.putExtra(LAT, userLat);
@@ -84,9 +89,7 @@ public class POIUpdateService extends IntentService{
   	  	
   	  	getApplicationContext().startActivity(i); //start Main Activity
   	  	
-  	  	//send broadcast to ActivitySplash, so it can terminate itself
-  	  	Intent i2 = new Intent(POIACTION_OK);
-  	  	sendBroadcast(i2);
+  	  	
 	}
 	
 	private void makeJsonArrayRequest(final int result, final double userLat, final double userLng) {

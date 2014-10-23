@@ -45,6 +45,8 @@ public class ActivitySplashScreen extends ListActivity {
     // Splash screen timeout
     private static int SPLASH_TIME_OUT = 2000;
     
+    private boolean registered;//is the receiver registered?
+    
     // BroadcastReceiver for Broadcasts from LocationUpdateService
     private BroadcastReceiver receiver = new BroadcastReceiver() {
     	private double lat = 0.0;
@@ -52,13 +54,14 @@ public class ActivitySplashScreen extends ListActivity {
     	
         @Override
         public void onReceive(Context context, Intent intent) {
-        	//Stop the Service
-        	stopLocationUpdateService();
+        	
         	
         	//Get Extras
         	Bundle bundle = intent.getExtras();
         	String action = intent.getAction();
         	if(action.equals(TAG_USERLOCATION)){ //action = "userLocation"
+        		//Stop the Service
+            	stopLocationUpdateService();
         		if (bundle != null) {
 		        	//Get resultCode, latitude and longitude sent from LocationUpdateService
 		            lat = bundle.getDouble(LocationUpdateService.LAT);
@@ -93,14 +96,25 @@ public class ActivitySplashScreen extends ListActivity {
            } else if(action.equals(TAG_POIUPDATE_OK)){//POIUpdateService is finished
         	   //terminate this activity
         	   finish();
+        	   //return;
            }
         }
     };
+
+	private IntentFilter filter;
+
+	
  
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
+        
+        filter = new IntentFilter(LocationUpdateService.USERACTION);
+    	filter.addAction(POIUpdateService.POIACTION_OK);
+    	registerReceiver(receiver, filter);
+        //registerReceiver(receiver, new IntentFilter(LocationUpdateService.USERACTION));
+        registered = true; //shows that a receiver is registered
         
         //TODO: Somehow this doesn't seem to create a thread at all...
         //SOLUTION: create Asynctask in Service to handle Location stuff
@@ -114,19 +128,44 @@ public class ActivitySplashScreen extends ListActivity {
 	  	
     }
     
+    /*
+    @Override
+    protected void onStart(){
+    	super.onStart();
+    	if(!registered){
+    		registerReceiver(receiver, filter);
+    		registered = true;
+    	}
+    }*/
+    
+    /*
     @Override
     protected void onResume(){
     	super.onResume();
-    	IntentFilter filter = new IntentFilter(LocationUpdateService.USERACTION);
-    	filter.addAction(POIUpdateService.POIACTION_OK);
-    	this.registerReceiver(receiver, filter);
-        registerReceiver(receiver, new IntentFilter(LocationUpdateService.USERACTION));
-    }
+    	if(!registered){
+    		registerReceiver(receiver, filter);
+    		registered = true;
+    	}
+    }*/
     
     @Override
     protected void onPause() {
       super.onPause();
-      unregisterReceiver(receiver);
+      /*if(registered){
+    	  unregisterReceiver(receiver);
+    	  registered = false;
+      }*/
+     
+      //unregisterReceiver(receiver);
+    }
+    
+    @Override
+	protected void onDestroy(){
+    	super.onDestroy();
+    	 if(registered){
+       	  	unregisterReceiver(receiver);
+       	  	registered = false;
+         }
     }
     
     //Start LocationUpdateService with Intent to get user's current position

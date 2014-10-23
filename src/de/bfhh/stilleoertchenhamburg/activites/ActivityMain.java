@@ -78,6 +78,8 @@ public class ActivityMain extends ActivityMenuBase {
 	private double userLat, userLng;
 	
 	private LatLngBounds.Builder builder;
+	private POIReceiver poiReceiver;
+	private boolean poiReceiverRegistered;
 	
     //not really used right now, but will be needed later
     public static class POIReceiver extends BroadcastReceiver {
@@ -130,9 +132,10 @@ public class ActivityMain extends ActivityMenuBase {
         
         //TODO: is it good to register receiver in oncreate() ??
         //Register Receiver for POI Updates
-        POIReceiver poiReceiver = new POIReceiver(new Handler());
+        poiReceiver = new POIReceiver(new Handler());
         poiReceiver.setMainActivityHandler(this);
         registerReceiver(poiReceiver, new IntentFilter("toiletLocation"));
+        poiReceiverRegistered = true;
      
         //Get the Intent that was sent from POIUpdateService
         Intent i = getIntent();
@@ -267,12 +270,40 @@ public class ActivityMain extends ActivityMenuBase {
     @Override
     protected void onStart(){
     	super.onStart();
+    	if(!poiReceiverRegistered){
+    		registerReceiver(poiReceiver, new IntentFilter("toiletLocation"));
+    		poiReceiverRegistered = true;
+    	}
     }
     
     @Override
     protected void onResume() {
         super.onResume();
         setUpMapIfNeeded();
+        if(!poiReceiverRegistered){
+    		registerReceiver(poiReceiver, new IntentFilter("toiletLocation"));
+    		poiReceiverRegistered = true;
+    	}
+        
+    }
+    
+    @Override
+	protected void onStop(){
+    	super.onStop();
+    	if(poiReceiverRegistered){
+    		unregisterReceiver(poiReceiver);
+    		poiReceiverRegistered = false;
+    	}
+    	
+    }
+    
+    @Override
+	protected void onDestroy(){
+    	super.onDestroy();
+    	if(poiReceiverRegistered){
+    		unregisterReceiver(poiReceiver);
+    		poiReceiverRegistered = false;
+    	}
     }
     
     private void setUserLocation(double lat, double lng){
