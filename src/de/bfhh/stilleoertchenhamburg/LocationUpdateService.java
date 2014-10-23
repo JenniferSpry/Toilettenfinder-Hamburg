@@ -2,6 +2,7 @@ package de.bfhh.stilleoertchenhamburg;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Currency;
 import java.util.HashMap;
 import java.util.List;
 import org.json.JSONArray;
@@ -12,6 +13,7 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.VolleyLog;
 import com.android.volley.toolbox.JsonArrayRequest;
+import com.google.android.gms.internal.cu;
 import com.google.android.gms.maps.model.LatLng;
 
 import de.bfhh.stilleoertchenhamburg.activites.ActivityMain;
@@ -22,9 +24,11 @@ import android.app.Service;
 import android.content.Intent;
 import android.location.Location;
 import android.location.LocationManager;
+import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
+import android.widget.Toast;
 
 public class LocationUpdateService extends Service {
 	
@@ -78,114 +82,33 @@ public class LocationUpdateService extends Service {
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId){
 		// In this method the 
-		
-				String action = intent.getStringExtra(USERACTION); //@TODO: add action static string in activities
-				if(action.equals("userLocation")){//a user's location update was requested from an activity
-					userLocation = getLastKnownLocation();
-					if(userLocation != null){
-						result = Activity.RESULT_OK;
-						//sends Broadcast with location
-						/*new Thread(new Runnable(){
-							@Override
-						    public void run() { */
-								publishUserLocation(); //send an intent broadcast with the current location
-						/*	}
-						}).start(); */
-					}else{
-						
-						publishUserLocation(); //send an intent broadcast with invalid location
-					}
-				}//other action for location update maybe?
-			
-		
-		/*
-		 else if(action.equals("toiletLocation")){ //KOMMT RAUS -> POIUpdateService
-			//send 
-			makeJsonArrayRequest();
-			//start MainActivity from IntentService POIUpdateService after JSONArrayRequest
-		}
-		*/
+		String action = intent.getStringExtra(USERACTION); //@TODO: add action static string in activities
+		if(action.equals("userLocation")){//a user's location update was requested from an activity
+					
+			//call getLastLocation in an AsyncTask and
+			//publish results once location is received
+			new LocationUpdateTask().execute();
+									
+		}//other action for location update maybe?			
 		return super.onStartCommand(intent, flags, startId);
 	}
 
 
-	private void publishUserLocation(){
-			final Location location = getCurrentUserLocation();
-	        //Start Axtivity main
-			if(location != null){
-			/*
-				Intent i = new Intent(getApplicationContext(), ActivityMain.class);
-		  	  	i.putExtra(LAT, location.getLatitude());
-		  	  	i.putExtra(LNG, location.getLongitude());
-		  	  	//putExtra contentprovider at some point
-		  	  	i.putExtra(RESULT, result);
-		  	  	i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-		  	  	getApplicationContext().startActivity(i); //start Main Activity
-		  	 */
-		  	  	
-		  	  	//start POIUpdateService in new Thread
-				/*
-				new Thread(new Runnable(){
-					@Override
-				    public void run() {
-				   */
-				    	int result;
-						double lat, lng;
-						
-						
-				// 2)
-						//Send Boradcast back to ActivitySplashScreen
-						Intent intent = new Intent(USERACTION);
-						
-						lat = location.getLatitude();
-						lng = location.getLongitude();
-						result = Activity.RESULT_OK;
-						
-						intent.putExtra(LAT, lat);
-						intent.putExtra(LNG, lng);
-						intent.putExtra(RESULT, result);
-						sendBroadcast(intent);
-						
-				/*
-				    	Intent poiIntent = new Intent(getApplicationContext(), POIUpdateService.class);
-				     	poiIntent.putExtra(LAT, lat);
-				     	poiIntent.putExtra(LNG, lng);
-			  	  	//putExtra contentprovider at some point
-				     	poiIntent.putExtra(RESULT, result);
-				        // add action info 
-				        poiIntent.putExtra(POIUpdateService.POIACTION, "POIUpdate");//POIACTIOn = null in debugger
-				        startService(poiIntent);
-				        //WHY IS SERVICE NOT STARTED???
-				         
-				         */
-				 /*   }
-				}).start(); */
-	  	  	}else{
-	  	  		//no location received
-		  	  	Intent intent = new Intent(USERACTION);
-				
-				double lat = HAMBURG.latitude;
-				double lng = HAMBURG.longitude;
-				result = Activity.RESULT_CANCELED;
-				
-				intent.putExtra(LAT, lat);
-				intent.putExtra(LNG, lng);
-				intent.putExtra(RESULT, result);
-				sendBroadcast(intent);
-	  	  	}
-
-  	  	
-		
-		//wait till timeout is done, then start main activity with location info
-	    /*new Handler().postDelayed(new Runnable() {
-	    	
-      	  	@Override
-      	  	public void run() {
-          	  	// This method will be executed once the timer is over
-      	  		
-      	  	}
-        }, SPLASH_TIME_OUT);*/
-	    
+	private void publishUserLocation(int result, Location userLocation){
+			//TODO: optimize code
+		if(userLocation != null){//you can never check enough!
+			//Send Broadcast back to ActivitySplashScreen
+			Intent intent = new Intent(USERACTION);
+			//location and result based on whether user location received or not
+			intent.putExtra(LAT, userLocation.getLatitude());
+			intent.putExtra(LNG, userLocation.getLongitude());				
+			intent.putExtra(RESULT, result);
+			sendBroadcast(intent);
+	  	  }//what else?? :)
+	}
+	
+	private void setCurrentUserLocation(Location loc){
+		userLocation = loc;
 	}
 	
 	private Location getCurrentUserLocation(){
@@ -206,89 +129,56 @@ public class LocationUpdateService extends Service {
 	    stopSelf();
 	}
 	
-/*
-	private void makeJsonArrayRequest() {
-		Location userLocation = getLastKnownLocation();
-		String url = AppController.getInstance().getStoresURL(
-				String.valueOf(userLocation.getLatitude()), 
-				String.valueOf(userLocation.getLongitude()), "70");
-		
-		JsonArrayRequest req = new JsonArrayRequest(url,
-			new Response.Listener<JSONArray>() {
-				@Override
-				public void onResponse(JSONArray json) {
-				
-				try {
-					// Parsing json array response
-					Log.d("JSON", json.toString());
-					
-					poiList = new ArrayList<HashMap<String, String>>();
-					
-					// loop through each json object
-					for (int i = 0; i < json.length(); i++) {
-						JSONObject c = json.getJSONObject(i);
+	/*
+	 * The three types used by an asynchronous task are the following:
 
-						// Storing each json item in variable
-						
-						String id = c.getString(ID);
-						String name = c.getString(NAME);
-						String address = c.getString(ADDRESS);
-						String description = c.getString(DESCR);
-						String latitude = String.valueOf(c.getDouble(LAT));
-						String longitude = String.valueOf(c.getDouble(LNG));
-						
-						// creating new HashMap
-						HashMap<String, String> map = new HashMap<String, String>();
+		Params: the type of the parameters sent to the task upon execution.
+		Progress: the type of the progress units published during the background computation.
+		Result: the type of the result of the background computation.
+	 */
+	private class LocationUpdateTask extends AsyncTask<Void, Void, Location> {
 
-						// adding each child node to HashMap key => value
-						map.put(ID, id);
-						map.put(NAME, name);
-						map.put(ADDRESS, address);
-						map.put(DESCR, description);
-						map.put(LAT, latitude);
-						map.put(LNG, longitude);
-						
-						// adding HashMap to ArrayList
-						poiList.add(map);
-					}
-					//add userLocation lat and lng to poiList
-					Location userLocation = getLastKnownLocation();
-					HashMap<String,String> latLngMap = new HashMap<String,String>();
-					latLngMap.put("userLatitude", String.valueOf(userLocation.getLatitude()));
-					latLngMap.put("userLongitude", String.valueOf(userLocation.getLongitude()));
-					
-					poiList.add(latLngMap);
-					
-					Intent i = new Intent("toiletLocation"); //make it a bit more generic
-		            //add ArrayList<HashMap<String, String>> poiList with store info as extra to intent
-		            i.putExtra("poiList",(Serializable) poiList);      
-		            i.putExtra(RESULT, -1);
-		            sendBroadcast(i);
-					
-				} catch (JSONException e) {
-					e.printStackTrace();
-				}
+        @Override
+        protected Location doInBackground(Void... params) {
+            Location currentLocation = getLastKnownLocation();
+            return currentLocation;
+        }
+
+        @Override
+        protected void onPostExecute(Location currentLocation) { //parameter is result passed from doInBackground()
+        	
+        	
+        	//if the location set through LocationUpdateTask is not null publish it
+			if(currentLocation != null){
+				//set current Location in class
+	        	setCurrentUserLocation(currentLocation);
+	        	
+				result = Activity.RESULT_OK;
+				publishUserLocation(result, currentLocation); //send an intent broadcast with the current location
+			} else { //if the location is null, set location to standard					
+				Location standardLocation = new Location("");
+				standardLocation.setLatitude(HAMBURG.latitude);
+				standardLocation.setLongitude(HAMBURG.longitude);
 				
+				//set current Location to standard location
+	        	setCurrentUserLocation(standardLocation);
+				
+				result = Activity.RESULT_CANCELED;
+				publishUserLocation(result, standardLocation); //send an intent broadcast with invalid location
 			}
-		}, new Response.ErrorListener() {
-			@Override
-			public void onErrorResponse(VolleyError error) {
-				VolleyLog.d("Error: " + error.getMessage());
-				}
-			}) {
-//			// lets use this later to make sure our "API" only responds to this app
-//			@Override
-//            public Map<String, String> getHeaders() throws AuthFailureError {
-//                HashMap<String, String> headers = new HashMap<String, String>();
-//                headers.put("Content-Type", "application/json");
-//                headers.put("apiKey", "xxxxxxxxxxxxxxx");
-//                return headers;
-//            }
-		};
-	
-		Log.d("REQUEST", req.toString());
-		AppController.getInstance().addToRequestQueue(req);
-	}
-*/
-	
+        	setCurrentUserLocation(currentLocation);
+        	//TODO: Toast that location was received
+        	Toast.makeText(getApplicationContext(),
+	                  "Location successfully received.  LAT: " + Double.valueOf(currentLocation.getLatitude()) + ", LNG: " + Double.valueOf(currentLocation.getLongitude()),
+	                  Toast.LENGTH_LONG).show();
+        	
+        }
+
+        @Override
+        protected void onPreExecute() {}
+
+        @Override
+        protected void onProgressUpdate(Void... values) {}
+    }
 }
+

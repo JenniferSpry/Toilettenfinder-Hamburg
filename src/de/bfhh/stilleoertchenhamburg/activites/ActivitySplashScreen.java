@@ -38,6 +38,7 @@ public class ActivitySplashScreen extends ListActivity {
 	private static final String TAG_RESULT = "result";
 	private static final String TAG_USERLOCATION = "userLocation";
 	private static final String TAG_POIUPDATE = "POIUpdate";
+	private static final String TAG_POIUPDATE_OK = "POIUpdate finished";
 	
 	final private LatLng HAMBURG = new LatLng(53.558, 9.927); //standard position in HH
 	
@@ -65,10 +66,6 @@ public class ActivitySplashScreen extends ListActivity {
 		            int resultCode = bundle.getInt(LocationUpdateService.RESULT);
 		
 		            if (resultCode == RESULT_OK) {
-			              Toast.makeText(ActivitySplashScreen.this,
-			                  "Location successfully received.  LAT: " + Double.valueOf(lat) + ", LNG: " + Double.valueOf(lng),
-			                  Toast.LENGTH_LONG).show();              
-			              
 			              //Start POIUpdateService with user location 
 			              //received from LocationUpdateService
 			              startPOIUpdateService(resultCode, lat, lng);
@@ -78,13 +75,13 @@ public class ActivitySplashScreen extends ListActivity {
 			              
 			              // Wait to show the logo, otherwise SplashScreen will not be seen.
 					      // Then close this activity.
-			              new Handler().postDelayed(new Runnable() {
+			              /*new Handler().postDelayed(new Runnable() {
 			            	  @Override
 			            	  public void run() {
 				            	  // close this activity
 				            	  finish();
 			            	  }
-			              }, SPLASH_TIME_OUT);
+			              }, SPLASH_TIME_OUT); */
 			              
 		            } else { //if RESULT_CANCELLED, then no location was received from locationManager in LocationUpdateService
 		            	  Toast.makeText(ActivitySplashScreen.this, "Last user location not received. Standard Location is set",
@@ -93,6 +90,9 @@ public class ActivitySplashScreen extends ListActivity {
 		            	  startPOIUpdateService(resultCode, lat, lng);
 		            }
 	          }
+           } else if(action.equals(TAG_POIUPDATE_OK)){//POIUpdateService is finished
+        	   //terminate this activity
+        	   finish();
            }
         }
     };
@@ -103,6 +103,7 @@ public class ActivitySplashScreen extends ListActivity {
         setContentView(R.layout.activity_splash);
         
         //TODO: Somehow this doesn't seem to create a thread at all...
+        //SOLUTION: create Asynctask in Service to handle Location stuff
         //Start LocationUpdateService in its own thread 
         new Thread(new Runnable(){
 		    @Override
@@ -116,6 +117,9 @@ public class ActivitySplashScreen extends ListActivity {
     @Override
     protected void onResume(){
     	super.onResume();
+    	IntentFilter filter = new IntentFilter(LocationUpdateService.USERACTION);
+    	filter.addAction(POIUpdateService.POIACTION_OK);
+    	this.registerReceiver(receiver, filter);
         registerReceiver(receiver, new IntentFilter(LocationUpdateService.USERACTION));
     }
     

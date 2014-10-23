@@ -40,6 +40,7 @@ public class POIUpdateService extends IntentService{
 	public static final String RESULT = "result";
 	
 	public static final String POIACTION = "POIUpdate";
+	public static final String POIACTION_OK = "POIUpdate finished";
 	public static final String TOILET_LOCATION = "toiletLocation";
 	
 	private ArrayList<HashMap<String, String>> poiList; //List with POI data from JSON Request
@@ -82,6 +83,10 @@ public class POIUpdateService extends IntentService{
   	  	i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
   	  	
   	  	getApplicationContext().startActivity(i); //start Main Activity
+  	  	
+  	  	//send broadcast to ActivitySplash, so it can terminate itself
+  	  	Intent i2 = new Intent(POIACTION_OK);
+  	  	sendBroadcast(i2);
 	}
 	
 	private void makeJsonArrayRequest(final int result, final double userLat, final double userLng) {
