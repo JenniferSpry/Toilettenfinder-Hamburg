@@ -53,7 +53,7 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
-                <action android:name="POIUpdate_OK" />
+                <!--  <action android:name="POIUpdate_OK" />-->
             </intent-filter>
         </activity>
         
@@ -61,7 +61,7 @@
         <activity
             android:name="de.bfhh.stilleoertchenhamburg.activites.ToiletTestActivity"
             android:label="@string/menu_test"
-            android:parentActivityName="de.bfhh.stilleoertchenhamburg.activites.ActivityMain" >
+            android:parentActivityName="de.bfhh.stilleoertchenhamburg.activites.ActivityMap" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".MainActivity" />
@@ -71,7 +71,7 @@
         <activity
             android:name="de.bfhh.stilleoertchenhamburg.activites.ActivityImpressum"
             android:label="@string/menu_impressum"
-            android:parentActivityName="de.bfhh.stilleoertchenhamburg.activites.ActivityMain" >
+            android:parentActivityName="de.bfhh.stilleoertchenhamburg.activites.ActivityMap" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".MainActivity" />
@@ -79,7 +79,7 @@
 
         <!-- Main Activity -->
         <activity
-            android:name="de.bfhh.stilleoertchenhamburg.activites.ActivityMain"
+            android:name="de.bfhh.stilleoertchenhamburg.activites.ActivityMap"
             android:label="@string/app_name" >
         </activity>
         

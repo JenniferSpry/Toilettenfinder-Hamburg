@@ -1,6 +1,6 @@
 package de.bfhh.stilleoertchenhamburg;
 
-import de.bfhh.stilleoertchenhamburg.activites.ActivityMain;
+import de.bfhh.stilleoertchenhamburg.activites.ActivityMap;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -72,23 +72,23 @@ public class POIUpdateService extends IntentService{
     }	
 	
 	//start Main Activity with extras: userLat, userLng, result and poiList
-	private void startMainActivity(int result, double userLat, double userLng){      
+	private void broadCastToActivity(int result, double userLat, double userLng){      
 		
 		//send broadcast to ActivitySplash, so it can terminate itself
   	  	Intent i2 = new Intent(POIACTION_OK);
+  	  	i2.putExtra("poiList",(Serializable) poiList);
+  	  	i2.putExtra(LAT, userLat);
+  	  	i2.putExtra(LNG, userLng);
+  	  	//putExtra contentprovider at some point
+  	  	i2.putExtra(RESULT, result);
+  	  	i2.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+  	  	
   	  	sendBroadcast(i2);
 		
+  	  	/*
   	  	//start main activity
-        Intent i = new Intent(getApplicationContext(), ActivityMain.class);
-        i.putExtra("poiList",(Serializable) poiList);
-        i.putExtra(LAT, userLat);
-        i.putExtra(LNG, userLng);
-  	  	//putExtra contentprovider at some point
-  	  	i.putExtra(RESULT, result);
-  	  	i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-  	  	
-  	  	getApplicationContext().startActivity(i); //start Main Activity
-  	  	
+        
+  	  	*/
   	  	
 	}
 	
@@ -137,7 +137,7 @@ public class POIUpdateService extends IntentService{
 						poiList.add(map);
 					}					
 		            
-					startMainActivity(result, userLat, userLng);
+					broadCastToActivity(result, userLat, userLng);
 					
 				} catch (JSONException e) {
 					e.printStackTrace();

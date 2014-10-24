@@ -1,5 +1,9 @@
 package de.bfhh.stilleoertchenhamburg.activites;
 
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.HashMap;
+
 import com.google.android.gms.maps.model.LatLng;
 
 import de.bfhh.stilleoertchenhamburg.LocationUpdateService;
@@ -29,9 +33,6 @@ import android.widget.Toast;
  */
 
 public class ActivitySplashScreen extends ListActivity {
-	
-	// Creating JSON Parser object
-	JSONParser jParser = new JSONParser();
 
 	private static final String TAG_LAT = "latitude";
 	private static final String TAG_LONG = "longitude";
@@ -39,8 +40,6 @@ public class ActivitySplashScreen extends ListActivity {
 	private static final String TAG_USERLOCATION = "userLocation";
 	private static final String TAG_POIUPDATE = "POIUpdate";
 	private static final String TAG_POIUPDATE_OK = "POIUpdate_OK";
-	
-	final private LatLng HAMBURG = new LatLng(53.558, 9.927); //standard position in HH
 	
     // Splash screen timeout
     private static int SPLASH_TIME_OUT = 2000;
@@ -95,6 +94,15 @@ public class ActivitySplashScreen extends ListActivity {
 	          }
            } else if(action.equals(TAG_POIUPDATE_OK)){//POIUpdateService is finished
         	   //terminate this activity
+        	   if (bundle != null) {
+		        	//Get resultCode, latitude and longitude sent from LocationUpdateService
+		            lat = bundle.getDouble(LocationUpdateService.LAT);
+		            lng = bundle.getDouble(LocationUpdateService.LNG);
+		            int resultCode = bundle.getInt(LocationUpdateService.RESULT);
+		            ArrayList<HashMap<String,String>> poiList = (ArrayList<HashMap<String,String>>) intent.getSerializableExtra("poiList");
+		            
+		            startMainActivity(lat, lng, poiList, resultCode);
+        	   }
         	   finish();
         	   //return;
            }
@@ -103,7 +111,17 @@ public class ActivitySplashScreen extends ListActivity {
 
 	private IntentFilter filter;
 
-	
+	private void startMainActivity(double userLat, double userLng, ArrayList<HashMap<String,String>> poiList, int result){
+		Intent i = new Intent(getApplicationContext(), ActivityMap.class);
+        i.putExtra("poiList",(Serializable) poiList);
+        i.putExtra(TAG_LAT, userLat);
+        i.putExtra(TAG_LONG, userLng);
+  	  	//putExtra contentprovider at some point
+  	  	i.putExtra(TAG_RESULT, result);
+  	  	i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+  	  	
+  	  	getApplicationContext().startActivity(i); //start Main Activity
+	}
  
     @Override
     protected void onCreate(Bundle savedInstanceState) {

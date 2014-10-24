@@ -16,7 +16,7 @@ import com.android.volley.toolbox.JsonArrayRequest;
 import com.google.android.gms.internal.cu;
 import com.google.android.gms.maps.model.LatLng;
 
-import de.bfhh.stilleoertchenhamburg.activites.ActivityMain;
+import de.bfhh.stilleoertchenhamburg.activites.ActivityMap;
 import de.bfhh.stilleoertchenhamburg.activites.ActivitySplashScreen;
 
 import android.app.Activity;

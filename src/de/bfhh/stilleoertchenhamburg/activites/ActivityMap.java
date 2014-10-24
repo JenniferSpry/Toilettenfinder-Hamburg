@@ -55,7 +55,7 @@ import android.provider.Settings;
  * 
  */
 
-public class ActivityMain extends ActivityMenuBase {
+public class ActivityMap extends ActivityMenuBase {
 
     private GoogleMap mMap;
     private MyLocationListener mylistener;
@@ -85,13 +85,13 @@ public class ActivityMain extends ActivityMenuBase {
     public static class POIReceiver extends BroadcastReceiver {
 
         private final Handler handler; // Handler used to execute code on the UI thread
-		private ActivityMain main;
+		private ActivityMap main;
 
         public POIReceiver(Handler handler) {
             this.handler = handler;
         }
         
-        void setMainActivityHandler(ActivityMain main){
+        void setMainActivityHandler(ActivityMap main){
             this.main = main;
         }
 
@@ -409,20 +409,20 @@ public class ActivityMain extends ActivityMenuBase {
 	
 		  @Override
 		  public void onStatusChanged(String provider, int status, Bundle extras) {
-			  Toast.makeText(ActivityMain.this, provider + "'s status changed to "+status +"!",
+			  Toast.makeText(ActivityMap.this, provider + "'s status changed to "+status +"!",
 				        Toast.LENGTH_SHORT).show();
 		  }
 	
 		  @Override
 		  public void onProviderEnabled(String provider) {
-			  Toast.makeText(ActivityMain.this, "Provider " + provider + " enabled!",
+			  Toast.makeText(ActivityMap.this, "Provider " + provider + " enabled!",
 		        Toast.LENGTH_SHORT).show();
 	
 		  }
 	
 		  @Override
 		  public void onProviderDisabled(String provider) {
-			  Toast.makeText(ActivityMain.this, "Provider " + provider + " disabled!",
+			  Toast.makeText(ActivityMap.this, "Provider " + provider + " disabled!",
 		        Toast.LENGTH_SHORT).show();
 		  }
 	  }

@@ -31,7 +31,7 @@ public class ActivityMenuBase extends ActionBarActivity {
 	            this.finish();
 	            return true;
 		    case R.id.menu_start:
-		    	Intent map = new Intent(this, ActivityMain.class);
+		    	Intent map = new Intent(this, ActivityMap.class);
 		    	//set flag for intent to get activity from stack if it's already running
 		    	map.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
 	    		startActivity(map);
