@@ -40,7 +40,7 @@ public class POIUpdateService extends IntentService{
 	public static final String RESULT = "result";
 	
 	public static final String POIACTION = "POIUpdate";
-	public static final String POIACTION_OK = "POIUpdate finished";
+	public static final String POIACTION_OK = "POIUpdate_OK";
 	public static final String TOILET_LOCATION = "toiletLocation";
 	
 	private ArrayList<HashMap<String, String>> poiList; //List with POI data from JSON Request

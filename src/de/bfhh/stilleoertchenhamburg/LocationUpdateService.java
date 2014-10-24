@@ -166,10 +166,10 @@ public class LocationUpdateService extends Service {
 				result = Activity.RESULT_CANCELED;
 				publishUserLocation(result, standardLocation); //send an intent broadcast with invalid location
 			}
-        	setCurrentUserLocation(currentLocation);
+        	//setCurrentUserLocation(currentLocation);
         	//TODO: Toast that location was received
         	Toast.makeText(getApplicationContext(),
-	                  "Location successfully received.  LAT: " + Double.valueOf(currentLocation.getLatitude()) + ", LNG: " + Double.valueOf(currentLocation.getLongitude()),
+	                  "Location successfully received.  LAT: " + Double.valueOf(userLocation.getLatitude()) + ", LNG: " + Double.valueOf(userLocation.getLongitude()),
 	                  Toast.LENGTH_LONG).show();
         	
         }

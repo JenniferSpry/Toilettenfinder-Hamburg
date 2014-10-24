@@ -38,7 +38,7 @@ public class ActivitySplashScreen extends ListActivity {
 	private static final String TAG_RESULT = "result";
 	private static final String TAG_USERLOCATION = "userLocation";
 	private static final String TAG_POIUPDATE = "POIUpdate";
-	private static final String TAG_POIUPDATE_OK = "POIUpdate finished";
+	private static final String TAG_POIUPDATE_OK = "POIUpdate_OK";
 	
 	final private LatLng HAMBURG = new LatLng(53.558, 9.927); //standard position in HH
 	
@@ -119,12 +119,12 @@ public class ActivitySplashScreen extends ListActivity {
         //TODO: Somehow this doesn't seem to create a thread at all...
         //SOLUTION: create Asynctask in Service to handle Location stuff
         //Start LocationUpdateService in its own thread 
-        new Thread(new Runnable(){
+        /*new Thread(new Runnable(){
 		    @Override
-        	public void run() {   
+        	public void run() {   */
 		    	startLocationUpdateService();
-		    }
-		}).start(); 
+		    	/*  }
+		}).start(); */
 	  	
     }
     
