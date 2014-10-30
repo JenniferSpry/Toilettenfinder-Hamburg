@@ -64,7 +64,7 @@
             android:parentActivityName="de.bfhh.stilleoertchenhamburg.activites.ActivityMap" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value=".MainActivity" />
+                android:value=".ActivityMap" />
         </activity>
         
         <!--  Impressum Activity -->
@@ -74,7 +74,7 @@
             android:parentActivityName="de.bfhh.stilleoertchenhamburg.activites.ActivityMap" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value=".MainActivity" />
+                android:value=".ActivityMap" />
         </activity>
 
         <!-- Main Activity -->

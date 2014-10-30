@@ -1,5 +1,6 @@
 package de.bfhh.stilleoertchenhamburg.activites;
 
+import java.security.Provider;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -57,28 +58,30 @@ import android.provider.Settings;
 
 public class ActivityMap extends ActivityMenuBase {
 
-    private GoogleMap mMap;
+    private static GoogleMap mMap;
     private MyLocationListener mylistener;
-    private Location userLocation;
+    private static Location userLocation;
     private TextView latitude;
     private TextView longitude;
     
-    private POIController poiController; //class that handles Broadcast, methods return List<POI>
+    private static POIController poiController; //class that handles Broadcast, methods return List<POI>
     
     private ImageButton myLocationButton; //Button to get back to current user location on map
     
     final private LatLng HAMBURG = new LatLng(53.558, 9.927); //standard position in HH
     
-    private Marker personInNeedOfToilette; //person's marker
+    private static Marker personInNeedOfToilette; //person's marker
 	private ArrayList<HashMap<String, String>> toiletList; //POI received from POIUpdateService
-	private ArrayList<MarkerOptions> markerList;
+	private static ArrayList<MarkerOptions> markerList;
 	
 	private ArrayList<String> keyNames;
 	
-	private double userLat, userLng;
+	private static double userLat;
+	private static double userLng;
 	
 	private LatLngBounds.Builder builder;
 	private POIReceiver poiReceiver;
+	private LocationUpdateReceiver locUpdReceiver;
 	private boolean poiReceiverRegistered;
 	
     //not really used right now, but will be needed later
@@ -113,14 +116,55 @@ public class ActivityMap extends ActivityMenuBase {
                   handler.post(new Runnable() {
                       @Override
                       public void run() {
-                         main.updateMarkers(pc);
+                    	  //TODO see if userLat and userLng are set
+                         updateMarkers(pc, userLat, userLng);
                       }
                   });
           	  }
             }        
         }
     }
-	
+
+    
+    //not really used right now, but will be needed later
+    public static class LocationUpdateReceiver extends BroadcastReceiver {
+
+        private final Handler handler; // Handler used to execute code on the UI thread
+		private ActivityMap main;
+
+        public LocationUpdateReceiver(Handler handler) {
+            this.handler = handler;
+        }
+        
+        void setMainActivityHandler(ActivityMap main){
+            this.main = main;
+        }
+
+        @Override
+        public void onReceive(final Context context, Intent intent) {
+        	Bundle bundle = intent.getExtras();
+            String action = intent.getAction();
+            //Location has been updated (by provider in LocService)
+            if(action.equals("LocationUpdate")){
+            	if(bundle != null){
+            		double lat = bundle.getDouble("latitude");
+            		double lng = bundle.getDouble("longitude");
+            		Log.d("ActivityMap BroadcastReceiver", "Location received: " + lat  + ", " + lng);
+            		//update the user location
+            		setUserLocation(lat, lng );
+            		//the user location has changed, so that there might be different closest ten POI, retrieve them
+            		updateUserAndPOIOnMap(lat, lng);
+            		String provider = bundle.getString("provider");
+            		//Toast to show updates
+            		Toast.makeText(context, "Location Update from provider: " + provider + ", Location: LAT " + lat + ", LNG " + lng,
+            				Toast.LENGTH_LONG).show();
+            	}
+            }        
+        }
+    }
+    
+    
+    
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -136,6 +180,11 @@ public class ActivityMap extends ActivityMenuBase {
         poiReceiver.setMainActivityHandler(this);
         registerReceiver(poiReceiver, new IntentFilter("toiletLocation"));
         poiReceiverRegistered = true;
+        
+        //LocUpdateReceiver
+        locUpdReceiver = new LocationUpdateReceiver(new Handler());
+        locUpdReceiver.setMainActivityHandler(this);
+        registerReceiver(locUpdReceiver, new IntentFilter("LocationUpdate"));
      
         //Get the Intent that was sent from POIUpdateService
         Intent i = getIntent();
@@ -162,7 +211,7 @@ public class ActivityMap extends ActivityMenuBase {
             setUpMapIfNeeded();
             
             //set/update map markers
-            updateMarkers(poiController);
+            updateMarkers(poiController, userLat, userLng);
         }
         
         mMap.setOnCameraChangeListener(new OnCameraChangeListener() {
@@ -194,7 +243,7 @@ public class ActivityMap extends ActivityMenuBase {
 		mylistener = new MyLocationListener();
 	
 		if (userLocation != null) {
-			mylistener.onLocationChanged(userLocation);
+			//mylistener.onLocationChanged(userLocation);
 		} else {
 			// leads to the settings because there is no last known location
 			Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
@@ -206,7 +255,15 @@ public class ActivityMap extends ActivityMenuBase {
 		//locationManager.requestLocationUpdates(provider, 200, 1, mylistener);
     }
     
-    private void moveToLocation(Location loc){
+    //send lat,lng to poiController
+    public static void updateUserAndPOIOnMap(double lat, double lng) {
+		// update Markers first
+		updateMarkers(poiController, lat, lng);
+		//set user position TODO: method out of that
+    	personInNeedOfToilette.setPosition(new LatLng(lat, lng));
+	}
+
+	private void moveToLocation(Location loc){
     	LatLng pos = new LatLng(loc.getLatitude(), loc.getLongitude());
     	personInNeedOfToilette.setPosition(pos);
     	//somehow set zoom dynamically, so that all toilets are seen
@@ -283,8 +340,7 @@ public class ActivityMap extends ActivityMenuBase {
         if(!poiReceiverRegistered){
     		registerReceiver(poiReceiver, new IntentFilter("toiletLocation"));
     		poiReceiverRegistered = true;
-    	}
-        
+    	}  
     }
     
     @Override
@@ -294,7 +350,6 @@ public class ActivityMap extends ActivityMenuBase {
     		unregisterReceiver(poiReceiver);
     		poiReceiverRegistered = false;
     	}
-    	
     }
     
     @Override
@@ -306,7 +361,7 @@ public class ActivityMap extends ActivityMenuBase {
     	}
     }
     
-    private void setUserLocation(double lat, double lng){
+    private static void setUserLocation(double lat, double lng){
     	userLat = lat;
     	userLng = lng;
     	//set user Location
@@ -320,7 +375,7 @@ public class ActivityMap extends ActivityMenuBase {
     }
     
     // Update / set markers on Google Map
-    private void updateMarkers(POIController poiController){
+    private static void updateMarkers(POIController poiController, double currLat, double currLng){
     	List<POI> closestTen = new ArrayList<POI>(); //list with closest ten POI to user position
     	List<POI> allPOI = new ArrayList<POI>();
     	markerList = new ArrayList<MarkerOptions>(); //markers for those POI
@@ -329,7 +384,7 @@ public class ActivityMap extends ActivityMenuBase {
 	        if(poiController.poiReceived() )
 	        {
 	        	//propagate the user position to all POI and set their distance to user in meters
-	        	poiController.setDistancePOIToUser(userLat, userLng);
+	        	poiController.setDistancePOIToUser(currLat, currLng);
 	        	//get closest ten POI
 	        	closestTen = poiController.getClosestTenPOI();
 	        	//get all POI
@@ -410,14 +465,13 @@ public class ActivityMap extends ActivityMenuBase {
 		  @Override
 		  public void onStatusChanged(String provider, int status, Bundle extras) {
 			  Toast.makeText(ActivityMap.this, provider + "'s status changed to "+status +"!",
-				        Toast.LENGTH_SHORT).show();
+				Toast.LENGTH_SHORT).show();
 		  }
 	
 		  @Override
 		  public void onProviderEnabled(String provider) {
 			  Toast.makeText(ActivityMap.this, "Provider " + provider + " enabled!",
-		        Toast.LENGTH_SHORT).show();
-	
+		        Toast.LENGTH_SHORT).show();	
 		  }
 	
 		  @Override
