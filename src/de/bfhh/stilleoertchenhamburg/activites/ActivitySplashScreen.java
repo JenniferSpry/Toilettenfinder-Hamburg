@@ -13,11 +13,16 @@ import de.bfhh.stilleoertchenhamburg.helpers.JSONParser;
 
 import android.app.ListActivity;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.ServiceConnection;
+import android.location.Location;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.widget.Toast;
  
 /*
@@ -40,15 +45,16 @@ public class ActivitySplashScreen extends ListActivity {
 	private static final String TAG_USERLOCATION = "userLocation";
 	private static final String TAG_POIUPDATE = "POIUpdate";
 	private static final String TAG_POIUPDATE_OK = "POIUpdate_OK";
-	
-    // Splash screen timeout
-    private static int SPLASH_TIME_OUT = 2000;
     
     private boolean registered;//is the receiver registered?
+    
+    private boolean locServiceRegistered;
     
     private IntentFilter filter;
     
     final private LatLng HAMBURG = new LatLng(53.558, 9.927);
+    
+    private LocationUpdateService service;
     
     // BroadcastReceiver for Broadcasts from LocationUpdateService
     private BroadcastReceiver receiver = new BroadcastReceiver() {
@@ -90,15 +96,14 @@ public class ActivitySplashScreen extends ListActivity {
 		            int resultCode = bundle.getInt(LocationUpdateService.RESULT);
 		            ArrayList<HashMap<String,String>> poiList = (ArrayList<HashMap<String,String>>) intent.getSerializableExtra("poiList");
 		            if(lat != 0.0 && lng != 0.0 && resultCode != 0 && poiList != null){
+		            	//start activity which shows map
 		            	startMapActivity(lat, lng, poiList, resultCode);
-		            	finish();
+		            	finish();// terminate this activity
 		            }	            
         	   }        	   
            }
         }
     };
-
-	
 
 	private void startMapActivity(double userLat, double userLng, ArrayList<HashMap<String,String>> poiList, int result){
 		Intent i = new Intent(this, ActivityMap.class);
@@ -108,7 +113,6 @@ public class ActivitySplashScreen extends ListActivity {
   	  	//putExtra contentprovider at some point
   	  	i.putExtra(TAG_RESULT, result);
   	  	i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-  	  	
   	  	startActivity(i); //start Main Activity
 	}
     
@@ -140,6 +144,28 @@ public class ActivitySplashScreen extends ListActivity {
 	    stopService(i1);
       	
     }
+    
+    //handles what happens when this activity binds to LocationUpdateService
+    private ServiceConnection mConnection = new ServiceConnection() {
+
+        public void onServiceConnected(ComponentName className, 
+            IBinder binder) {
+          LocationUpdateService.ServiceBinder b = (LocationUpdateService.ServiceBinder) binder;
+          service = b.getLocService();
+          Toast.makeText(ActivitySplashScreen.this, "LocService Connected", Toast.LENGTH_SHORT)
+              .show();
+          Location loc = service.getCurrentUserLocation();
+          if(loc == null){
+        	  service.updateLocation();//calls AsyncTask and publishes results
+          }
+        }
+
+        public void onServiceDisconnected(ComponentName className) {
+        service = null;
+          Toast.makeText(ActivitySplashScreen.this, "LocService Disconnected", Toast.LENGTH_SHORT)
+          .show();
+        }
+    };
  
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -152,16 +178,15 @@ public class ActivitySplashScreen extends ListActivity {
         //registerReceiver(receiver, new IntentFilter(LocationUpdateService.USERACTION));
         registered = true; //shows that a receiver is registered
         
-        //TODO: Somehow this doesn't seem to create a thread at all...
-        //SOLUTION: create Asynctask in Service to handle Location stuff
-        //Start LocationUpdateService in its own thread 
-        /*new Thread(new Runnable(){
-		    @Override
-        	public void run() {   */
-		    	startLocationUpdateService();
-		    	/*  }
-		}).start(); */
-	  	
+        //SOLUTION for Threading: create Asynctask in Service to handle Location stuff
+        //startLocationUpdateService();  	
+        //bind to it rather than starting service
+        //bind LocationUpdateService
+        Intent intent= new Intent(this, LocationUpdateService.class);
+        bindService(intent, mConnection,
+            Context.BIND_AUTO_CREATE);
+        //set locServiceRegistered to true
+        locServiceRegistered = true;
     }
     
     /*
@@ -174,7 +199,7 @@ public class ActivitySplashScreen extends ListActivity {
     	}
     }*/
     
-    /*
+    
     @Override
     protected void onResume(){
     	super.onResume();
@@ -182,30 +207,40 @@ public class ActivitySplashScreen extends ListActivity {
     		registerReceiver(receiver, filter);
     		registered = true;
     	}
-    }*/
+    	if(!locServiceRegistered){
+    		 //bind to service rather than starting it
+            Intent intent= new Intent(this, LocationUpdateService.class);
+            //intent.putExtra(LocationUpdateService.USERACTION, TAG_USERLOCATION);
+            bindService(intent, mConnection,
+                Context.BIND_AUTO_CREATE);
+            locServiceRegistered = true;
+    	}
+    }
     
     @Override
     protected void onPause() {
-      super.onPause();
-      /*if(registered){
-    	  unregisterReceiver(receiver);
-    	  registered = false;
-      }*/
-     
-      //unregisterReceiver(receiver);
+    	super.onPause();
+    	if(registered){
+    	  	unregisterReceiver(receiver);
+    	  	registered = false;
+      	}
+    	if(locServiceRegistered){
+    		unbindService(mConnection);
+    		locServiceRegistered = false;
+    	}
     }
     
     @Override
 	protected void onDestroy(){
     	super.onDestroy();
-    	 if(registered){
-       	  	unregisterReceiver(receiver);
-       	  	registered = false;
-         }
+    	if(registered){
+    	  	unregisterReceiver(receiver);
+    	  	registered = false;
+      	}
+    	if(locServiceRegistered){
+    		unbindService(mConnection);
+    		locServiceRegistered = false;
+    	}
     }
-    
-	
-
- 
 }
 

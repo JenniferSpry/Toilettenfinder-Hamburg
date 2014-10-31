@@ -36,14 +36,18 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Fragment;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.location.Location;
 import android.location.LocationListener;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.provider.Settings;
 
 
@@ -59,7 +63,6 @@ import android.provider.Settings;
 public class ActivityMap extends ActivityMenuBase {
 
     private static GoogleMap mMap;
-    private MyLocationListener mylistener;
     private static Location userLocation;
     private TextView latitude;
     private TextView longitude;
@@ -83,6 +86,9 @@ public class ActivityMap extends ActivityMenuBase {
 	private POIReceiver poiReceiver;
 	private LocationUpdateReceiver locUpdReceiver;
 	private boolean poiReceiverRegistered;
+	private boolean locUpdReceiverRegistered;
+	
+	private LocationUpdateService service;
 	
     //not really used right now, but will be needed later
     public static class POIReceiver extends BroadcastReceiver {
@@ -185,8 +191,9 @@ public class ActivityMap extends ActivityMenuBase {
         locUpdReceiver = new LocationUpdateReceiver(new Handler());
         locUpdReceiver.setMainActivityHandler(this);
         registerReceiver(locUpdReceiver, new IntentFilter("LocationUpdate"));
-     
-        //Get the Intent that was sent from POIUpdateService
+        locUpdReceiverRegistered = true;
+        
+        //Get the Intent that was sent from ActivitySplashScreen
         Intent i = getIntent();
         Bundle bundle = i.getExtras();
         if(bundle != null){
@@ -195,8 +202,6 @@ public class ActivityMap extends ActivityMenuBase {
             	setUserLocation(bundle.getDouble("latitude"), bundle.getDouble("longitude"));
         	}
         	
-            //userLat = bundle.getDouble("latitude"); //make final string in parent class
-            //userLng = bundle.getDouble("longitude"); 
             int result = bundle.getInt("result");
             if(result == Activity.RESULT_CANCELED){
             	Log.d("MainActivity:", "Activity.RESULT_CANCELED: standard lat and lng");
@@ -215,12 +220,10 @@ public class ActivityMap extends ActivityMenuBase {
         }
         
         mMap.setOnCameraChangeListener(new OnCameraChangeListener() {
-
             @Override
             public void onCameraChange(CameraPosition arg0) {
                 // Move camera.
             	CameraUpdate cu = getBoundsOnMap();
-            	//mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(builder.build(), 10));
             	mMap.moveCamera(cu);
                 // Remove listener to prevent position reset on camera move.
             	mMap.setOnCameraChangeListener(null);
@@ -239,9 +242,7 @@ public class ActivityMap extends ActivityMenuBase {
             }
         });
 		
-		//needed?
-		mylistener = new MyLocationListener();
-	
+		//TODO: put the settings action check somwhere else (LocationUpdateService)
 		if (userLocation != null) {
 			//mylistener.onLocationChanged(userLocation);
 		} else {
@@ -249,10 +250,6 @@ public class ActivityMap extends ActivityMenuBase {
 			Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
 			startActivity(intent);
 		}
-		// location updates: at least 1 meter and 200millsecs change
-		
-		//WHERE TO UPDATE LOCATIONS FROM?? -> inner class locationListener in LocationUpdateService a la  http://stackoverflow.com/questions/14478179/background-service-with-location-listener-in-android
-		//locationManager.requestLocationUpdates(provider, 200, 1, mylistener);
     }
     
     //send lat,lng to poiController
@@ -272,8 +269,6 @@ public class ActivityMap extends ActivityMenuBase {
     	//have initialized yet, therefore we can't get bounding box with padding when our map
     	//has width = 0. In that case we wait until the Fragment holding our
     	//map has been initialized, and when it's time call animateCamera() again.
-    	
-    	
     	/*
     	 * More info here: http://stackoverflow.com/questions/14828217/android-map-v2-zoom-to-show-all-the-markers
     	 * and here: http://stackoverflow.com/questions/13692579/movecamera-with-cameraupdatefactory-newlatlngbounds-crashes
@@ -321,7 +316,6 @@ public class ActivityMap extends ActivityMenuBase {
 
         return CameraUpdateFactory.newLatLngBounds(bounds,
                 30);
-    	
     }
     
     @Override
@@ -330,6 +324,10 @@ public class ActivityMap extends ActivityMenuBase {
     	if(!poiReceiverRegistered){
     		registerReceiver(poiReceiver, new IntentFilter("toiletLocation"));
     		poiReceiverRegistered = true;
+    	}
+    	if(!locUpdReceiverRegistered){
+    		registerReceiver(locUpdReceiver, new IntentFilter("LocationUpdate"));
+    		locUpdReceiverRegistered = true;
     	}
     }
     
@@ -340,7 +338,29 @@ public class ActivityMap extends ActivityMenuBase {
         if(!poiReceiverRegistered){
     		registerReceiver(poiReceiver, new IntentFilter("toiletLocation"));
     		poiReceiverRegistered = true;
-    	}  
+    	} 
+        if(!locUpdReceiverRegistered){
+    		registerReceiver(locUpdReceiver, new IntentFilter("LocationUpdate"));
+    		locUpdReceiverRegistered = true;
+    	}
+        //bind LocationUpdateService
+        Intent intent= new Intent(this, LocationUpdateService.class);
+        bindService(intent, mConnection,
+            Context.BIND_AUTO_CREATE);
+    }
+    
+    @Override
+    protected void onPause(){
+    	super.onPause();
+    	unbindService(mConnection);//unbind service
+    	if(poiReceiverRegistered){
+    		unregisterReceiver(poiReceiver);
+    		poiReceiverRegistered = false;
+    	}
+    	if(locUpdReceiverRegistered){
+    		unregisterReceiver(locUpdReceiver);
+    		locUpdReceiverRegistered = false;
+    	}
     }
     
     @Override
@@ -350,6 +370,10 @@ public class ActivityMap extends ActivityMenuBase {
     		unregisterReceiver(poiReceiver);
     		poiReceiverRegistered = false;
     	}
+    	if(locUpdReceiverRegistered){
+    		unregisterReceiver(locUpdReceiver);
+    		locUpdReceiverRegistered = false;
+    	}
     }
     
     @Override
@@ -358,6 +382,10 @@ public class ActivityMap extends ActivityMenuBase {
     	if(poiReceiverRegistered){
     		unregisterReceiver(poiReceiver);
     		poiReceiverRegistered = false;
+    	}
+    	if(locUpdReceiverRegistered){
+    		unregisterReceiver(locUpdReceiver);
+    		locUpdReceiverRegistered = false;
     	}
     }
     
@@ -451,33 +479,24 @@ public class ActivityMap extends ActivityMenuBase {
 	    	.icon(BitmapDescriptorFactory.fromResource(R.drawable.peeer)));
     }
     
+    private ServiceConnection mConnection = new ServiceConnection() {
 
-    private class MyLocationListener implements LocationListener {
-    	
-		  @Override
-		  public void onLocationChanged(Location location) {
-			// Initialize the location fields
-			  latitude.setText("Latitude: "+String.valueOf(location.getLatitude()));
-			  longitude.setText("Longitude: "+String.valueOf(location.getLongitude()));
-			  moveToLocation(location);
-		  }
-	
-		  @Override
-		  public void onStatusChanged(String provider, int status, Bundle extras) {
-			  Toast.makeText(ActivityMap.this, provider + "'s status changed to "+status +"!",
-				Toast.LENGTH_SHORT).show();
-		  }
-	
-		  @Override
-		  public void onProviderEnabled(String provider) {
-			  Toast.makeText(ActivityMap.this, "Provider " + provider + " enabled!",
-		        Toast.LENGTH_SHORT).show();	
-		  }
-	
-		  @Override
-		  public void onProviderDisabled(String provider) {
-			  Toast.makeText(ActivityMap.this, "Provider " + provider + " disabled!",
-		        Toast.LENGTH_SHORT).show();
-		  }
-	  }
+        public void onServiceConnected(ComponentName className, 
+            IBinder binder) {
+          LocationUpdateService.ServiceBinder b = (LocationUpdateService.ServiceBinder) binder;
+          service = b.getLocService();
+          Toast.makeText(ActivityMap.this, "LocService Connected", Toast.LENGTH_SHORT)
+              .show();
+          Location loc = service.getCurrentUserLocation();
+          if(loc == null){
+        	  service.updateLocation();
+          }
+        }
+
+        public void onServiceDisconnected(ComponentName className) {
+          service = null;
+          Toast.makeText(ActivityMap.this, "LocService Disconnected", Toast.LENGTH_SHORT)
+          .show();
+        }
+      };
 }

@@ -1,13 +1,9 @@
 package de.bfhh.stilleoertchenhamburg;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import org.json.JSONArray;
 
 import com.google.android.gms.maps.model.LatLng;
-
-import de.bfhh.stilleoertchenhamburg.activites.ActivityMap;
 
 import android.app.Activity;
 import android.app.Service;
@@ -16,6 +12,7 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.AsyncTask;
+import android.os.Binder;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
@@ -44,11 +41,11 @@ public class LocationUpdateService extends Service {
 	private Location userLocation;
 		
 	JSONArray toilets = null;// products JSONArray
-	
-	private ArrayList<HashMap<String, String>> poiList;
-	private long SPLASH_TIME_OUT = 1000;
-	private LocationUpdateListener locUpdListener; 
 
+	private LocationUpdateListener locUpdListener; 
+	
+	//Binder to bind activities to this service
+	 private final IBinder mBinder = new ServiceBinder();
 	
 	public LocationUpdateService(){
 		super();
@@ -56,7 +53,7 @@ public class LocationUpdateService extends Service {
 	
 	//*****What if bestLocation is null??? ****
 	
-	private Location getLastKnownLocation() {   
+	protected Location getLastKnownLocation() {   
 		
 	    List<String> providers = mlocationManager.getProviders(true);
 	    Location bestLocation = null;
@@ -73,6 +70,7 @@ public class LocationUpdateService extends Service {
 	    return bestLocation;
 	}
 	
+	//not needed when binding to service
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId){
 		// In this method the 
@@ -92,9 +90,25 @@ public class LocationUpdateService extends Service {
 		}//other action for location update maybe?			
 		return super.onStartCommand(intent, flags, startId);
 	}
+	
+	public void updateLocation(){
+		// In this method the 
+		//String action = intent.getStringExtra(USERACTION); //@TODO: add action static string in activities
+		//if(action.equals("userLocation")){//a user's location update was requested from an activity
+		//instantiate LocationManager object
+		mlocationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+		//instantiate LocationUpdateListener
+		locUpdListener = new LocationUpdateListener();
+		//register for location Updates every 20 seconds, minimum distance change: 3 meters
+		mlocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 20000,  3.0f, locUpdListener);
+		mlocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 20000, 3.0f, locUpdListener);
+		//call getLastKnownLocation() from within an AsyncTask and
+		//publish results once location is received
+		new LocationUpdateTask().execute();							
+	}
 
 	//broadcast user location
-	private void publishUserLocation(int result, Location userLocation){
+	protected void publishUserLocation(int result, Location userLocation){
 		if(userLocation != null){//you can never check enough!
 			//Send Broadcast back to ActivitySplashScreen
 			Intent intent = new Intent(USERACTION);
@@ -106,18 +120,29 @@ public class LocationUpdateService extends Service {
 	  	  }//what else?? :)
 	}
 	
+	private Location returnUserLocation(int result, Location userLocation){
+		return userLocation;
+	}
+	
 	private void setCurrentUserLocation(Location loc){
 		userLocation = loc;
 	}
 	
-	private Location getCurrentUserLocation(){
+	public Location getCurrentUserLocation(){
 		return userLocation;
 	}
 
+	//return local binder, through which activity can get service instance
 	@Override
 	public IBinder onBind(Intent intent) {
-		// TODO Auto-generated method stub
-		return null;
+		return mBinder;
+	}
+	
+	//inner class Binder, so that Activities can bind to this service
+	public class ServiceBinder extends Binder {
+	    public LocationUpdateService getLocService() { 
+	      return LocationUpdateService.this;//return service to bind to
+	    }
 	}
 
 	@Override
@@ -164,7 +189,7 @@ public class LocationUpdateService extends Service {
 	        	setCurrentUserLocation(standardLocation);
 				
 				result = Activity.RESULT_CANCELED;
-				publishUserLocation(result, standardLocation); //send an intent broadcast with invalid location
+				publishUserLocation(result, standardLocation); //send an intent broadcast with standard location
 			}
         	//Toast that location was received
         	Toast.makeText(getApplicationContext(),
