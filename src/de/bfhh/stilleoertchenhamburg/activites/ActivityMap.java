@@ -67,6 +67,10 @@ public class ActivityMap extends ActivityMenuBase {
     private TextView latitude;
     private TextView longitude;
     
+    private static final String BUNDLE_POILIST = "com.bfhh.stilleoertchenhamburg.BUNDLE_POILIST";
+    private static final String BUNDLE_LATITUDE = "com.bfhh.stilleoertchenhamburg.BUNDLE_LATITUDE";
+    private static final String BUNDLE_LONGITUDE = "com.bfhh.stilleoertchenhamburg.BUNDLE_LONGITUDE";
+    
     private static POIController poiController; //class that handles Broadcast, methods return List<POI>
     
     private ImageButton myLocationButton; //Button to get back to current user location on map
@@ -193,31 +197,51 @@ public class ActivityMap extends ActivityMenuBase {
         registerReceiver(locUpdReceiver, new IntentFilter("LocationUpdate"));
         locUpdReceiverRegistered = true;
         
-        //Get the Intent that was sent from ActivitySplashScreen
-        Intent i = getIntent();
-        Bundle bundle = i.getExtras();
-        if(bundle != null){
-        	if(bundle.getDouble("latitude") != 0.0 && bundle.getDouble("longitude") != 0.0){
-        		//set user Position
-            	setUserLocation(bundle.getDouble("latitude"), bundle.getDouble("longitude"));
-        	}
-        	
-            int result = bundle.getInt("result");
-            if(result == Activity.RESULT_CANCELED){
-            	Log.d("MainActivity:", "Activity.RESULT_CANCELED: standard lat and lng");
-            }
-            //get the toiletList
-            toiletList = (ArrayList<HashMap<String,String>>) i.getSerializableExtra("poiList");
-            
-            //set up POIController with list of toilets received from POIUpdateService
-            setPOIController(new POIController(toiletList));
-            
-            //set up Google Map with current user position
-            setUpMapIfNeeded();
-            
-            //set/update map markers
-            updateMarkers(poiController, userLat, userLng);
+        //check the saved instance state:
+        /*
+         * if the activity is closed by pressing back button it is destroyed, but
+         * the application might still be run again by the user.
+         * in that case we have to save the location and poiList in savedInstanceState bundle
+         * and check whether this bundle holds any information here.
+         */
+        if(savedInstanceState != null){ //activity was destroyed and recreated
+        	// Restore value of members from saved state
+            userLat = savedInstanceState.getDouble(BUNDLE_LATITUDE);
+            userLng = savedInstanceState.getDouble(BUNDLE_LONGITUDE);
+            setUserLocation(userLat, userLng);
+            toiletList = (ArrayList<HashMap<String, String>>) savedInstanceState.getSerializable(BUNDLE_POILIST);
+        }else{ //activity was started from scratch
+        	 Intent i = getIntent();
+             Bundle bundle = i.getExtras();
+             if(bundle != null){
+             	if(bundle.getDouble("latitude") != 0.0 && bundle.getDouble("longitude") != 0.0){
+             		//set user Position
+             		userLat = bundle.getDouble("latitude");
+             		userLng = bundle.getDouble("longitude");
+                 	setUserLocation(userLat, userLng);
+             	}
+             	
+                int result = bundle.getInt("result");
+                if(result == Activity.RESULT_CANCELED){
+                	Log.d("MainActivity:", "Activity.RESULT_CANCELED: standard lat and lng");
+                }
+                //get the toiletList
+                toiletList = (ArrayList<HashMap<String,String>>) i.getSerializableExtra("poiList");
+             }   
         }
+        //set up POIController with list of toilets received from POIUpdateService
+        if(toiletList != null){
+        	setPOIController(new POIController(toiletList));
+        }else{
+        	Log.d("MainActivity.oncreate():", "toiletList is null");
+        }
+        //set up Google Map with current user position
+        setUpMapIfNeeded();
+        
+        //set/update map markers
+        updateMarkers(poiController, userLat, userLng);
+        //Get the Intent that was sent from ActivitySplashScreen
+       
         
         mMap.setOnCameraChangeListener(new OnCameraChangeListener() {
             @Override
@@ -243,13 +267,24 @@ public class ActivityMap extends ActivityMenuBase {
         });
 		
 		//TODO: put the settings action check somwhere else (LocationUpdateService)
-		if (userLocation != null) {
+		if (userLocation == null) {
 			//mylistener.onLocationChanged(userLocation);
-		} else {
 			// leads to the settings because there is no last known location
 			Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
 			startActivity(intent);
 		}
+    }
+    
+    //is called before activity is destroyed
+    @Override
+    public void onSaveInstanceState(Bundle savedInstanceState) {
+        // Save the user's current game state
+        savedInstanceState.putSerializable(BUNDLE_POILIST, toiletList);
+        savedInstanceState.putDouble(BUNDLE_LATITUDE, userLat);
+        savedInstanceState.putDouble(BUNDLE_LONGITUDE, userLng);
+        
+        // Always call the superclass so it can save the view hierarchy state
+        super.onSaveInstanceState(savedInstanceState);
     }
     
     //send lat,lng to poiController

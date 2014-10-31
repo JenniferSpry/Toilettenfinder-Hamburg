@@ -100,8 +100,8 @@ public class LocationUpdateService extends Service {
 		//instantiate LocationUpdateListener
 		locUpdListener = new LocationUpdateListener();
 		//register for location Updates every 20 seconds, minimum distance change: 3 meters
-		mlocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 20000,  3.0f, locUpdListener);
-		mlocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 20000, 3.0f, locUpdListener);
+		mlocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 20000,  10.0f, locUpdListener);
+		mlocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 20000, 10.0f, locUpdListener);
 		//call getLastKnownLocation() from within an AsyncTask and
 		//publish results once location is received
 		new LocationUpdateTask().execute();							
