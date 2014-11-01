@@ -34,10 +34,12 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Fragment;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
@@ -93,6 +95,10 @@ public class ActivityMap extends ActivityMenuBase {
 	private boolean locUpdReceiverRegistered;
 	
 	private LocationUpdateService service;
+	
+	//camera position is saved onPause() so we can restore old view
+	private CameraPosition cp;
+	protected boolean changeGPSSettings;
 	
     //not really used right now, but will be needed later
     public static class POIReceiver extends BroadcastReceiver {
@@ -162,8 +168,19 @@ public class ActivityMap extends ActivityMenuBase {
             		Log.d("ActivityMap BroadcastReceiver", "Location received: " + lat  + ", " + lng);
             		//update the user location
             		setUserLocation(lat, lng );
+            		userLat = lat;
+            		userLng = lng;
             		//the user location has changed, so that there might be different closest ten POI, retrieve them
-            		updateUserAndPOIOnMap(lat, lng);
+            		//updateUserAndPOIOnMap(lat, lng);
+            		if(poiController == null){
+            			Log.d("ActivityMap LocUpdRec" , "poiController is null");
+            		}
+            		updateMarkers(poiController, userLat, userLng);
+ 
+            		//TODO: es müssen nicht nur die marker upgedated werden, sondern
+            		//auch die kamera bewegt, sobald sich die position des users ändert.
+            		//moveToLocation(userLocation);
+            		
             		String provider = bundle.getString("provider");
             		//Toast to show updates
             		Toast.makeText(context, "Location Update from provider: " + provider + ", Location: LAT " + lat + ", LNG " + lng,
@@ -220,9 +237,15 @@ public class ActivityMap extends ActivityMenuBase {
              		userLng = bundle.getDouble("longitude");
                  	setUserLocation(userLat, userLng);
              	}
+             	//if the location is the standard location, show settings dialog
+             	if(userLat == HAMBURG.latitude && userLng == HAMBURG.longitude){
+             		buildAlertMessageGPSSettings();
+             	}
+             	
              	
                 int result = bundle.getInt("result");
                 if(result == Activity.RESULT_CANCELED){
+                	
                 	Log.d("MainActivity:", "Activity.RESULT_CANCELED: standard lat and lng");
                 }
                 //get the toiletList
@@ -234,9 +257,12 @@ public class ActivityMap extends ActivityMenuBase {
         	setPOIController(new POIController(toiletList));
         }else{
         	Log.d("MainActivity.oncreate():", "toiletList is null");
+        	
         }
         //set up Google Map with current user position
         setUpMapIfNeeded();
+        
+        setPeeerOnMap();
         
         //set/update map markers
         updateMarkers(poiController, userLat, userLng);
@@ -274,6 +300,33 @@ public class ActivityMap extends ActivityMenuBase {
 			startActivity(intent);
 		}
     }
+    
+	DialogInterface.OnClickListener onOkListener = new DialogInterface.OnClickListener() {
+        public void onClick(final DialogInterface dialog, final int id) {
+            startActivity(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
+            changeGPSSettings = true;
+            
+        }
+    };
+    
+    DialogInterface.OnClickListener onCancelListener = new DialogInterface.OnClickListener() {
+        public void onClick(final DialogInterface dialog, final int id) {
+            //startActivity(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
+            changeGPSSettings = true;
+           
+        }
+    };
+    
+	//show alert dialog with option to change gps settings
+	private void buildAlertMessageGPSSettings() {
+	    final AlertDialog.Builder builder = new AlertDialog.Builder(ActivityMap.this);
+	    builder.setMessage("Your GPS seems to be disabled, do you want to enable it?")
+	           .setCancelable(false)
+	           .setPositiveButton("Yes", onOkListener)
+	           .setNegativeButton("No", onCancelListener);
+	    final AlertDialog alert = builder.create();
+	    alert.show();
+	}
     
     //is called before activity is destroyed
     @Override
@@ -370,6 +423,7 @@ public class ActivityMap extends ActivityMenuBase {
     protected void onResume() {
         super.onResume();
         setUpMapIfNeeded();
+        //updateUserAndPOIOnMap(userLat, userLng);
         if(!poiReceiverRegistered){
     		registerReceiver(poiReceiver, new IntentFilter("toiletLocation"));
     		poiReceiverRegistered = true;
@@ -396,6 +450,10 @@ public class ActivityMap extends ActivityMenuBase {
     		unregisterReceiver(locUpdReceiver);
     		locUpdReceiverRegistered = false;
     	}
+    	//fix the map at restart of application, so that user and markers can be seen again
+    	//TODO: nullpointer after disabling network in running app and then trying to pause it (back  button)
+    	cp = mMap.getCameraPosition();
+        mMap = null;
     }
     
     @Override
@@ -495,7 +553,7 @@ public class ActivityMap extends ActivityMenuBase {
            
             // Check if we were successful in obtaining the map.
             if (mMap != null) {
-                setUpMap();
+            	setPeeerOnMap();
             }
         }
     }
@@ -506,7 +564,7 @@ public class ActivityMap extends ActivityMenuBase {
      * <p>
      * This should only be called once and when we are sure that {@link #mMap} is not null.
      */
-    private void setUpMap() {
+    private void setPeeerOnMap() {
     	// need to turn this off so we can use our own icon
         //mMap.setMyLocationEnabled(true); 
     	personInNeedOfToilette = mMap.addMarker(new MarkerOptions()

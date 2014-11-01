@@ -6,7 +6,9 @@ import org.json.JSONArray;
 import com.google.android.gms.maps.model.LatLng;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Service;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.location.Location;
 import android.location.LocationListener;
@@ -15,6 +17,7 @@ import android.os.AsyncTask;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.provider.Settings;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -51,21 +54,25 @@ public class LocationUpdateService extends Service {
 		super();
 	}
 	
-	//*****What if bestLocation is null??? ****
-	
 	protected Location getLastKnownLocation() {   
-		
+		//get list of enabled providers
 	    List<String> providers = mlocationManager.getProviders(true);
 	    Location bestLocation = null;
-	    for (String provider : providers) {
-	        Location l = mlocationManager.getLastKnownLocation(provider);
-	        if (l == null) {
-	            continue;
-	        }
-	        if (bestLocation == null || l.getAccuracy() < bestLocation.getAccuracy()) {
-	            // Found best last known location: %s", l);
-	            bestLocation = l;
-	        }
+	    //check whether providers list is empty
+	    if(providers.isEmpty()){
+	    	//show gps dialog if there are no providers
+	    	//buildAlertMessageGPSSettings();
+	    }else{
+	    	for (String provider : providers) {
+		        Location l = mlocationManager.getLastKnownLocation(provider);
+		        if (l == null) {
+		            continue;
+		        }
+		        if (bestLocation == null || l.getAccuracy() < bestLocation.getAccuracy()) {
+		            // Found best last known location: %s", l);
+		            bestLocation = l;
+		        }
+		    }
 	    }
 	    return bestLocation;
 	}
@@ -181,6 +188,9 @@ public class LocationUpdateService extends Service {
 				result = Activity.RESULT_OK;
 				publishUserLocation(result, currentLocation); //send an intent broadcast with the current location
 			} else { //if the location is null, set location to standard and publish as RESULT_CANCELLED					
+				//show gps dialog if there are providers, but we didn't receive location from them
+				//buildAlertMessageGPSSettings();
+				
 				Location standardLocation = new Location("");
 				standardLocation.setLatitude(HAMBURG.latitude);
 				standardLocation.setLongitude(HAMBURG.longitude);
@@ -190,6 +200,10 @@ public class LocationUpdateService extends Service {
 				
 				result = Activity.RESULT_CANCELED;
 				publishUserLocation(result, standardLocation); //send an intent broadcast with standard location
+				
+				//TODO: show dialogue in which user is asked to change gps settings
+				//Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+				//startActivity(intent);
 			}
         	//Toast that location was received
         	Toast.makeText(getApplicationContext(),
@@ -289,6 +303,7 @@ public class LocationUpdateService extends Service {
 		  public void onProviderEnabled(String provider) {
 			  Toast.makeText(getApplicationContext(), "Provider " + provider + " enabled!",
 		        Toast.LENGTH_SHORT).show();	
+			  new LocationUpdateTask().execute();	
 		  }
 	
 		  @Override

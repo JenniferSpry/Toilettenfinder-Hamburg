@@ -11,10 +11,12 @@ import de.bfhh.stilleoertchenhamburg.POIUpdateService;
 import de.bfhh.stilleoertchenhamburg.R;
 import de.bfhh.stilleoertchenhamburg.helpers.JSONParser;
 
+import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
@@ -56,11 +58,14 @@ public class ActivitySplashScreen extends ListActivity {
     
     private LocationUpdateService service;
     
+    private boolean changeGPSSettings;
+    
+    private double lat = 0.0;
+	private double lng = 0.0;
+    
     // BroadcastReceiver for Broadcasts from LocationUpdateService
     private BroadcastReceiver receiver = new BroadcastReceiver() {
-    	private double lat = 0.0;
-    	private double lng = 0.0;
-    	
+
         @Override
         public void onReceive(Context context, Intent intent) { 	
         	//Get Extras
@@ -83,6 +88,9 @@ public class ActivitySplashScreen extends ListActivity {
 		            } else { //if RESULT_CANCELLED or lat and long are standard location then no location was received from locationManager in LocationUpdateService
 		            	  Toast.makeText(ActivitySplashScreen.this, "Last user location not received. Standard Location is set",
 		            		  Toast.LENGTH_LONG).show();
+		            	  if(changeGPSSettings == false){
+		            		 // buildAlertMessageGPSSettings();
+		            	  }
 		            	  //start with Hamburg standard location
 		            	  startPOIUpdateService(resultCode, lat, lng);
 		            }
@@ -95,7 +103,7 @@ public class ActivitySplashScreen extends ListActivity {
 		            lng = bundle.getDouble(LocationUpdateService.LNG);
 		            int resultCode = bundle.getInt(LocationUpdateService.RESULT);
 		            ArrayList<HashMap<String,String>> poiList = (ArrayList<HashMap<String,String>>) intent.getSerializableExtra("poiList");
-		            if(lat != 0.0 && lng != 0.0 && resultCode != 0 && poiList != null){
+		            if(lat != 0.0 && lng != 0.0 && poiList != null){
 		            	//start activity which shows map
 		            	startMapActivity(lat, lng, poiList, resultCode);
 		            	finish();// terminate this activity
@@ -104,7 +112,34 @@ public class ActivitySplashScreen extends ListActivity {
            }
         }
     };
-
+    
+	DialogInterface.OnClickListener onOkListener = new DialogInterface.OnClickListener() {
+        public void onClick(final DialogInterface dialog, final int id) {
+            startActivity(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
+            changeGPSSettings = true;
+            startPOIUpdateService(0, lat, lng);
+        }
+    };
+    
+    DialogInterface.OnClickListener onCancelListener = new DialogInterface.OnClickListener() {
+        public void onClick(final DialogInterface dialog, final int id) {
+            //startActivity(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
+            changeGPSSettings = true;
+            startPOIUpdateService(0, lat, lng); //start Service with standard location which is already set
+        }
+    };
+    
+	//show alert dialog with option to change gps settings
+	private void buildAlertMessageGPSSettings() {
+	    final AlertDialog.Builder builder = new AlertDialog.Builder(ActivitySplashScreen.this);
+	    builder.setMessage("Your GPS seems to be disabled, do you want to enable it?")
+	           .setCancelable(false)
+	           .setPositiveButton("Yes", onOkListener)
+	           .setNegativeButton("No", onCancelListener);
+	    final AlertDialog alert = builder.create();
+	    alert.show();
+	}
+    
 	private void startMapActivity(double userLat, double userLng, ArrayList<HashMap<String,String>> poiList, int result){
 		Intent i = new Intent(this, ActivityMap.class);
         i.putExtra("poiList",(Serializable) poiList);
@@ -178,6 +213,8 @@ public class ActivitySplashScreen extends ListActivity {
         //registerReceiver(receiver, new IntentFilter(LocationUpdateService.USERACTION));
         registered = true; //shows that a receiver is registered
         
+        
+        changeGPSSettings = false;
         //SOLUTION for Threading: create Asynctask in Service to handle Location stuff
         //startLocationUpdateService();  	
         //bind to it rather than starting service
