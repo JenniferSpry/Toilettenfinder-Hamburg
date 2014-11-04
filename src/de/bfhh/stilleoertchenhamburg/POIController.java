@@ -135,9 +135,9 @@ public class POIController {
 		MarkerOptions marker = new MarkerOptions();
 		BitmapDescriptor icon;
 		if(poi.isWheelchairAccessible()){// wheelchair accessible POI
-			icon = BitmapDescriptorFactory.fromResource(R.drawable.yellow_pin_w_s);
+			icon = BitmapDescriptorFactory.fromResource(R.drawable.yellow_pin_w);
 		}else{
-			icon = BitmapDescriptorFactory.fromResource(R.drawable.yellow_pin_s);
+			icon = BitmapDescriptorFactory.fromResource(R.drawable.yellow_pin);
 		}	
 		return marker.position(new LatLng(poi.getLat(), poi.getLng()))
 					 .title(poi.getName())
