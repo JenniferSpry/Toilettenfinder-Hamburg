@@ -7,6 +7,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
 
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
+
 import android.location.Location;
 
 import de.bfhh.stilleoertchenhamburg.models.POI;
@@ -123,6 +128,20 @@ public class POIController {
 	
 	public List<POI> getAllPOI(){
 		return poiList;
+	}
+	
+	//returns the MarkerOptions for a passed POI
+	public MarkerOptions getMarkerOptionsForPOI(POI poi){
+		MarkerOptions marker = new MarkerOptions();
+		BitmapDescriptor icon;
+		if(poi.isWheelchairAccessible()){// wheelchair accessible POI
+			icon = BitmapDescriptorFactory.fromResource(R.drawable.yellow_pin_w_s);
+		}else{
+			icon = BitmapDescriptorFactory.fromResource(R.drawable.yellow_pin_s);
+		}	
+		return marker.position(new LatLng(poi.getLat(), poi.getLng()))
+					 .title(poi.getName())
+					 .icon(icon);
 	}
 	
 }

@@ -74,6 +74,16 @@ public class POI implements Parcelable{
 		return description;
 	}
 	
+	public boolean isWheelchairAccessible(){
+		//see if description matches the regular expression (...R/rollstuhlgerecht..)
+		//if(description.matches(".*[rR]ollstuhlgerechte.*")){
+		if(description.indexOf("Rollstuhlgerechte") != -1 || description.indexOf("rollstuhlgerechte") != -1){
+			return true;
+		}else{
+			return false;
+		}
+	}
+	
 	public Location getLocation(){		
 		return location;	
 	}
