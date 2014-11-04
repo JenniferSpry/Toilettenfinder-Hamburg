@@ -76,12 +76,15 @@ public class ActivityMap extends ActivityMenuBase {
     private static POIController poiController; //class that handles Broadcast, methods return List<POI>
     
     private ImageButton myLocationButton; //Button to get back to current user location on map
+    private ImageButton updatePOIButton; //Button that will update visible POI depending on map center LatLng
     
     final private LatLng HAMBURG = new LatLng(53.558, 9.927); //standard position in HH
     
     private static Marker personInNeedOfToilette; //person's marker
 	private ArrayList<HashMap<String, String>> toiletList; //POI received from POIUpdateService
 	private static ArrayList<MarkerOptions> markerList;
+	private LatLngBounds mapBounds; //bounds of visible map, updated onCameraChange
+	private List<LatLng> cornersLatLng; // contains two LatLng decribing northeastern and southwestern points on visible map
 	
 	private ArrayList<String> keyNames;
 	
@@ -133,7 +136,7 @@ public class ActivityMap extends ActivityMenuBase {
                       @Override
                       public void run() {
                     	  //TODO see if userLat and userLng are set
-                         updateMarkers(pc, userLat, userLng);
+                    	  updateClosestTenMarkers(pc, userLat, userLng);
                       }
                   });
           	  }
@@ -175,7 +178,7 @@ public class ActivityMap extends ActivityMenuBase {
             		if(poiController == null){
             			Log.d("ActivityMap LocUpdRec" , "poiController is null");
             		}
-            		updateMarkers(poiController, userLat, userLng);
+            		updateClosestTenMarkers(poiController, userLat, userLng);
  
             		//TODO: es müssen nicht nur die marker upgedated werden, sondern
             		//auch die kamera bewegt, sobald sich die position des users ändert.
@@ -200,6 +203,7 @@ public class ActivityMap extends ActivityMenuBase {
         longitude = (TextView) findViewById(R.id.longitude);
         //Button that will animate camera back to user position
         myLocationButton = (ImageButton) findViewById(R.id.mylocation);
+        updatePOIButton = (ImageButton) findViewById(R.id.poiupdate);
         
         //TODO: is it good to register receiver in oncreate() ??
         //Register Receiver for POI Updates
@@ -265,20 +269,24 @@ public class ActivityMap extends ActivityMenuBase {
         setPeeerOnMap();
         
         //set/update map markers
-        updateMarkers(poiController, userLat, userLng);
-        //Get the Intent that was sent from ActivitySplashScreen
-       
+        updateClosestTenMarkers(poiController, userLat, userLng);
+        //move camera to user location      
+        moveToLocation(userLocation);
         
         mMap.setOnCameraChangeListener(new OnCameraChangeListener() {
             @Override
-            public void onCameraChange(CameraPosition arg0) {
+            public void onCameraChange(CameraPosition pos) {
                 // Move camera.
-            	CameraUpdate cu = getBoundsOnMap();
-            	mMap.moveCamera(cu);
-                // Remove listener to prevent position reset on camera move.
-            	mMap.setOnCameraChangeListener(null);
-            }
-
+            	CameraUpdate cu = getClosestPOIBoundsOnMap();
+            	if(mMap != null){
+            		mMap.moveCamera(cu);
+                    // Remove listener to prevent position reset on camera move.
+                	mMap.setOnCameraChangeListener(null);
+                	//get LatLngBounds of current camera position
+                	mapBounds = mMap.getProjection().getVisibleRegion().latLngBounds;
+                    setLatLngCornersFromBounds(mapBounds);
+            	}
+            }			
         });
 		
 		//Location Button Listener
@@ -343,16 +351,17 @@ public class ActivityMap extends ActivityMenuBase {
     //send lat,lng to poiController
     public static void updateUserAndPOIOnMap(double lat, double lng) {
 		// update Markers first
-		updateMarkers(poiController, lat, lng);
+    	updateClosestTenMarkers(poiController, lat, lng);
 		//set user position TODO: method out of that
     	personInNeedOfToilette.setPosition(new LatLng(lat, lng));
 	}
 
 	private void moveToLocation(Location loc){
     	LatLng pos = new LatLng(loc.getLatitude(), loc.getLongitude());
-    	personInNeedOfToilette.setPosition(pos);
+    	//personInNeedOfToilette.setPosition(pos);
     	//somehow set zoom dynamically, so that all toilets are seen
-    	CameraUpdate cu = getBoundsOnMap();
+    	CameraUpdate cu = getClosestPOIBoundsOnMap();
+    	deleteOldMarkersFromList();
         //this block has to be here because the map layout might not
     	//have initialized yet, therefore we can't get bounding box with padding when our map
     	//has width = 0. In that case we wait until the Fragment holding our
@@ -382,7 +391,7 @@ public class ActivityMap extends ActivityMenuBase {
     	                    mapView.getViewTreeObserver()
     	                        .removeOnGlobalLayoutListener(this);
     	                }
-    	                CameraUpdate c = getBoundsOnMap();
+    	                CameraUpdate c = getClosestPOIBoundsOnMap();
     	                mMap.animateCamera(c);
     	            }
     	        });
@@ -392,9 +401,18 @@ public class ActivityMap extends ActivityMenuBase {
         
     }
     
-    private CameraUpdate getBoundsOnMap(){
+	//returns the LatLngBounds around the user and the ten nearest POI
+    private CameraUpdate getClosestPOIBoundsOnMap(){
     	builder = new LatLngBounds.Builder();
-        for (MarkerOptions m : markerList) {
+    	//update markerList with ten nearest POI to user position
+    	if(poiController != null){
+    		if(mMap != null){
+    			deleteOldMarkersFromList();//delete markers in markerList (but not from map!)
+    			setPeeerOnMap();
+    			updateClosestTenMarkers(poiController, userLat , userLng ); //put ten closest in markerList and add to map
+    		}
+    	}
+    	for (MarkerOptions m : markerList) {
             builder.include(m.getPosition());
         }
         //also add peeer, in case there is only toilets on one side, 
@@ -406,9 +424,92 @@ public class ActivityMap extends ActivityMenuBase {
                 30);
     }
     
+    //called every time onCameraChange -> NEEDED?
+    private void setLatLngCornersFromBounds(LatLngBounds bounds) {
+    	cornersLatLng = new ArrayList<LatLng>();
+		// add northeastern corner
+    	cornersLatLng.add(bounds.northeast);
+    	//add southwestern corner
+    	cornersLatLng.add(bounds.southwest);	
+	}
+    
+    //returns Location representing center of displayed map or NULL
+    private LatLng getMapCenter(){
+    	LatLng mapCenter = null;
+		if(mapBounds != null){
+			mapCenter = mapBounds.getCenter();
+		}else{
+			Log.d("ActivityMap getMapCenter()", "mapBounds is null");
+		}
+		return mapCenter; //may be null
+    }
+    
+    //List of POI that are contained within the LatLngBounds of the map or NULL
+    private List<POI> getClosestPOI(){
+		List<POI> containedPOI = null;
+		List<POI> allPOI = null;
+		//get a list of all POI
+		if(poiController != null){
+			allPOI = poiController.getAllPOI();
+			if(allPOI != null && mapBounds != null){
+				containedPOI = new ArrayList<POI>();
+				//check all of the POI as to whether they're in the LatLngBounds
+				for(int i = 0; i < allPOI.size(); i++){
+					//if the POI's LatLng lies within the bounds, add it to containedPOI
+					if(mapBounds.contains(allPOI.get(i).getLatLng())){
+						containedPOI.add(allPOI.get(i));
+					}
+				}
+			}
+		}
+		return containedPOI;// may be null
+    }
+    
+    //List of POI that are contained within the LatLngBounds of the map or NULL
+    private List<POI> getContainedPOI(){
+		List<POI> containedPOI = null;
+		List<POI> allPOI = null;
+		//get a list of all POI
+		if(poiController != null){
+			allPOI = poiController.getAllPOI();
+			if(allPOI != null && mapBounds != null){
+				containedPOI = new ArrayList<POI>();
+				//check all of the POI as to whether they're in the LatLngBounds
+				for(int i = 0; i < allPOI.size(); i++){
+					//if the POI's LatLng lies within the bounds, add it to containedPOI
+					if(mapBounds.contains(allPOI.get(i).getLatLng())){
+						containedPOI.add(allPOI.get(i));
+					}
+				}
+			}
+		}
+		return containedPOI;// may be null
+    }
+    
+    private void displayContainedPOI(List<POI> contained){
+    	if(mMap != null){
+    		for(int i = 0; i < contained.size(); i++){
+        		MarkerOptions marker = new MarkerOptions();
+        		POI poi = contained.get(i);
+        		marker.position(new LatLng(poi.getLat(), poi.getLng())).title(poi.getName());
+                // adding marker
+                mMap.addMarker(marker);
+                markerList.add(marker); 
+        	}
+    	}
+    }
+    
+    //delete old markers on the map
+    private void deleteOldMarkersFromList(){
+    	markerList.clear(); //clear old markers first
+    	//mMap.clear();//clear ALL markers, polylines etc from map	
+    }   
+    
     @Override
     protected void onStart(){
     	super.onStart();
+    	//set up Google Map with current user position
+        setUpMapIfNeeded();
     	if(!poiReceiverRegistered){
     		registerReceiver(poiReceiver, new IntentFilter("toiletLocation"));
     		poiReceiverRegistered = true;
@@ -417,6 +518,40 @@ public class ActivityMap extends ActivityMenuBase {
     		registerReceiver(locUpdReceiver, new IntentFilter("LocationUpdate"));
     		locUpdReceiverRegistered = true;
     	}
+    	
+    	mMap.setOnCameraChangeListener(new OnCameraChangeListener() {
+             @Override
+             public void onCameraChange(CameraPosition pos) {
+                 // Move camera.	
+             	if(mMap != null){
+                 	//get LatLngBounds of current camera position
+                 	mapBounds = mMap.getProjection().getVisibleRegion().latLngBounds;
+                 	setLatLngCornersFromBounds(mapBounds);
+             	}
+             }			
+         });
+    	 
+ 		//Refresh Button Listener
+ 		updatePOIButton.setOnClickListener(new View.OnClickListener() {
+ 		    public void onClick(View v) {
+ 		        //TODO: Update view based on map center and POI inside new mapBounds
+ 		    	if(mapBounds != null){
+ 		    		LatLng centerLatLng = getMapCenter();
+ 		    		Location centerMap = new Location("");
+ 		    		centerMap.setLatitude(centerLatLng.latitude);
+ 		    		centerMap.setLongitude(centerLatLng.longitude);
+ 		    		List<POI> containedPOI = getContainedPOI();//all POI with LatLng contained in map's LatLngBounds
+ 		    		if(containedPOI != null){
+ 		    			deleteOldMarkersFromList();//delete markers from map and markerList
+ 		    			mMap.clear();
+ 		    			displayContainedPOI(containedPOI); //display all visible POI
+ 		    			setPeeerOnMap();// set peeer back on map
+ 		    		}else{
+ 		    			Log.d("MapActivity l.311: ", "containedPOI is null");
+ 		    		}
+ 		    	}
+ 		    }
+ 		});
     }
     
     @Override
@@ -496,33 +631,31 @@ public class ActivityMap extends ActivityMenuBase {
     }
     
     // Update / set markers on Google Map
-    private static void updateMarkers(POIController poiController, double currLat, double currLng){
+    private static void updateClosestTenMarkers(POIController poiController, double currLat, double currLng){
     	List<POI> closestTen = new ArrayList<POI>(); //list with closest ten POI to user position
     	List<POI> allPOI = new ArrayList<POI>();
     	markerList = new ArrayList<MarkerOptions>(); //markers for those POI
     	//check whether the broadcast was received
     	if(poiController != null ){
-	        if(poiController.poiReceived() )
-	        {
+	        if(poiController.poiReceived() ){
 	        	//propagate the user position to all POI and set their distance to user in meters
 	        	poiController.setDistancePOIToUser(currLat, currLng);
 	        	//get closest ten POI
-	        	closestTen = poiController.getClosestTenPOI();
+	        	closestTen = poiController.getClosestPOI(10); // get ten closest toilets
 	        	//get all POI
 	        	allPOI = poiController.getAllPOI();
-	        	
-	        	//add markers to the map  for the ten closest POI
-	        	for(int i = 0; i < closestTen.size(); i++){
-	        		MarkerOptions marker = new MarkerOptions();
-	        		POI poi = closestTen.get(i);
-	        		marker.position(new LatLng(poi.getLat(), poi.getLng())).title(poi.getName());
-	                // adding marker
-	                mMap.addMarker(marker);
-	                markerList.add(marker); 
+	        	if(mMap != null){
+	        		//add markers to the map  for the ten closest POI
+		        	for(int i = 0; i < closestTen.size(); i++){
+		        		MarkerOptions marker = new MarkerOptions();
+		        		POI poi = closestTen.get(i);
+		        		marker.position(new LatLng(poi.getLat(), poi.getLng())).title(poi.getName());
+		                // adding marker
+		                mMap.addMarker(marker);
+		                markerList.add(marker); 
+		        	}
 	        	}
-	        }
-	        else
-	        {
+	        } else {
 	        	//TODO: Toast
 	        	Log.d("ActivityMain.onStart()", "POIController has not received Broadcast");
 	        }

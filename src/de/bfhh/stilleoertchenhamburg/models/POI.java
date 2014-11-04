@@ -2,6 +2,8 @@ package de.bfhh.stilleoertchenhamburg.models;
 
 import java.util.HashMap;
 
+import com.google.android.gms.maps.model.LatLng;
+
 import android.location.Location;
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -25,6 +27,7 @@ public class POI implements Parcelable{
 	private final String address;
 	private final String description;
 	private final Location location; //location (lat lng)
+	private final LatLng latLng;
 	
 	private float distanceToUser; //distance to user's current position in meters
 	
@@ -39,6 +42,7 @@ public class POI implements Parcelable{
 		this.location = new Location("");//empty provider string
 		location.setLatitude(this.lat);
         location.setLongitude(this.lng);
+        latLng = new LatLng(lat, lng);
 	}
 	
 	
@@ -56,6 +60,10 @@ public class POI implements Parcelable{
 	
 	public double getLng(){
 		return lng;
+	}
+	
+	public LatLng getLatLng(){
+		return latLng;
 	}
 	
 	public String getAddress() {

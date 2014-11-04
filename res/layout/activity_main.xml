@@ -45,5 +45,15 @@
             android:layout_below="@+id/latitude"
             android:layout_marginRight="16dp"
             android:src="@drawable/mylocation" />
+
+         <ImageButton
+             android:id="@+id/poiupdate"
+             style="?android:attr/buttonStyleSmall"
+             android:layout_width="48dp"
+             android:layout_height="48dp"
+             android:layout_alignParentBottom="true"
+             android:layout_alignRight="@+id/longitude"
+             android:layout_marginBottom="14dp"
+             android:src="@drawable/update_button" />
     
 </RelativeLayout>

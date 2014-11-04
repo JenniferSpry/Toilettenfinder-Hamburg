@@ -104,8 +104,8 @@ public class POIController {
 	}
 	
 	//returns the closest ten POI to the user's current location
-	public List<POI> getClosestTenPOI(){	
-		List<POI> closestTenPOI = new ArrayList<POI>();
+	public List<POI> getClosestPOI(int amount){	
+		List<POI> closestPOI = new ArrayList<POI>();
 		
 		Collections.sort(poiList, new Comparator<POI>() {
 	        @Override 
@@ -113,11 +113,12 @@ public class POIController {
 	            return  p1.getDistanceToUserInt() - p2.getDistanceToUserInt(); // Ascending
 	        }
 	    });
-		
-		for(int i = 0; i < 10; i++){ //add ten closes points to other List
-			closestTenPOI.add(poiList.get(i));
-		}	
-		return closestTenPOI;
+		if(amount > 0){
+			for(int i = 0; i < amount; i++){ //add ten closes points to other List
+				closestPOI.add(poiList.get(i));
+			}	
+		}
+		return closestPOI; //could be empty of amount == 0
 	}
 	
 	public List<POI> getAllPOI(){
