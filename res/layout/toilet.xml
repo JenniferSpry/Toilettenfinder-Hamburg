@@ -1,44 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
-<TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:layout_margin="10sp"
     android:padding="10sp"
-    android:shrinkColumns="*"  
-    android:stretchColumns="*"
+    android:orientation="vertical"
     android:background="@drawable/toilet_item_style" >
     
-    <!-- Row with name -->
-   <TableRow 
-        android:layout_height="wrap_content" 
-        android:layout_width="fill_parent" 
-        android:gravity="left"> 
-        <!--name -->
-	    <TextView
-	        android:id="@+id/toilet_name"
-	        android:layout_width="match_parent"
-	        android:layout_height="wrap_content"
-	        android:textStyle="bold"
-	        android:layout_span="2"
-	        android:textColor="@color/black"
-	        android:textSize="@dimen/toilet_text"
-	        android:text="Name"/>
-    </TableRow>
-    
-   <!-- Row other content -->
-    <TableRow
-        android:layout_height="wrap_content" 
-        android:layout_width="fill_parent" 
-        android:gravity="left">
-	    
-        <!-- Column left -->
-        <LinearLayout
-		    android:layout_width="wrap_content"
-		    android:layout_height="match_parent"
-		    android:gravity="left"
-		    android:orientation="vertical" >
-		    
-            <!--adress -->
+   <!--name -->
+   <TextView
+       android:id="@+id/toilet_name"
+       android:layout_width="match_parent"
+       android:layout_height="wrap_content"
+       android:textStyle="bold"
+       android:textColor="@color/black"
+       android:textSize="@dimen/toilet_text"
+       android:text="Name"/>
+   
+   <LinearLayout
+       android:layout_width="fill_parent"
+       android:layout_height="wrap_content"
+       android:orientation="horizontal"
+       android:paddingTop="5dp">
+   
+	   <LinearLayout
+	       android:layout_width="0dp"
+	       android:layout_height="wrap_content"
+	       android:layout_weight="0.8"
+	       android:orientation="vertical"
+	       android:paddingRight="5dp"
+	       android:paddingTop="5dp">
+			    
+	        <!--adress -->
 		    <TextView
 		        android:id="@+id/toilet_adress"
 		        android:layout_width="wrap_content"
@@ -47,44 +40,45 @@
 		        android:paddingBottom="5sp"
 		        android:textSize="@dimen/toilet_text"
 		        android:text="adress" />
-		
-		    <!--description -->
+		    
+		     <!--description -->
 		    <TextView
 		        android:id="@+id/toilet_description"
 		        android:layout_width="wrap_content"
 		        android:layout_height="wrap_content"
 		        android:textColor="@color/black"
 		        android:textSize="@dimen/toilet_text"
-		        android:text="description" />
+		        android:text="description" />         
 		    
-        </LinearLayout>
-        
-        <!-- Column left -->
-        <LinearLayout
-		    android:layout_width="wrap_content"
-		    android:layout_height="match_parent"
-		    android:gravity="right"
-		    android:orientation="vertical" >
-		    
-            <!--distance -->
-            <TextView
-		        android:id="@+id/distance"
-		        android:layout_width="wrap_content"
-		        android:layout_height="wrap_content"
+		</LinearLayout>
+		<LinearLayout
+	       android:layout_width="0dp"
+	       android:layout_height="wrap_content"
+	       android:layout_weight="0.2"
+	       android:orientation="vertical"
+	       android:paddingTop="5dp">  
+		
+		   <!--distance -->
+	        <TextView
+		        android:id="@+id/toilet_distance"
+		        android:layout_width="fill_parent"
+		        android:layout_height="fill_parent"
+		        android:gravity="right"
 		        android:text="300m"
+		        android:textStyle="bold"
 		        android:textColor="@color/black"
-		        android:textSize="@dimen/toilet_text" />
-            
-		    <TextView
+		        android:textSize="@dimen/toilet_text" /> 
+			    
+	       
+			<TextView
 		        android:id="@+id/icon"
-		        android:layout_width="wrap_content"
-		        android:layout_height="wrap_content"
+		        android:layout_width="fill_parent"
+		        android:layout_height="fill_parent"
+		        android:gravity="right"
 		        android:textColor="@color/black"
 		        android:textSize="@dimen/toilet_text"
 		        android:text="icon hier" />
-		    
-        </LinearLayout>    
-
-    </TableRow>  
-
-</TableLayout>
+			    
+	    </LinearLayout>
+	</LinearLayout>
+</LinearLayout >
