@@ -59,7 +59,7 @@
         
         <!--  Toilet List Test Activity -->
         <activity
-            android:name="de.bfhh.stilleoertchenhamburg.activites.ToiletTestActivity"
+            android:name="de.bfhh.stilleoertchenhamburg.activites.ActivityToiletList"
             android:label="@string/menu_test"
             android:parentActivityName="de.bfhh.stilleoertchenhamburg.activites.ActivityMap" >
             <meta-data

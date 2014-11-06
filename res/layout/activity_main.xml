@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
- 
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent" 
     android:layout_height="fill_parent">
@@ -9,32 +8,6 @@
           android:layout_width="match_parent"
           android:layout_height="match_parent"
           android:name="com.google.android.gms.maps.SupportMapFragment"/>
-    
-        <!-- <Button 
-        android:text="@string/button_text"
-        android:id="@+id/Button01"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentTop="true"/> -->
-        
-        <TextView
-        android:id="@+id/latitude"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentTop="true"
-        android:text="@string/latitude"
-        android:textAppearance="?android:attr/textAppearanceMedium" />
-        
-        <TextView
-        android:id="@+id/longitude"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignLeft="@+id/latitude"
-        android:layout_below="@+id/latitude"
-        android:text="@string/longitude"
-        android:textAppearance="?android:attr/textAppearanceMedium" />
 
         <ImageButton
             android:id="@+id/mylocation"
@@ -42,7 +15,6 @@
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:layout_alignParentRight="true"
-            android:layout_below="@+id/latitude"
             android:layout_marginRight="16dp"
             android:src="@drawable/mylocation" />
 
@@ -52,7 +24,6 @@
              android:layout_width="48dp"
              android:layout_height="48dp"
              android:layout_alignParentBottom="true"
-             android:layout_alignRight="@+id/longitude"
              android:layout_marginBottom="14dp"
              android:src="@drawable/update_button" />
     

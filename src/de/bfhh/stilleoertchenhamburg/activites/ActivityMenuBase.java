@@ -42,7 +42,7 @@ public class ActivityMenuBase extends ActionBarActivity {
 	    		startActivity(impressum);
 	            return true;
 	        case R.id.menu_test:
-	        	Intent testToiletList = new Intent(this, ToiletTestActivity.class);
+	        	Intent testToiletList = new Intent(this, ActivityToiletList.class);
 	        	testToiletList.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
 	    		startActivity(testToiletList);
 	            return true;

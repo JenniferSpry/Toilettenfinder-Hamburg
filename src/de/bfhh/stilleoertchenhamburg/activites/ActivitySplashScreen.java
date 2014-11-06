@@ -9,10 +9,9 @@ import com.google.android.gms.maps.model.LatLng;
 import de.bfhh.stilleoertchenhamburg.LocationUpdateService;
 import de.bfhh.stilleoertchenhamburg.POIUpdateService;
 import de.bfhh.stilleoertchenhamburg.R;
-import de.bfhh.stilleoertchenhamburg.helpers.JSONParser;
 
+import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.ListActivity;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -21,9 +20,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.location.Location;
-import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.IBinder;
 import android.widget.Toast;
  
@@ -39,14 +36,18 @@ import android.widget.Toast;
  * it receives a broadcast from POIUpdateService that it's done processing)
  */
 
-public class ActivitySplashScreen extends ListActivity {
+public class ActivitySplashScreen extends Activity {
 
 	private static final String TAG_LAT = "latitude";
 	private static final String TAG_LONG = "longitude";
+	private static final String TAG_RAD = "radius";
 	private static final String TAG_RESULT = "result";
 	private static final String TAG_USERLOCATION = "userLocation";
 	private static final String TAG_POIUPDATE = "POIUpdate";
 	private static final String TAG_POIUPDATE_OK = "POIUpdate_OK";
+	
+	// TODO: should be more like 1km what ever fits on our inital sceen in the map activity
+	private static final double INITIAL_RADIUS = 1d;
     
     private boolean registered;//is the receiver registered?
     
@@ -63,7 +64,7 @@ public class ActivitySplashScreen extends ListActivity {
     private double lat = 0.0;
 	private double lng = 0.0;
     
-    // BroadcastReceiver for Broadcasts from LocationUpdateService
+    // BroadcastReceiver for Broadcasts from LocationUpdateService and POIUpdateService
     private BroadcastReceiver receiver = new BroadcastReceiver() {
 
         @Override
@@ -71,6 +72,7 @@ public class ActivitySplashScreen extends ListActivity {
         	//Get Extras
         	Bundle bundle = intent.getExtras();
         	String action = intent.getAction();
+        	
         	if(action.equals(TAG_USERLOCATION)){ //action = "userLocation"
         		//Stop the Service
             	//stopLocationUpdateService();
@@ -159,6 +161,7 @@ public class ActivitySplashScreen extends ListActivity {
         //add lat and lng
         i2.putExtra(TAG_LAT, lat);
         i2.putExtra(TAG_LONG, lng);
+        i2.putExtra(TAG_RAD, INITIAL_RADIUS);
         i2.putExtra(TAG_RESULT, resultCode);
         startService(i2);
     }
@@ -213,15 +216,13 @@ public class ActivitySplashScreen extends ListActivity {
         //registerReceiver(receiver, new IntentFilter(LocationUpdateService.USERACTION));
         registered = true; //shows that a receiver is registered
         
-        
         changeGPSSettings = false;
         //SOLUTION for Threading: create Asynctask in Service to handle Location stuff
         //startLocationUpdateService();  	
         //bind to it rather than starting service
         //bind LocationUpdateService
         Intent intent= new Intent(this, LocationUpdateService.class);
-        bindService(intent, mConnection,
-            Context.BIND_AUTO_CREATE);
+        bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
         //set locServiceRegistered to true
         locServiceRegistered = true;
     }

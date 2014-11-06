@@ -1,7 +1,5 @@
 package de.bfhh.stilleoertchenhamburg;
 
-import de.bfhh.stilleoertchenhamburg.activites.ActivityMap;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -10,23 +8,20 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.VolleyLog;
-import com.android.volley.toolbox.JsonArrayRequest;
-
 import android.app.IntentService;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
 
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.VolleyLog;
+import com.android.volley.toolbox.JsonArrayRequest;
+
 /*
  * This class makes the JSON request to the bf-hh Server and 
- * fills an ArrayList (poiList) with the results of this request.
- * It also starts the Main Activity, passing the poiList and the current user
- * position (received from SplashScreen) on to it.
- * 
+ * fills an ArrayList (poiList) with the results of this request. 
  */
 
 public class POIUpdateService extends IntentService{
@@ -37,6 +32,7 @@ public class POIUpdateService extends IntentService{
 	public static final String DESCR = "description";
 	public static final String LNG = "longitude"; //user's lat and long
 	public static final String LAT = "latitude";
+	public static final String RAD = "radius";
 	public static final String RESULT = "result";
 	
 	public static final String POIACTION = "POIUpdate";
@@ -58,9 +54,10 @@ public class POIUpdateService extends IntentService{
 			int result = bundle.getInt(RESULT);
 			double userLat = bundle.getDouble(LAT);
 			double userLng = bundle.getDouble(LNG);
+			double userRadius = bundle.getDouble(RAD);
 			if(action.equals("POIUpdate")){
 				//request JSON Array and add results to ArrayList, then send Broadcast with ArrayList
-				makeJsonArrayRequest(result, userLat, userLng);
+				makeJsonArrayRequest(result, userLat, userLng, userRadius);
 			}
 		}
 	}
@@ -85,11 +82,12 @@ public class POIUpdateService extends IntentService{
   	  	sendBroadcast(i2); 	  	
 	}
 	
-	private void makeJsonArrayRequest(final int result, final double userLat, final double userLng) {
+	private void makeJsonArrayRequest(final int result, final double userLat, final double userLng, final double userRadius) {
 		
 		String url = AppController.getInstance().getStoresURL(
 				String.valueOf(userLat), 
-				String.valueOf(userLng), "70");
+				String.valueOf(userLng),
+				String.valueOf(userRadius));
 		
 		JsonArrayRequest req = new JsonArrayRequest(url,
 			new Response.Listener<JSONArray>() {

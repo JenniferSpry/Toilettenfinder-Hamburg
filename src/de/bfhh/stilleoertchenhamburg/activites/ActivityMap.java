@@ -1,6 +1,5 @@
 package de.bfhh.stilleoertchenhamburg.activites;
 
-import java.security.Provider;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -21,21 +20,16 @@ import de.bfhh.stilleoertchenhamburg.LocationUpdateService;
 import de.bfhh.stilleoertchenhamburg.POIController;
 import de.bfhh.stilleoertchenhamburg.POIUpdateService;
 import de.bfhh.stilleoertchenhamburg.R;
-import de.bfhh.stilleoertchenhamburg.R.drawable;
-import de.bfhh.stilleoertchenhamburg.R.id;
-import de.bfhh.stilleoertchenhamburg.R.layout;
 import de.bfhh.stilleoertchenhamburg.models.POI;
 
 import android.util.Log;
 import android.view.View;
 import android.view.ViewTreeObserver.OnGlobalLayoutListener;
 import android.widget.ImageButton;
-import android.widget.TextView;
 import android.widget.Toast;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.Fragment;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -44,8 +38,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.location.Location;
-import android.location.LocationListener;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -54,20 +46,16 @@ import android.provider.Settings;
 
 
 /*
- * This activity is started by POIUpdateService after the IntentService 
+ * This activity is started by the ActivitySpashScreen after the IntentService 
  * has finished its task of retrieving a list of POI from the bf-hh server via JSON.
  * This list is also sent to this activity via the starting Intent, as well as
  * the user's current position (retrieved by LocationUpdateService).
- * 
- * 
  */
 
 public class ActivityMap extends ActivityMenuBase {
 
     private static GoogleMap mMap;
     private static Location userLocation;
-    private TextView latitude;
-    private TextView longitude;
     
     private static final String BUNDLE_POILIST = "com.bfhh.stilleoertchenhamburg.BUNDLE_POILIST";
     private static final String BUNDLE_LATITUDE = "com.bfhh.stilleoertchenhamburg.BUNDLE_LATITUDE";
@@ -91,6 +79,7 @@ public class ActivityMap extends ActivityMenuBase {
 	
 	private static double userLat;
 	private static double userLng;
+	private static double userRadius;
 	
 	private LatLngBounds.Builder builder;
 	private POIReceiver poiReceiver;
@@ -200,8 +189,6 @@ public class ActivityMap extends ActivityMenuBase {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        latitude = (TextView) findViewById(R.id.latitude);
-        longitude = (TextView) findViewById(R.id.longitude);
         //Button that will animate camera back to user position
         myLocationButton = (ImageButton) findViewById(R.id.mylocation);
         updatePOIButton = (ImageButton) findViewById(R.id.poiupdate);
@@ -235,7 +222,7 @@ public class ActivityMap extends ActivityMenuBase {
             userLng = savedInstanceState.getDouble(BUNDLE_LONGITUDE);
             setUserLocation(userLat, userLng);
             toiletList = (ArrayList<HashMap<String, String>>) savedInstanceState.getSerializable(BUNDLE_POILIST);
-        }else{ //activity was started from scratch
+        } else { //activity was started from scratch
         	 Intent i = getIntent();
              Bundle bundle = i.getExtras();
              if(bundle != null){
@@ -243,6 +230,7 @@ public class ActivityMap extends ActivityMenuBase {
              		//set user Position
              		userLat = bundle.getDouble("latitude");
              		userLng = bundle.getDouble("longitude");
+             		userRadius = bundle.getDouble("radius");
                  	setUserLocation(userLat, userLng);
              	}
              	//if the location is the standard location, show settings dialog
@@ -250,10 +238,8 @@ public class ActivityMap extends ActivityMenuBase {
              		buildAlertMessageGPSSettings();
              	}
              	
-             	
                 int result = bundle.getInt("result");
                 if(result == Activity.RESULT_CANCELED){
-                	
                 	Log.d("MainActivity:", "Activity.RESULT_CANCELED: standard lat and lng");
                 }
                 //get the toiletList
@@ -304,7 +290,7 @@ public class ActivityMap extends ActivityMenuBase {
             }
         });
 		
-		//TODO: put the settings action check somwhere else (LocationUpdateService)
+		//TODO: put the settings action check somewhere else (LocationUpdateService)
 		if (userLocation == null) {
 			//mylistener.onLocationChanged(userLocation);
 			// leads to the settings because there is no last known location
@@ -456,7 +442,7 @@ public class ActivityMap extends ActivityMenuBase {
 		//get a list of all POI
 		if(poiController != null){
 			allPOI = poiController.getAllPOI();
-			if(allPOI != null && mapBounds != null){
+			if(allPOI != null && !allPOI.isEmpty() && mapBounds != null){
 				containedPOI = new ArrayList<POI>();
 				//check all of the POI as to whether they're in the LatLngBounds
 				for(int i = 0; i < allPOI.size(); i++){

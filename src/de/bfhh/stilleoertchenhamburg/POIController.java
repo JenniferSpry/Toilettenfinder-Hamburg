@@ -118,7 +118,7 @@ public class POIController {
 	            return  p1.getDistanceToUserInt() - p2.getDistanceToUserInt(); // Ascending
 	        }
 	    });
-		if(amount > 0){
+		if(amount > 0 && !poiList.isEmpty()){
 			for(int i = 0; i < amount; i++){ //add ten closes points to other List
 				closestPOI.add(poiList.get(i));
 			}	

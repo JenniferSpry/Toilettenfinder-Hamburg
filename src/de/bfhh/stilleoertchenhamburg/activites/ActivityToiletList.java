@@ -9,7 +9,7 @@ import android.os.Bundle;
  *
  */
 
-public class ToiletTestActivity extends ActivityMenuBase {
+public class ActivityToiletList extends ActivityMenuBase {
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {

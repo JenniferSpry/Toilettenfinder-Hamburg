@@ -1,10 +1,5 @@
 package de.bfhh.stilleoertchenhamburg.helpers;
 
-/**
- * http://khurramitdeveloper.blogspot.de/2013/07/properties-file-in-android.html
- */
-
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
@@ -13,6 +8,9 @@ import android.content.Context;
 import android.content.res.AssetManager;
 import android.util.Log;
 
+/**
+ * Helps reading text files containing properties such as the URLs of the REST-API
+ */
 public class AssetsPropertyReader {
 	private Context context;
 	private Properties properties;

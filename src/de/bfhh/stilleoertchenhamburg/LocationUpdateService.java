@@ -6,9 +6,7 @@ import org.json.JSONArray;
 import com.google.android.gms.maps.model.LatLng;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.app.Service;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.location.Location;
 import android.location.LocationListener;
@@ -17,7 +15,6 @@ import android.os.AsyncTask;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.provider.Settings;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -54,7 +51,7 @@ public class LocationUpdateService extends Service {
 		super();
 	}
 	
-	protected Location getLastKnownLocation() {   
+	protected Location getLastKnownLocation() {
 		//get list of enabled providers
 	    List<String> providers = mlocationManager.getProviders(true);
 	    Location bestLocation = null;
@@ -99,14 +96,14 @@ public class LocationUpdateService extends Service {
 	}
 	
 	public void updateLocation(){
-		// In this method the 
+		// In this method the ... yes? ^_^
 		//String action = intent.getStringExtra(USERACTION); //@TODO: add action static string in activities
 		//if(action.equals("userLocation")){//a user's location update was requested from an activity
 		//instantiate LocationManager object
 		mlocationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
 		//instantiate LocationUpdateListener
 		locUpdListener = new LocationUpdateListener();
-		//register for location Updates every 20 seconds, minimum distance change: 3 meters
+		//register for location Updates every 20 seconds, minimum distance change: 10 meters
 		mlocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 20000,  10.0f, locUpdListener);
 		mlocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 20000, 10.0f, locUpdListener);
 		//call getLastKnownLocation() from within an AsyncTask and
