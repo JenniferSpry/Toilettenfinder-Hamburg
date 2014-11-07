@@ -64,6 +64,7 @@ public class ActivityMap extends ActivityMenuBase {
     private static POIController poiController; //class that handles Broadcast, methods return List<POI>
     
     private ImageButton myLocationButton; //Button to get back to current user location on map
+    // TODO remove button and functionality
     private ImageButton updatePOIButton; //Button that will update visible POI depending on map center LatLng
     
     final private LatLng HAMBURG = new LatLng(53.558, 9.927); //standard position in HH
@@ -73,13 +74,12 @@ public class ActivityMap extends ActivityMenuBase {
 	private static ArrayList<MarkerOptions> markerList;
 	private static HashMap<Integer, Marker> visiblePOI;
 	private LatLngBounds mapBounds; //bounds of visible map, updated onCameraChange
-	private List<LatLng> cornersLatLng; // contains two LatLng decribing northeastern and southwestern points on visible map
+	//private List<LatLng> cornersLatLng; // contains two LatLng decribing northeastern and southwestern points on visible map
 	
 	private ArrayList<String> keyNames;
 	
 	private static double userLat;
 	private static double userLng;
-	private static double userRadius;
 	
 	private LatLngBounds.Builder builder;
 	private POIReceiver poiReceiver;
@@ -184,7 +184,6 @@ public class ActivityMap extends ActivityMenuBase {
     }
     
     
-    
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -230,7 +229,6 @@ public class ActivityMap extends ActivityMenuBase {
              		//set user Position
              		userLat = bundle.getDouble("latitude");
              		userLng = bundle.getDouble("longitude");
-             		userRadius = bundle.getDouble("radius");
                  	setUserLocation(userLat, userLng);
              	}
              	//if the location is the standard location, show settings dialog
@@ -251,12 +249,11 @@ public class ActivityMap extends ActivityMenuBase {
         	setPOIController(new POIController(toiletList));
         }else{
         	Log.d("MainActivity.oncreate():", "toiletList is null");
-        	
         }
         //set up Google Map with current user position
         setUpMapIfNeeded();
         
-        setPeeerOnMap();
+        setPeeerOnMap();//needed????
         
         //set/update map markers
         updateClosestXMarkers(poiController, userLat, userLng, 10);
@@ -274,7 +271,7 @@ public class ActivityMap extends ActivityMenuBase {
                 	mMap.setOnCameraChangeListener(null);
                 	//get LatLngBounds of current camera position
                 	mapBounds = mMap.getProjection().getVisibleRegion().latLngBounds;
-                    setLatLngCornersFromBounds(mapBounds);
+                    //setLatLngCornersFromBounds(mapBounds);
             	}
             }			
         });
@@ -338,7 +335,7 @@ public class ActivityMap extends ActivityMenuBase {
         super.onSaveInstanceState(savedInstanceState);
     }
     
-    //send lat,lng to poiController
+    //set user marker and closest POI markers on map
     public static void updateUserAndPOIOnMap(double lat, double lng) {
 		// update Markers first
     	updateClosestXMarkers(poiController, lat, lng, 10);
@@ -417,11 +414,11 @@ public class ActivityMap extends ActivityMenuBase {
     
     //called every time onCameraChange -> NEEDED?
     private void setLatLngCornersFromBounds(LatLngBounds bounds) {
-    	cornersLatLng = new ArrayList<LatLng>();
-		// add northeastern corner
-    	cornersLatLng.add(bounds.northeast);
-    	//add southwestern corner
-    	cornersLatLng.add(bounds.southwest);	
+//    	cornersLatLng = new ArrayList<LatLng>();
+//		// add northeastern corner
+//    	cornersLatLng.add(bounds.northeast);
+//    	//add southwestern corner
+//    	cornersLatLng.add(bounds.southwest);	
 	}
     
     //returns Location representing center of displayed map or NULL
@@ -433,27 +430,6 @@ public class ActivityMap extends ActivityMenuBase {
 			Log.d("ActivityMap getMapCenter()", "mapBounds is null");
 		}
 		return mapCenter; //may be null
-    }
-    
-    //List of POI that are contained within the LatLngBounds of the map or NULL
-    private List<POI> getClosestPOI(){
-		List<POI> containedPOI = null;
-		List<POI> allPOI = null;
-		//get a list of all POI
-		if(poiController != null){
-			allPOI = poiController.getAllPOI();
-			if(allPOI != null && !allPOI.isEmpty() && mapBounds != null){
-				containedPOI = new ArrayList<POI>();
-				//check all of the POI as to whether they're in the LatLngBounds
-				for(int i = 0; i < allPOI.size(); i++){
-					//if the POI's LatLng lies within the bounds, add it to containedPOI
-					if(mapBounds.contains(allPOI.get(i).getLatLng())){
-						containedPOI.add(allPOI.get(i));
-					}
-				}
-			}
-		}
-		return containedPOI;// may be null
     }
     
     //List of POI that are contained within the LatLngBounds of the map or NULL
@@ -667,7 +643,6 @@ public class ActivityMap extends ActivityMenuBase {
     // Update closest X markers on the map
     private static void updateClosestXMarkers(POIController poiController, double currLat, double currLng, int x){
     	List<POI> closestX = new ArrayList<POI>(); //list with closest ten POI to user position
-    	List<POI> allPOI = new ArrayList<POI>();
     	markerList = new ArrayList<MarkerOptions>(); //markers for those POI
     	//check whether the broadcast was received
     	if(poiController != null ){
@@ -676,8 +651,6 @@ public class ActivityMap extends ActivityMenuBase {
 	        	poiController.setDistancePOIToUser(currLat, currLng);
 	        	//get closest ten POI
 	        	closestX = poiController.getClosestPOI(x); // get ten closest toilets
-	        	//get all POI
-	        	allPOI = poiController.getAllPOI();
 	        	if(mMap != null){
 	        		//add markers to the map  for the ten closest POI
 		        	for(int i = 0; i < closestX.size(); i++){

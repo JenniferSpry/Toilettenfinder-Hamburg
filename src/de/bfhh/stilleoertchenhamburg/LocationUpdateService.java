@@ -36,16 +36,16 @@ public class LocationUpdateService extends Service {
 	public static final String PROVIDER = "provider";
 	
 	private LocationManager mlocationManager;
-	
-	final private LatLng HAMBURG = new LatLng(53.558, 9.927);
-	private Location userLocation;
-		
-	JSONArray toilets = null;// products JSONArray
-
 	private LocationUpdateListener locUpdListener; 
+	private Location userLocation;
+	
+	//TODO: export to config file
+	final private LatLng HAMBURG = new LatLng(53.558, 9.927);
+		
+	JSONArray toilets = null;// POI JSONArray
 	
 	//Binder to bind activities to this service
-	 private final IBinder mBinder = new ServiceBinder();
+	private final IBinder mBinder = new ServiceBinder();
 	
 	public LocationUpdateService(){
 		super();
@@ -56,10 +56,7 @@ public class LocationUpdateService extends Service {
 	    List<String> providers = mlocationManager.getProviders(true);
 	    Location bestLocation = null;
 	    //check whether providers list is empty
-	    if(providers.isEmpty()){
-	    	//show gps dialog if there are no providers
-	    	//buildAlertMessageGPSSettings();
-	    }else{
+	    if(!providers.isEmpty()){
 	    	for (String provider : providers) {
 		        Location l = mlocationManager.getLastKnownLocation(provider);
 		        if (l == null) {
@@ -74,34 +71,10 @@ public class LocationUpdateService extends Service {
 	    return bestLocation;
 	}
 	
-	//not needed when binding to service
-	@Override
-	public int onStartCommand(Intent intent, int flags, int startId){
-		// In this method the 
-		String action = intent.getStringExtra(USERACTION); //@TODO: add action static string in activities
-		if(action.equals("userLocation")){//a user's location update was requested from an activity
-			//instantiate LocationManager object
-			mlocationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-			//instantiate LocationUpdateListener
-			locUpdListener = new LocationUpdateListener();
-			//register for location Updates every 20 seconds, minimum distance change: 3 meters
-			mlocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 20000,  3.0f, locUpdListener);
-			mlocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 20000, 3.0f, locUpdListener);
-			//call getLastKnownLocation() from within an AsyncTask and
-			//publish results once location is received
-			new LocationUpdateTask().execute();
-									
-		}//other action for location update maybe?			
-		return super.onStartCommand(intent, flags, startId);
-	}
 	
 	public void updateLocation(){
-		// In this method the ... yes? ^_^
-		//String action = intent.getStringExtra(USERACTION); //@TODO: add action static string in activities
-		//if(action.equals("userLocation")){//a user's location update was requested from an activity
-		//instantiate LocationManager object
+		// Starting point for this Service
 		mlocationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-		//instantiate LocationUpdateListener
 		locUpdListener = new LocationUpdateListener();
 		//register for location Updates every 20 seconds, minimum distance change: 10 meters
 		mlocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 20000,  10.0f, locUpdListener);
@@ -114,18 +87,14 @@ public class LocationUpdateService extends Service {
 	//broadcast user location
 	protected void publishUserLocation(int result, Location userLocation){
 		if(userLocation != null){//you can never check enough!
-			//Send Broadcast back to ActivitySplashScreen
+			//Send Broadcast to activities
 			Intent intent = new Intent(USERACTION);
 			//location and result based on whether user location received or not
 			intent.putExtra(LAT, userLocation.getLatitude());
 			intent.putExtra(LNG, userLocation.getLongitude());				
 			intent.putExtra(RESULT, result);
 			sendBroadcast(intent);
-	  	  }//what else?? :)
-	}
-	
-	private Location returnUserLocation(int result, Location userLocation){
-		return userLocation;
+	  	  }
 	}
 	
 	private void setCurrentUserLocation(Location loc){
@@ -153,7 +122,8 @@ public class LocationUpdateService extends Service {
 	public void onDestroy() {
 	    super.onDestroy();
 	    Log.e(TAG, "in onDestroy in LocationService class");
-	    //mlocManager.removeUpdates(mlocListener);
+	    
+	    //TODO: unregister from location updates by providers
 	    stopSelf();
 	}
 	
@@ -183,10 +153,8 @@ public class LocationUpdateService extends Service {
 	        	setCurrentUserLocation(currentLocation);
 	        	
 				result = Activity.RESULT_OK;
-				publishUserLocation(result, currentLocation); //send an intent broadcast with the current location
+				publishUserLocation(result, currentLocation);
 			} else { //if the location is null, set location to standard and publish as RESULT_CANCELLED					
-				//show gps dialog if there are providers, but we didn't receive location from them
-				//buildAlertMessageGPSSettings();
 				
 				Location standardLocation = new Location("");
 				standardLocation.setLatitude(HAMBURG.latitude);
@@ -196,11 +164,7 @@ public class LocationUpdateService extends Service {
 	        	setCurrentUserLocation(standardLocation);
 				
 				result = Activity.RESULT_CANCELED;
-				publishUserLocation(result, standardLocation); //send an intent broadcast with standard location
-				
-				//TODO: show dialogue in which user is asked to change gps settings
-				//Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-				//startActivity(intent);
+				publishUserLocation(result, standardLocation);
 			}
         	//Toast that location was received
         	Toast.makeText(getApplicationContext(),
@@ -310,7 +274,6 @@ public class LocationUpdateService extends Service {
 		  }
 		  
 		  //TODO: Check here, whether providers are being disabled while the app
-		  // is running -> Dialogue to open settings
     }
 }
 

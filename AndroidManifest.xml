@@ -53,14 +53,13 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
-                <!--  <action android:name="POIUpdate_OK" />-->
             </intent-filter>
         </activity>
         
-        <!--  Toilet List Test Activity -->
+        <!--  Toilet List Activity -->
         <activity
             android:name="de.bfhh.stilleoertchenhamburg.activites.ActivityToiletList"
-            android:label="@string/menu_test"
+            android:label="@string/menu_toi_list"
             android:parentActivityName="de.bfhh.stilleoertchenhamburg.activites.ActivityMap" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"

@@ -4,9 +4,9 @@
     tools:context="de.bfhh.stilleoertchenhamburg.MainActivity" >
 
     <item
-        android:id="@+id/menu_start"
+        android:id="@+id/menu_map"
         android:orderInCategory="100"
-        android:title="@string/menu_start"
+        android:title="@string/menu_map"
         app:showAsAction="never"/>
     
     <item
@@ -15,9 +15,9 @@
         app:showAsAction="never"/>
     
     <item
-        android:id="@+id/menu_test"
+        android:id="@+id/menu_toi_list"
         android:orderInCategory="100"
-        android:title="@string/menu_test"
+        android:title="@string/menu_toi_list"
         app:showAsAction="never"/>
 
 </menu>

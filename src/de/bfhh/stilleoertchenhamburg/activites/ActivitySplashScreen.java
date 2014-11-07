@@ -4,18 +4,14 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import com.google.android.gms.maps.model.LatLng;
-
 import de.bfhh.stilleoertchenhamburg.LocationUpdateService;
 import de.bfhh.stilleoertchenhamburg.POIUpdateService;
 import de.bfhh.stilleoertchenhamburg.R;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
@@ -38,32 +34,46 @@ import android.widget.Toast;
 
 public class ActivitySplashScreen extends Activity {
 
+	// TODO: add package names and outsource to other file 
 	private static final String TAG_LAT = "latitude";
 	private static final String TAG_LONG = "longitude";
-	private static final String TAG_RAD = "radius";
 	private static final String TAG_RESULT = "result";
 	private static final String TAG_USERLOCATION = "userLocation";
 	private static final String TAG_POIUPDATE = "POIUpdate";
 	private static final String TAG_POIUPDATE_OK = "POIUpdate_OK";
-	
-	// TODO: should be more like 1km what ever fits on our inital sceen in the map activity
-	private static final double INITIAL_RADIUS = 1d;
     
-    private boolean registered;//is the receiver registered?
+    private boolean isReceiverRegistered;//is the receiver registered?
     
-    private boolean locServiceRegistered;
+    private boolean locServiceBound;
     
     private IntentFilter filter;
     
-    final private LatLng HAMBURG = new LatLng(53.558, 9.927);
-    
     private LocationUpdateService service;
-    
-    private boolean changeGPSSettings;
     
     private double lat = 0.0;
 	private double lng = 0.0;
     
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_splash);
+        
+        // Set reciever to listen to actions from both services
+        filter = new IntentFilter(LocationUpdateService.USERACTION);
+    	filter.addAction(POIUpdateService.POIACTION_OK);
+    	registerReceiver(receiver, filter);
+        isReceiverRegistered = true; //shows that a receiver is registered
+        
+        //SOLUTION for Threading: create Asynctask in Service to handle Location stuff	
+        //bind to it rather than starting service
+        Intent intent= new Intent(this, LocationUpdateService.class);
+        bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+        //set locServiceRegistered to true
+        locServiceBound = true;
+    }
+    
+	
     // BroadcastReceiver for Broadcasts from LocationUpdateService and POIUpdateService
     private BroadcastReceiver receiver = new BroadcastReceiver() {
 
@@ -74,28 +84,18 @@ public class ActivitySplashScreen extends Activity {
         	String action = intent.getAction();
         	
         	if(action.equals(TAG_USERLOCATION)){ //action = "userLocation"
-        		//Stop the Service
-            	//stopLocationUpdateService();
         		if (bundle != null) {
 		        	//Get resultCode, latitude and longitude sent from LocationUpdateService
 		            lat = bundle.getDouble(LocationUpdateService.LAT);
 		            lng = bundle.getDouble(LocationUpdateService.LNG);
 		            int resultCode = bundle.getInt(LocationUpdateService.RESULT);
 		            //lat, lng and resultcode received successfully
-		            if (resultCode == RESULT_OK && lat != HAMBURG.latitude && lng != HAMBURG.longitude) {
-			              //Start POIUpdateService with user location 
-			              //received from LocationUpdateService
-			              startPOIUpdateService(resultCode, lat, lng);
-			              
-		            } else { //if RESULT_CANCELLED or lat and long are standard location then no location was received from locationManager in LocationUpdateService
+		            if (resultCode == RESULT_CANCELED) {
+		            	//if RESULT_CANCELLED or lat and long are standard location then no location was received from locationManager in LocationUpdateService
 		            	  Toast.makeText(ActivitySplashScreen.this, "Last user location not received. Standard Location is set",
-		            		  Toast.LENGTH_LONG).show();
-		            	  if(changeGPSSettings == false){
-		            		 // buildAlertMessageGPSSettings();
-		            	  }
-		            	  //start with Hamburg standard location
-		            	  startPOIUpdateService(resultCode, lat, lng);
-		            }
+		            		  Toast.LENGTH_LONG).show();    
+		            } 
+		            startPOIUpdateService(resultCode, lat, lng);
 	          }
            } else if(action.equals(TAG_POIUPDATE_OK)){//POIUpdateService is finished
         	   //terminate this activity
@@ -114,34 +114,7 @@ public class ActivitySplashScreen extends Activity {
            }
         }
     };
-    
-	DialogInterface.OnClickListener onOkListener = new DialogInterface.OnClickListener() {
-        public void onClick(final DialogInterface dialog, final int id) {
-            startActivity(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
-            changeGPSSettings = true;
-            startPOIUpdateService(0, lat, lng);
-        }
-    };
-    
-    DialogInterface.OnClickListener onCancelListener = new DialogInterface.OnClickListener() {
-        public void onClick(final DialogInterface dialog, final int id) {
-            //startActivity(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
-            changeGPSSettings = true;
-            startPOIUpdateService(0, lat, lng); //start Service with standard location which is already set
-        }
-    };
-    
-	//show alert dialog with option to change gps settings
-	private void buildAlertMessageGPSSettings() {
-	    final AlertDialog.Builder builder = new AlertDialog.Builder(ActivitySplashScreen.this);
-	    builder.setMessage("Your GPS seems to be disabled, do you want to enable it?")
-	           .setCancelable(false)
-	           .setPositiveButton("Yes", onOkListener)
-	           .setNegativeButton("No", onCancelListener);
-	    final AlertDialog alert = builder.create();
-	    alert.show();
-	}
-    
+
 	private void startMapActivity(double userLat, double userLng, ArrayList<HashMap<String,String>> poiList, int result){
 		Intent i = new Intent(this, ActivityMap.class);
         i.putExtra("poiList",(Serializable) poiList);
@@ -155,33 +128,16 @@ public class ActivitySplashScreen extends Activity {
     
     //start POIUpdateService with Intent to get list of POI
     private void startPOIUpdateService(int resultCode, double lat, double lng){
-     	Intent i2 = new Intent(ActivitySplashScreen.this, POIUpdateService.class);
+     	Intent i2 = new Intent(this, POIUpdateService.class);
         // add action			     	
         i2.putExtra(POIUpdateService.POIACTION, TAG_POIUPDATE);
         //add lat and lng
         i2.putExtra(TAG_LAT, lat);
         i2.putExtra(TAG_LONG, lng);
-        i2.putExtra(TAG_RAD, INITIAL_RADIUS);
         i2.putExtra(TAG_RESULT, resultCode);
         startService(i2);
     }
     
-    //Start LocationUpdateService with Intent to get user's current position
-    private void startLocationUpdateService(){	
-     	Intent i1 = new Intent(getApplicationContext(), LocationUpdateService.class);
-     	// Add appropriate action
-        i1.putExtra(LocationUpdateService.USERACTION, TAG_USERLOCATION);
-        startService(i1);
-    }
-    
-    //Stop LocationUpdateService using same Intent it was started with
-    private void stopLocationUpdateService(){
-	    Intent i1 = new Intent(getApplicationContext(), LocationUpdateService.class);
-	    // add action
-	    i1.putExtra(LocationUpdateService.USERACTION, TAG_USERLOCATION);
-	    stopService(i1);
-      	
-    }
     
     //handles what happens when this activity binds to LocationUpdateService
     private ServiceConnection mConnection = new ServiceConnection() {
@@ -199,34 +155,12 @@ public class ActivitySplashScreen extends Activity {
         }
 
         public void onServiceDisconnected(ComponentName className) {
-        service = null;
-          Toast.makeText(ActivitySplashScreen.this, "LocService Disconnected", Toast.LENGTH_SHORT)
-          .show();
+        	service = null;
+          	Toast.makeText(ActivitySplashScreen.this, "LocService Disconnected", Toast.LENGTH_SHORT)
+          		.show();
         }
     };
  
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_splash);
-        
-        filter = new IntentFilter(LocationUpdateService.USERACTION);
-    	filter.addAction(POIUpdateService.POIACTION_OK);
-    	registerReceiver(receiver, filter);
-        //registerReceiver(receiver, new IntentFilter(LocationUpdateService.USERACTION));
-        registered = true; //shows that a receiver is registered
-        
-        changeGPSSettings = false;
-        //SOLUTION for Threading: create Asynctask in Service to handle Location stuff
-        //startLocationUpdateService();  	
-        //bind to it rather than starting service
-        //bind LocationUpdateService
-        Intent intent= new Intent(this, LocationUpdateService.class);
-        bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
-        //set locServiceRegistered to true
-        locServiceRegistered = true;
-    }
-    
     /*
     @Override
     protected void onStart(){
@@ -241,43 +175,42 @@ public class ActivitySplashScreen extends Activity {
     @Override
     protected void onResume(){
     	super.onResume();
-    	if(!registered){
+    	if(!isReceiverRegistered){
     		registerReceiver(receiver, filter);
-    		registered = true;
+    		isReceiverRegistered = true;
     	}
-    	if(!locServiceRegistered){
+    	if(!locServiceBound){
     		 //bind to service rather than starting it
             Intent intent= new Intent(this, LocationUpdateService.class);
-            //intent.putExtra(LocationUpdateService.USERACTION, TAG_USERLOCATION);
             bindService(intent, mConnection,
                 Context.BIND_AUTO_CREATE);
-            locServiceRegistered = true;
+            locServiceBound = true;
     	}
     }
     
     @Override
     protected void onPause() {
     	super.onPause();
-    	if(registered){
+    	if(isReceiverRegistered){
     	  	unregisterReceiver(receiver);
-    	  	registered = false;
+    	  	isReceiverRegistered = false;
       	}
-    	if(locServiceRegistered){
+    	if(locServiceBound){
     		unbindService(mConnection);
-    		locServiceRegistered = false;
+    		locServiceBound = false;
     	}
     }
     
     @Override
 	protected void onDestroy(){
     	super.onDestroy();
-    	if(registered){
+    	if(isReceiverRegistered){
     	  	unregisterReceiver(receiver);
-    	  	registered = false;
+    	  	isReceiverRegistered = false;
       	}
-    	if(locServiceRegistered){
+    	if(locServiceBound){
     		unbindService(mConnection);
-    		locServiceRegistered = false;
+    		locServiceBound = false;
     	}
     }
 }

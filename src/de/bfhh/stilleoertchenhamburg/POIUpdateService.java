@@ -57,7 +57,7 @@ public class POIUpdateService extends IntentService{
 			double userRadius = bundle.getDouble(RAD);
 			if(action.equals("POIUpdate")){
 				//request JSON Array and add results to ArrayList, then send Broadcast with ArrayList
-				makeJsonArrayRequest(result, userLat, userLng, userRadius);
+				makeJsonArrayRequest(result, userLat, userLng);
 			}
 		}
 	}
@@ -82,12 +82,12 @@ public class POIUpdateService extends IntentService{
   	  	sendBroadcast(i2); 	  	
 	}
 	
-	private void makeJsonArrayRequest(final int result, final double userLat, final double userLng, final double userRadius) {
+	private void makeJsonArrayRequest(final int result, final double userLat, final double userLng) {
 		
 		String url = AppController.getInstance().getStoresURL(
 				String.valueOf(userLat), 
 				String.valueOf(userLng),
-				String.valueOf(userRadius));
+				"70");
 		
 		JsonArrayRequest req = new JsonArrayRequest(url,
 			new Response.Listener<JSONArray>() {
