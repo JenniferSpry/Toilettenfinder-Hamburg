@@ -77,8 +77,8 @@ public class LocationUpdateService extends Service {
 		mlocationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
 		locUpdListener = new LocationUpdateListener();
 		//register for location Updates every 20 seconds, minimum distance change: 10 meters
-		mlocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 5000,  1.0f, locUpdListener);
-		mlocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 1.0f, locUpdListener);
+		mlocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 20000,  5.0f, locUpdListener);
+		mlocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 20000, 5.0f, locUpdListener);
 		//call getLastKnownLocation() from within an AsyncTask and
 		//publish results once location is received
 		new LocationUpdateTask().execute();							
@@ -94,7 +94,7 @@ public class LocationUpdateService extends Service {
 			intent.putExtra(LNG, userLocation.getLongitude());				
 			intent.putExtra(RESULT, result);
 			sendBroadcast(intent);
-	  	  }
+	  	}
 	}
 	
 	private void setCurrentUserLocation(Location loc){
@@ -114,7 +114,7 @@ public class LocationUpdateService extends Service {
 	//inner class Binder, so that Activities can bind to this service
 	public class ServiceBinder extends Binder {
 	    public LocationUpdateService getLocService() { 
-	      return LocationUpdateService.this;//return service to bind to
+	    	return LocationUpdateService.this;//return service to bind to
 	    }
 	}
 
@@ -122,9 +122,12 @@ public class LocationUpdateService extends Service {
 	public void onDestroy() {
 	    super.onDestroy();
 	    Log.e(TAG, "in onDestroy in LocationService class");
-	    
-	    //TODO: unregister from location updates by providers
+	    //unregister from location updates 
+	    /*if(locUpdListener != null){
+	    	mlocationManager.removeUpdates(locUpdListener);
+	    }*/
 	    stopSelf();
+	    
 	}
 	
 	/*

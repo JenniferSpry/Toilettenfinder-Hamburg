@@ -166,32 +166,22 @@ public class ActivityMap extends ActivityMenuBase {
             		nLocation.setLongitude(lng);
             		//to call non static methods we need instance of ActivityMap
             		instance = getInstance();
-            		//Needed: Distance from Location map center to Location NorthEasteCorner
+            		standardLocation = AppController.getInstance().getStandardLocation();
+            		
             		if(lat == standardLocation.getLatitude() && lng == standardLocation.getLongitude()){
 						instance.buildAlertMessageGPSSettings();	
-                 	}else if(userLocation.distanceTo(nLocation) > 10.0 ){
+                 	}//TODO: Testing
+            		// if the old userLocation is same as standardLocation and distance to newly received location is greater 10m -> move camera
+            		else if(userLocation == standardLocation && userLocation.distanceTo(nLocation) > 10.0 ){
                  		instance.moveToLocation(nLocation, 10);
                  	}
-            		userLat = lat;
-            		userLng = lng;
-            		standardLocation = AppController.getInstance().getStandardLocation();
-                 	
             		setUserLocation(lat, lng );
-            		updateClosestXMarkers(poiController, userLat, userLng, 10);
-             		instance.setPeeerOnMap();
-            		
-            		
-            		//the user location has changed, so that there might be different closest ten POI, retrieve them
-            		//updateUserAndPOIOnMap(lat, lng);
+            		instance.deleteOldMarkersFromList();
+            		updateUserAndPOIOnMap(lat, lng);
+
             		if(poiController == null){
             			Log.d("ActivityMap LocUpdRec" , "poiController is null");
             		}
-            		
- 
-            		//TODO: es müssen nicht nur die marker upgedated werden, sondern
-            		//auch die kamera bewegt, sobald sich die position des users ändert.
-            		//moveToLocation(userLocation);
-            		
             		String provider = bundle.getString("provider");
             		//Toast to show updates
             		Toast.makeText(context, "Location Update from provider: " + provider + ", Location: LAT " + lat + ", LNG " + lng,
@@ -586,7 +576,6 @@ public class ActivityMap extends ActivityMenuBase {
     protected void onResume() {
         super.onResume();
         setUpMapIfNeeded();
-        //updateUserAndPOIOnMap(userLat, userLng);
         if(!poiReceiverRegistered){
     		registerReceiver(poiReceiver, new IntentFilter("toiletLocation"));
     		poiReceiverRegistered = true;
