@@ -40,7 +40,7 @@ public class LocationUpdateService extends Service {
 	private Location userLocation;
 	
 	//TODO: export to config file
-	final private LatLng HAMBURG = new LatLng(53.558, 9.927);
+	final private LatLng HAMBURG = new LatLng(53.5509517,9.9936818);
 		
 	JSONArray toilets = null;// POI JSONArray
 	
@@ -77,8 +77,8 @@ public class LocationUpdateService extends Service {
 		mlocationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
 		locUpdListener = new LocationUpdateListener();
 		//register for location Updates every 20 seconds, minimum distance change: 10 meters
-		mlocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 20000,  10.0f, locUpdListener);
-		mlocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 20000, 10.0f, locUpdListener);
+		mlocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 5000,  1.0f, locUpdListener);
+		mlocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 1.0f, locUpdListener);
 		//call getLastKnownLocation() from within an AsyncTask and
 		//publish results once location is received
 		new LocationUpdateTask().execute();							
@@ -155,16 +155,17 @@ public class LocationUpdateService extends Service {
 				result = Activity.RESULT_OK;
 				publishUserLocation(result, currentLocation);
 			} else { //if the location is null, set location to standard and publish as RESULT_CANCELLED					
+				Location standardLocation = AppController.getInstance().getStandardLocation();
+				if(standardLocation != null){
+					//set current location to standard location
+		        	setCurrentUserLocation(standardLocation);
+					
+					result = Activity.RESULT_CANCELED;
+					publishUserLocation(result, standardLocation);
+				}else{
+					throw new IllegalArgumentException("Standard Location is null");
+				}
 				
-				Location standardLocation = new Location("");
-				standardLocation.setLatitude(HAMBURG.latitude);
-				standardLocation.setLongitude(HAMBURG.longitude);
-				
-				//set current location to standard location
-	        	setCurrentUserLocation(standardLocation);
-				
-				result = Activity.RESULT_CANCELED;
-				publishUserLocation(result, standardLocation);
 			}
         	//Toast that location was received
         	Toast.makeText(getApplicationContext(),
@@ -223,8 +224,6 @@ public class LocationUpdateService extends Service {
         }
         return false;
     }
-
-
 
 	// Checks whether two providers are the same 
     private boolean isSameProvider(String provider1, String provider2) {

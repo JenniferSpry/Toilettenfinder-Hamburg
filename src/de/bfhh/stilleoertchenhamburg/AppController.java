@@ -10,6 +10,7 @@ import de.bfhh.stilleoertchenhamburg.helpers.AssetsPropertyReader;
 
 import android.app.Application;
 import android.content.Context;
+import android.location.Location;
 import android.text.TextUtils;
 
 public class AppController extends Application {
@@ -69,5 +70,18 @@ public class AppController extends Application {
                 + "&long=" + lng
                 + "&status=" + 1 //only get validated POI
                 + "&radius=" + radius;
+    }
+    
+    public Location getStandardLocation(){
+    	Location hamburg = new Location("");
+    	if (properties.getProperty("Hamburg").contains(",")) {
+    		String[] hh = properties.getProperty("Hamburg").split(",");
+        	hamburg.setLatitude(Double.valueOf(hh[0]));
+        	hamburg.setLongitude(Double.valueOf(hh[1]));
+        	return hamburg;
+    	} else {
+    	    throw new IllegalArgumentException("String " + properties.getProperty("Hamburg") + " does not contain ,");
+    	}
+    	
     }
 }

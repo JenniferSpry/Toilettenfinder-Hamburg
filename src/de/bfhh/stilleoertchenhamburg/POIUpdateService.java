@@ -141,7 +141,7 @@ public class POIUpdateService extends IntentService{
 				VolleyLog.d("Error: " + error.getMessage());
 				}
 			}) {
-//			// lets use this later to make sure our "API" only responds to this app
+//			// TODO: lets use this later to make sure our "API" only responds to this app
 //			@Override
 //            public Map<String, String> getHeaders() throws AuthFailureError {
 //                HashMap<String, String> headers = new HashMap<String, String>();
