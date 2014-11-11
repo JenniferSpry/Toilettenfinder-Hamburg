@@ -15,7 +15,7 @@ public class ActivityToiletList extends ActivityMenuBase {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.test_toilet_list);
+		setContentView(R.layout.activity_toilet_list);
 		ActionBar actionBar = getSupportActionBar();
 	    actionBar.setDisplayHomeAsUpEnabled(true);
 	}

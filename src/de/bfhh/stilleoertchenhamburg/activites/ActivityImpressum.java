@@ -11,7 +11,7 @@ public class ActivityImpressum extends ActivityMenuBase {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.impressum);
+		setContentView(R.layout.activity_impressum);
 		
 		TextView t2 = (TextView) findViewById(R.id.impressum_link);
 	    t2.setMovementMethod(LinkMovementMethod.getInstance());

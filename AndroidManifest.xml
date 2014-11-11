@@ -35,12 +35,13 @@
         android:label="@string/app_name"
         android:theme="@style/AppTheme"
         android:name="de.bfhh.stilleoertchenhamburg.AppController" >
-        <!--  <uses-library android:name="com.google.android.maps" /> -->
-        <!-- Location Service -->
+        
+s        <!-- Location Service -->
         <service 
             android:name=".LocationUpdateService" 
             android:enabled="true"
             android:exported="false" /> <!-- lets no other applications use our service -->
+            
         <!-- POI Update IntentService -->
         <service android:name=".POIUpdateService" 
             android:enabled="true"
@@ -63,30 +64,29 @@
             android:parentActivityName="de.bfhh.stilleoertchenhamburg.activites.ActivityMap" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value=".ActivityMap" />
+                android:value="de.bfhh.stilleoertchenhamburg.activites.ActivityMap" />
         </activity>
         
-        <!--  Impressum Activity -->
+        <!--  Impress Activity -->
         <activity
             android:name="de.bfhh.stilleoertchenhamburg.activites.ActivityImpressum"
             android:label="@string/menu_impressum"
             android:parentActivityName="de.bfhh.stilleoertchenhamburg.activites.ActivityMap" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value=".ActivityMap" />
+                android:value="de.bfhh.stilleoertchenhamburg.activites.ActivityMap" />
         </activity>
 
         <!-- Main Activity -->
         <activity
             android:name="de.bfhh.stilleoertchenhamburg.activites.ActivityMap"
-            android:label="@string/app_name" >
+            android:label="@string/menu_map" >
         </activity>
         
         <!-- Goolge Maps API Key -->
 		<meta-data
 		     android:name="com.google.android.maps.v2.API_KEY"
 		     android:value="AIzaSyAL6h4-NNJcuUY7d7Csm0jNxEiYd7h9oEg" />
-		<!--  From Stackoverflow http://stackoverflow.com/questions/20193272/my-google-map-v2-test-apps-crashes -->
 		<meta-data
 			android:name="com.google.android.gms.version"
 			android:value="@integer/google_play_services_version" />
