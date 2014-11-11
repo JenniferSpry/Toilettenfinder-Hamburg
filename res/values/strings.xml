@@ -6,7 +6,8 @@
     <!-- Menu names -->
     <string name="menu_map">Karte</string>
     <string name="menu_impressum">Impressum</string>
-    <string name="menu_toi_list">Liste</string>  
+    <string name="menu_toi_list">Liste</string> 
+    <string name="menu_search">Suchen</string>  
     
     <string name="latitude">Latitude</string>
     <string name="longitude">Logitude</string>

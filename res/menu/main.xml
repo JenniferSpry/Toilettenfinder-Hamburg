@@ -2,22 +2,36 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="de.bfhh.stilleoertchenhamburg.MainActivity" >
+    
+    <!-- Icons -->
+    <item
+        android:id="@+id/menu_search"
+        android:icon="@drawable/ic_action_search"
+        android:menuCategory="container"
+        android:orderInCategory="3"
+        android:title="@string/menu_search"
+        app:showAsAction="ifRoom"/>
 
     <item
         android:id="@+id/menu_map"
-        android:orderInCategory="100"
+        android:icon="@drawable/ic_action_map"
+        android:menuCategory="container"
+        android:orderInCategory="1"
         android:title="@string/menu_map"
-        app:showAsAction="never"/>
-    
-    <item
-        android:id="@+id/menu_impressum"
-        android:title="@string/menu_impressum"
-        app:showAsAction="never"/>
+        app:showAsAction="ifRoom"/>
     
     <item
         android:id="@+id/menu_toi_list"
-        android:orderInCategory="100"
+        android:icon="@drawable/ic_list"
+        android:menuCategory="container"
+        android:orderInCategory="2"
         android:title="@string/menu_toi_list"
+        app:showAsAction="ifRoom"/>
+    
+    <!-- Overflow -->
+    <item
+        android:id="@+id/menu_impressum"
+        android:title="@string/menu_impressum"
         app:showAsAction="never"/>
 
 </menu>
