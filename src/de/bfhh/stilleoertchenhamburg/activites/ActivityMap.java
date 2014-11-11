@@ -65,8 +65,6 @@ public class ActivityMap extends ActivityMenuBase {
     private static POIController poiController; //class that handles Broadcast, methods return List<POI>
     
     private ImageButton myLocationButton; //Button to get back to current user location on map
-    // TODO remove button and functionality
-    private ImageButton updatePOIButton; //Button that will update visible POI depending on map center LatLng
     
     final private LatLng HAMBURG = new LatLng(53.5509517,9.9936818); //standard position in HH
     
@@ -163,18 +161,25 @@ public class ActivityMap extends ActivityMenuBase {
             		double lng = bundle.getDouble("longitude");
             		Log.d("ActivityMap LocationUpdateReceiver", "Location received: " + lat  + ", " + lng);
             		//update the user location
+            		Location nLocation = new Location("");
+            		nLocation.setLatitude(lat);
+            		nLocation.setLongitude(lng);
+            		//to call non static methods we need instance of ActivityMap
+            		instance = getInstance();
+            		//Needed: Distance from Location map center to Location NorthEasteCorner
+            		if(lat == standardLocation.getLatitude() && lng == standardLocation.getLongitude()){
+						instance.buildAlertMessageGPSSettings();	
+                 	}else if(userLocation.distanceTo(nLocation) > 10.0 ){
+                 		instance.moveToLocation(nLocation, 10);
+                 	}
             		userLat = lat;
             		userLng = lng;
             		standardLocation = AppController.getInstance().getStandardLocation();
-                 	//to call non static methods we need instance of ActivityMap
-            		instance = getInstance();
+                 	
             		setUserLocation(lat, lng );
             		updateClosestXMarkers(poiController, userLat, userLng, 10);
              		instance.setPeeerOnMap();
-             		instance.moveToLocation(userLocation, 10);
-            		if(userLat == standardLocation.getLatitude() && userLng == standardLocation.getLongitude()){
-						instance.buildAlertMessageGPSSettings();	
-                 	}
+            		
             		
             		//the user location has changed, so that there might be different closest ten POI, retrieve them
             		//updateUserAndPOIOnMap(lat, lng);
@@ -203,7 +208,7 @@ public class ActivityMap extends ActivityMenuBase {
         setContentView(R.layout.activity_main);
         //Button that will animate camera back to user position
         myLocationButton = (ImageButton) findViewById(R.id.mylocation);
-        updatePOIButton = (ImageButton) findViewById(R.id.poiupdate);
+        
         
         //TODO: is it good to register receiver in oncreate() ??
         //Register Receiver for POI Updates
@@ -375,7 +380,8 @@ public class ActivityMap extends ActivityMenuBase {
 		// update Markers first
     	updateClosestXMarkers(poiController, lat, lng, 10);
 		//set user position TODO: method out of that
-    	personInNeedOfToilette.setPosition(new LatLng(lat, lng));
+    	getInstance().setPeeerOnMap();
+    	//personInNeedOfToilette.setPosition(new LatLng(lat, lng));
 	}
 
 	private void moveToLocation(Location loc, final int poiAmount){
@@ -431,8 +437,7 @@ public class ActivityMap extends ActivityMenuBase {
     		if(mMap != null){
     			mMap.clear();
     			deleteOldMarkersFromList();//delete markers in markerList and visiblePOI
-    			setPeeerOnMap();
-    			updateClosestXMarkers(poiController, userLat , userLng, poiAmount ); //put ten closest in markerList and add to map
+    			updateUserAndPOIOnMap(userLat, userLng); //put ten closest in markerList and add to map
     		}
     	}
     	for (MarkerOptions m : markerList) {
@@ -574,27 +579,7 @@ public class ActivityMap extends ActivityMenuBase {
              }			
          });
     	 
- 		//Refresh Button Listener
- 		updatePOIButton.setOnClickListener(new View.OnClickListener() {
- 		    public void onClick(View v) {
- 		        //TODO: Update view based on map center and POI inside new mapBounds
- 		    	if(mapBounds != null){
- 		    		LatLng centerLatLng = getMapCenter();
- 		    		Location centerMap = new Location("");
- 		    		centerMap.setLatitude(centerLatLng.latitude);
- 		    		centerMap.setLongitude(centerLatLng.longitude);
- 		    		List<POI> containedPOI = getContainedPOI();//all POI with LatLng contained in map's LatLngBounds
- 		    		if(containedPOI != null){
- 		    			deleteOldMarkersFromList();//delete markers from  markerList and visiblePOI
- 		    			mMap.clear();
- 		    			displayContainedPOI(containedPOI); //display all visible POI
- 		    			setPeeerOnMap();// set peeer back on map
- 		    		}else{
- 		    			Log.d("MapActivity l.311: ", "containedPOI is null");
- 		    		}
- 		    	}
- 		    }
- 		});
+ 		
     }
     
     @Override
@@ -740,6 +725,9 @@ public class ActivityMap extends ActivityMenuBase {
     private void setPeeerOnMap() {
     	// check whether user position is standard position, if not set icon
         if(userLat != standardLocation.getLatitude() && userLng != standardLocation.getLongitude()){
+        	if(personInNeedOfToilette != null){
+        		personInNeedOfToilette.remove();
+        	}
         	personInNeedOfToilette = mMap.addMarker(new MarkerOptions()
 	    	.position(new LatLng(userLat, userLng))
 	    	.icon(BitmapDescriptorFactory.fromResource(R.drawable.peeer)));
