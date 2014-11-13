@@ -21,6 +21,7 @@ import de.bfhh.stilleoertchenhamburg.LocationUpdateService;
 import de.bfhh.stilleoertchenhamburg.POIController;
 import de.bfhh.stilleoertchenhamburg.POIUpdateService;
 import de.bfhh.stilleoertchenhamburg.R;
+import de.bfhh.stilleoertchenhamburg.TagNames;
 import de.bfhh.stilleoertchenhamburg.models.POI;
 
 import android.util.Log;
@@ -54,6 +55,8 @@ import android.provider.Settings;
  */
 
 public class ActivityMap extends ActivityMenuBase {
+	
+	private static final String TAG = ActivitySplashScreen.class.getSimpleName();
 
     private static GoogleMap mMap;
     private static Location userLocation;
@@ -110,28 +113,27 @@ public class ActivityMap extends ActivityMenuBase {
 
         @Override
         public void onReceive(final Context context, Intent intent) {
-        	Bundle bundle = intent.getExtras();
-            String action = intent.getAction();
-            if(action.equals("toiletLocation")){//action sent by POIUpdateService
-            	
-            //TODO: How to check whether this typecast worked?
-          	  //get POI List
-            ArrayList<HashMap<String, String>> poiList = (ArrayList<HashMap<String,String>>) intent.getSerializableExtra("poiList");
-          	  if( poiList != null && bundle.getInt(POIUpdateService.RESULT) == RESULT_OK ){
-          		  //create poiController Object
-          		  final POIController pc = new POIController(poiList);
-          		  main.setPOIController(pc);
-          		  
-          		  // Post the UI updating code to our Handler
-                  handler.post(new Runnable() {
-                      @Override
-                      public void run() {
-                    	  //TODO see if userLat and userLng are set
-                    	  updateClosestXMarkers(pc, userLat, userLng, 10);
-                      }
-                  });
-          	  }
-            }        
+//            String action = intent.getAction();
+//            if(action.equals("toiletLocation")){//action sent by POIUpdateService
+//            	
+//            	//TODO: How to check whether this typecast worked?
+//          	  	//get POI List
+//	            ArrayList<HashMap<String, String>> poiList = (ArrayList<HashMap<String,String>>) intent.getSerializableExtra("poiList");
+//          	  	if (poiList != null){
+//          	  		//create poiController Object
+//          		  	final POIController pc = new POIController(poiList);
+//          		  	main.setPOIController(pc);
+//          		  
+//          		  	// Post the UI updating code to our Handler
+//          		  	handler.post(new Runnable() {
+//          		  		@Override
+//          		  		public void run() {
+//          		  			//TODO see if userLat and userLng are set
+//          		  			updateClosestXMarkers(pc, userLat, userLng, 10);
+//          		  		}
+//          		  	});
+//          	  	}
+//            }      
         }
     }
 
@@ -155,10 +157,10 @@ public class ActivityMap extends ActivityMenuBase {
         	Bundle bundle = intent.getExtras();
             String action = intent.getAction();
             //Location has been updated (by provider in LocService)
-            if(action.equals("LocationUpdate")){
+            if(action.equals(TagNames.BROADC_LOCATION_UPDATED)){
             	if(bundle != null){
-            		double lat = bundle.getDouble("latitude");
-            		double lng = bundle.getDouble("longitude");
+            		double lat = bundle.getDouble(TagNames.EXTRA_LAT);
+            		double lng = bundle.getDouble(TagNames.EXTRA_LONG);
             		Log.d("ActivityMap LocationUpdateReceiver", "Location received: " + lat  + ", " + lng);
             		//update the user location
             		Location nLocation = new Location("");
@@ -192,7 +194,7 @@ public class ActivityMap extends ActivityMenuBase {
             		//auch die kamera bewegt, sobald sich die position des users ändert.
             		//moveToLocation(userLocation);
             		
-            		String provider = bundle.getString("provider");
+            		String provider = bundle.getString(TagNames.EXTRA_PROVIDER);
             		//Toast to show updates
             		Toast.makeText(context, "Location Update from provider: " + provider + ", Location: LAT " + lat + ", LNG " + lng,
             				Toast.LENGTH_LONG).show();
@@ -204,23 +206,23 @@ public class ActivityMap extends ActivityMenuBase {
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+    	Log.d(TAG, "onCreate");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         //Button that will animate camera back to user position
-        myLocationButton = (ImageButton) findViewById(R.id.mylocation);
-        
+        myLocationButton = (ImageButton) findViewById(R.id.mylocation);  
         
         //TODO: is it good to register receiver in oncreate() ??
         //Register Receiver for POI Updates
         poiReceiver = new POIReceiver(new Handler());
         poiReceiver.setMainActivityHandler(this);
-        registerReceiver(poiReceiver, new IntentFilter("toiletLocation"));
+        registerReceiver(poiReceiver, new IntentFilter(TagNames.BROADC_POIS));
         poiReceiverRegistered = true;
         
         //LocUpdateReceiver
         locUpdReceiver = new LocationUpdateReceiver(new Handler());
         locUpdReceiver.setMainActivityHandler(this);
-        registerReceiver(locUpdReceiver, new IntentFilter("LocationUpdate"));
+        registerReceiver(locUpdReceiver, new IntentFilter(TagNames.BROADC_LOCATION_UPDATED));
         locUpdReceiverRegistered = true;
         
         //list of POI that are currently visible on the map
@@ -247,15 +249,16 @@ public class ActivityMap extends ActivityMenuBase {
          	}
             toiletList = (ArrayList<HashMap<String, String>>) savedInstanceState.getSerializable(BUNDLE_POILIST);
             setUpMapIfNeeded();
-            //moveToLocation(userLocation);
+
         } else { //activity was started from scratch
+        	
         	 Intent i = getIntent();
              Bundle bundle = i.getExtras();
              if(bundle != null){
-             	if(bundle.getDouble("latitude") != 0.0 && bundle.getDouble("longitude") != 0.0){
+             	if(bundle.getDouble(TagNames.EXTRA_LAT) != 0.0 && bundle.getDouble(TagNames.EXTRA_LONG) != 0.0){
              		//set user Position
-             		userLat = bundle.getDouble("latitude");
-             		userLng = bundle.getDouble("longitude");
+             		userLat = bundle.getDouble(TagNames.EXTRA_LAT);
+             		userLng = bundle.getDouble(TagNames.EXTRA_LONG);
              		standardLocation = AppController.getInstance().getStandardLocation();
              		setUserLocation(userLat, userLng);
              		//if the location is the standard location, show settings dialog
@@ -268,7 +271,7 @@ public class ActivityMap extends ActivityMenuBase {
                  	setUpMapIfNeeded();
              	}
              	
-                int result = bundle.getInt("result");
+                int result = bundle.getInt(TagNames.EXTRA_LOCATION_RESULT);
                 if(result == Activity.RESULT_CANCELED){
                 	Log.d("MainActivity:", "Activity.RESULT_CANCELED: standard lat and lng");
                 }
@@ -635,6 +638,7 @@ public class ActivityMap extends ActivityMenuBase {
     @Override
 	protected void onDestroy(){
     	super.onDestroy();
+    	Log.d(TAG, "onDestroy");
     	if(poiReceiverRegistered){
     		unregisterReceiver(poiReceiver);
     		poiReceiverRegistered = false;

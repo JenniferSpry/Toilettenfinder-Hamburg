@@ -44,7 +44,7 @@ public class FragmentToiletList extends ListFragment {
     
 	private void makeJsonArrayRequest() {
 	
-		String url = AppController.getInstance().getStoresURL("53.5653", "10.0014", "1");
+		String url = AppController.getInstance().getToiletsURL();
 		Log.d("URL", url);
 		
 		JsonArrayRequest req = new JsonArrayRequest(url,

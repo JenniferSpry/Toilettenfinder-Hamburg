@@ -24,20 +24,9 @@ import com.android.volley.toolbox.JsonArrayRequest;
  * fills an ArrayList (poiList) with the results of this request. 
  */
 
-public class POIUpdateService extends IntentService{
-
-	public static final String ID = "id";
-	public static final String NAME = "name";
-	public static final String ADDRESS = "address";
-	public static final String DESCR = "description";
-	public static final String LNG = "longitude"; //user's lat and long
-	public static final String LAT = "latitude";
-	public static final String RAD = "radius";
-	public static final String RESULT = "result";
+public class POIUpdateService extends IntentService {
 	
-	public static final String POIACTION = "POIUpdate";
-	public static final String POIACTION_OK = "POIUpdate_OK";
-	public static final String TOILET_LOCATION = "toiletLocation";
+	private static final String TAG = POIUpdateService.class.getSimpleName();
 	
 	private ArrayList<HashMap<String, String>> poiList; //List with POI data from JSON Request
 
@@ -46,19 +35,17 @@ public class POIUpdateService extends IntentService{
 	}
 
 	@Override
-	protected void onHandleIntent(Intent intent) {	
-		String action = intent.getStringExtra(POIACTION); //@TODO: add action static string in activities
+	protected void onHandleIntent(Intent intent) {
+		Log.d(TAG, "onHandleIntent");
+		// TODO: Get Data from Server and update Database if necessary
+		// Fetch Pois from Database depending on lat, long and radius
 		Bundle bundle = intent.getExtras();
 		if(bundle != null){
-			//data passed by SplashScreen Activity
-			int result = bundle.getInt(RESULT);
-			double userLat = bundle.getDouble(LAT);
-			double userLng = bundle.getDouble(LNG);
-			double userRadius = bundle.getDouble(RAD);
-			if(action.equals("POIUpdate")){
-				//request JSON Array and add results to ArrayList, then send Broadcast with ArrayList
-				makeJsonArrayRequest(result, userLat, userLng);
-			}
+			double userLat = bundle.getDouble(TagNames.EXTRA_LAT);
+			double userLng = bundle.getDouble(TagNames.EXTRA_LONG);
+			//double userRadius = bundle.getDouble(TagNames.EXTRA_RADIUS);
+			//request JSON Array and add results to ArrayList, then send Broadcast with ArrayList
+			makeJsonArrayRequest(userLat, userLng);
 		}
 	}
 	
@@ -67,32 +54,35 @@ public class POIUpdateService extends IntentService{
         return null;
     }	
 	
-	//broadcast results: userLat, userLng, result code and poiList
-	private void broadCastToActivity(int result, double userLat, double userLng){      
+	//broadcast results: userLat, userLng and poiList
+	private void broadcastPoiList(double userLat, double userLng){      
 		
-		//send broadcast to all activities, incl. ActivitySplash, so it can terminate itself
-  	  	Intent i2 = new Intent(POIACTION_OK);
-  	  	i2.putExtra("poiList",(Serializable) poiList);
-  	  	i2.putExtra(LAT, userLat);
-  	  	i2.putExtra(LNG, userLng);
-  	  	//putExtra contentprovider at some point
-  	  	i2.putExtra(RESULT, result);
+  	  	Intent i2 = new Intent(TagNames.BROADC_POIS);
+  	  	i2.putExtra(TagNames.EXTRA_POI_LIST,(Serializable) poiList);
+  	  	i2.putExtra(TagNames.EXTRA_LAT, userLat);
+  	  	i2.putExtra(TagNames.EXTRA_LONG, userLng);
   	  	i2.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
   	  	
   	  	sendBroadcast(i2); 	  	
 	}
 	
-	private void makeJsonArrayRequest(final int result, final double userLat, final double userLng) {
+	private void makeJsonArrayRequest(final double userLat, final double userLng) {
 		
-		String url = AppController.getInstance().getStoresURL(
-				String.valueOf(userLat), 
-				String.valueOf(userLng),
-				"70");
+		Log.d(TAG, "makeJsonArrayRequest");
+		
+		String url = AppController.getInstance().getToiletsURL();
 		
 		JsonArrayRequest req = new JsonArrayRequest(url,
 			new Response.Listener<JSONArray>() {
 				@Override
 				public void onResponse(JSONArray json) {
+					
+					final String ID = "id";
+					final String NAME = "name";
+					final String ADDRESS = "address";
+					final String DESCR = "description";
+					final String LNG = "longitude";
+					final String LAT = "latitude";
 				
 				try {
 					// Parsing json array response
@@ -105,7 +95,6 @@ public class POIUpdateService extends IntentService{
 						JSONObject c = json.getJSONObject(i);
 
 						// Storing each json item in variable
-						
 						String id = c.getString(ID);
 						String name = c.getString(NAME);
 						String address = c.getString(ADDRESS);
@@ -128,7 +117,7 @@ public class POIUpdateService extends IntentService{
 						poiList.add(map);
 					}					
 		            
-					broadCastToActivity(result, userLat, userLng);
+					broadcastPoiList(userLat, userLng);
 					
 				} catch (JSONException e) {
 					e.printStackTrace();
