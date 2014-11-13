@@ -133,15 +133,13 @@ public class POIController {
 	//returns the MarkerOptions for a passed POI
 	public MarkerOptions getMarkerOptionsForPOI(POI poi){
 		MarkerOptions marker = new MarkerOptions();
-		BitmapDescriptor icon;
-		if(poi.isWheelchairAccessible()){// wheelchair accessible POI
-			icon = BitmapDescriptorFactory.fromResource(R.drawable.yellow_pin_w);
-		}else{
-			icon = BitmapDescriptorFactory.fromResource(R.drawable.yellow_pin);
-		}	
+		//poi.getMarkerIconRessource() returns the drawable icon depending on wheelchair accessibility
+		BitmapDescriptor icon = BitmapDescriptorFactory.fromResource(poi.getMarkerIconRessource());
 		return marker.position(new LatLng(poi.getLat(), poi.getLng()))
 					 .title(poi.getName())
 					 .icon(icon);
 	}
+	
+
 	
 }

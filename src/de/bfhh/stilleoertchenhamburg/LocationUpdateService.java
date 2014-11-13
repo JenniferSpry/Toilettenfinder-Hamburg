@@ -3,8 +3,6 @@ package de.bfhh.stilleoertchenhamburg;
 import java.util.List;
 import org.json.JSONArray;
 
-import com.google.android.gms.maps.model.LatLng;
-
 import android.app.Activity;
 import android.app.Service;
 import android.content.Context;
@@ -22,26 +20,14 @@ import android.widget.Toast;
 public class LocationUpdateService extends Service {
 	
 	private static final String TAG = LocationUpdateService.class.getSimpleName();
+	
 	private int result = Activity.RESULT_CANCELED;
-	//Intent actions (labels/names)
-	public static final String USERACTION = "userLocation";
-	public static final String POIACTION = "toiletLocation";
 	
 	private static final int TWO_MINUTES = 1000 * 60 * 2;
-	
-	//names of the data that is sent back to activities
-	//TODO: add package name
-	public static final String LNG = "longitude"; 
-	public static final String LAT = "latitude";
-	public static final String RESULT = "result";
-	public static final String PROVIDER = "provider";
-	
+		
 	private LocationManager mlocationManager;
 	private LocationUpdateListener locUpdListener; 
 	private Location userLocation;
-	
-	//TODO: export to config file
-	final private LatLng HAMBURG = new LatLng(53.5509517,9.9936818);
 		
 	JSONArray toilets = null;// POI JSONArray
 	
@@ -79,10 +65,17 @@ public class LocationUpdateService extends Service {
 		locUpdListener = new LocationUpdateListener();
 		//register for location Updates every 5 seconds, minimum distance change: 3 meters
 		requestGPSUpdates(5000, 3.0f);
-		requestNetworkUpdates(15000, 1.0f);
+		requestNetworkUpdates(5000, 1.0f);
 		//call getLastKnownLocation() from within an AsyncTask and
 		//publish results once location is received
 		new LocationUpdateTask().execute();							
+	}
+	
+	public void stopLocationUpdates(){
+		if(mlocationManager != null){
+			Log.d("stopLocationUpdates", "Removing location updates");
+			mlocationManager.removeUpdates(locUpdListener);
+		}
 	}
 	
 	public void requestGPSUpdates(long minTime, float minDistance){
@@ -97,15 +90,15 @@ public class LocationUpdateService extends Service {
 		new LocationUpdateTask().execute();	
 	}
 
-	//broadcast user location
+	//broadcast user location; done once
 	protected void publishUserLocation(int result, Location userLocation){
 		if(userLocation != null){//you can never check enough!
 			//Send Broadcast to activities
-			Intent intent = new Intent(USERACTION);
+			Intent intent = new Intent(TagNames.BROADC_LOCATION_NEW);
 			//location and result based on whether user location received or not
-			intent.putExtra(LAT, userLocation.getLatitude());
-			intent.putExtra(LNG, userLocation.getLongitude());				
-			intent.putExtra(RESULT, result);
+			intent.putExtra(TagNames.EXTRA_LAT, userLocation.getLatitude());
+			intent.putExtra(TagNames.EXTRA_LONG, userLocation.getLongitude());				
+			intent.putExtra(TagNames.EXTRA_LOCATION_RESULT, result);
 			sendBroadcast(intent);
 	  	}
 	}
@@ -255,23 +248,19 @@ public class LocationUpdateService extends Service {
     }
     
     private class LocationUpdateListener implements LocationListener {
+    	  Location oldLocation = AppController.getInstance().getStandardLocation();
     	
 		  @Override
 		  public void onLocationChanged(Location location) {
 			  //if location is not null and better than current location broadcast it
-			  Location oldLocation = getCurrentUserLocation();
+			  //oldLocation = getCurrentUserLocation();
 			  if(location != null){
 				  if(isBetterLocation(location, oldLocation)) {
-					  Log.i("LocationUpdateListener.onLocationChanged(): ", "Update of user location received"); 
-					  Intent intent = new Intent("LocationUpdate");
-					  intent.putExtra(LAT, location.getLatitude());
-					  intent.putExtra(LNG, location.getLongitude());    
-		              intent.putExtra(PROVIDER, location.getProvider());
-		              //if the last known user location is the standard location, add Extra to tell ActivityMap to move camera
-		              Location standLocation = AppController.getInstance().getStandardLocation();
-		              if(standLocation.getLatitude() == oldLocation.getLatitude() && standLocation.getLongitude() == oldLocation.getLongitude()){
-		            	  intent.putExtra("MOVETOLOCATION", true);
-		              }
+					  Log.i("LocationUpdateListener.onLocationChanged(): ", "Update of user location received from " + location.getProvider()); 
+		              Intent intent = new Intent(TagNames.BROADC_LOCATION_UPDATED);
+					  intent.putExtra(TagNames.EXTRA_LAT, location.getLatitude());
+					  intent.putExtra(TagNames.EXTRA_LONG, location.getLongitude());    
+		              intent.putExtra(TagNames.EXTRA_PROVIDER, location.getProvider());
 		              //broadcast to all activities that want location updates
 		              sendBroadcast(intent);     
 		              setCurrentUserLocation(location);

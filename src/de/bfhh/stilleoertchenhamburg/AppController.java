@@ -62,14 +62,8 @@ public class AppController extends Application {
         }
     }
     
-    public String getStoresURL(String lat, String lng, String radius){
-    	return properties.getProperty("BasePath") + 
-    			properties.getProperty("URLStores")
-    			+ "?kategorie=127" //category ID for toilets
-    			+ "&lat=" + lat
-                + "&long=" + lng
-                + "&status=" + 1 //only get validated POI
-                + "&radius=" + radius;
+    public String getToiletsURL(){
+    	return properties.getProperty("URLToilets");
     }
     
     public Location getStandardLocation(){

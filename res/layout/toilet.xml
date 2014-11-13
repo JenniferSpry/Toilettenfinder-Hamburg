@@ -73,20 +73,26 @@
 		        android:layout_width="fill_parent"
 		        android:layout_height="fill_parent"
 		        android:gravity="right"
-		        android:text="300m"
 		        android:textStyle="bold"
 		        android:textColor="@color/black"
 		        android:textSize="@dimen/toilet_text" /> 
 			    
 	       
-			<TextView
+			<!-- <TextView
 		        android:id="@+id/icon"
 		        android:layout_width="fill_parent"
 		        android:layout_height="fill_parent"
 		        android:gravity="right"
 		        android:textColor="@color/black"
 		        android:textSize="@dimen/toilet_text"
-		        android:text="icon hier" />
+		        android:text="icon hier" /> -->
+			
+			<ImageView
+			    android:id="@+id/icon"
+			    android:layout_width="fill_parent"
+		        android:layout_height="fill_parent"
+		        android:gravity="right"
+		        android:contentDescription="icon" />
 			    
 	    </LinearLayout>
 	</LinearLayout>

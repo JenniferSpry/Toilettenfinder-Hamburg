@@ -8,6 +8,7 @@ import de.bfhh.stilleoertchenhamburg.AppController;
 import de.bfhh.stilleoertchenhamburg.LocationUpdateService;
 import de.bfhh.stilleoertchenhamburg.POIUpdateService;
 import de.bfhh.stilleoertchenhamburg.R;
+import de.bfhh.stilleoertchenhamburg.TagNames;
 
 import android.app.Activity;
 import android.content.BroadcastReceiver;
@@ -19,6 +20,7 @@ import android.content.ServiceConnection;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.util.Log;
 import android.widget.Toast;
  
 /*
@@ -34,14 +36,8 @@ import android.widget.Toast;
  */
 
 public class ActivitySplashScreen extends Activity {
-
-	// TODO: add package names and outsource to other file 
-	private static final String TAG_LAT = "latitude";
-	private static final String TAG_LONG = "longitude";
-	private static final String TAG_RESULT = "result";
-	private static final String TAG_USERLOCATION = "userLocation";
-	private static final String TAG_POIUPDATE = "POIUpdate";
-	private static final String TAG_POIUPDATE_OK = "POIUpdate_OK";
+	
+	private static final String TAG = ActivitySplashScreen.class.getSimpleName();
     
     private boolean isReceiverRegistered;//is the receiver registered?
     
@@ -53,6 +49,7 @@ public class ActivitySplashScreen extends Activity {
     
     private double lat = 0.0;
 	private double lng = 0.0;
+	private int locationResult = Activity.RESULT_CANCELED;
     
 
     @Override
@@ -60,9 +57,9 @@ public class ActivitySplashScreen extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
         
-        // Set reciever to listen to actions from both services
-        filter = new IntentFilter(LocationUpdateService.USERACTION);
-    	filter.addAction(POIUpdateService.POIACTION_OK);
+        // Set receiver to listen to actions from both services
+        filter = new IntentFilter(TagNames.BROADC_LOCATION_NEW);
+    	filter.addAction(TagNames.BROADC_POIS);
     	registerReceiver(receiver, filter);
         isReceiverRegistered = true; //shows that a receiver is registered
         
@@ -84,31 +81,30 @@ public class ActivitySplashScreen extends Activity {
         	Bundle bundle = intent.getExtras();
         	String action = intent.getAction();
         	
-        	if(action.equals(TAG_USERLOCATION)){ //action = "userLocation"
+        	if(action.equals(TagNames.BROADC_LOCATION_NEW)){ //LocationUpdateService is finished
+        		Log.d(TAG, "Recieved Broadcast location new");
         		if (bundle != null) {
 		        	//Get resultCode, latitude and longitude sent from LocationUpdateService
-		            lat = bundle.getDouble(LocationUpdateService.LAT);
-		            lng = bundle.getDouble(LocationUpdateService.LNG);
-		            int resultCode = bundle.getInt(LocationUpdateService.RESULT);
+		            lat = bundle.getDouble(TagNames.EXTRA_LAT);
+		            lng = bundle.getDouble(TagNames.EXTRA_LONG);
+		            locationResult = bundle.getInt(TagNames.EXTRA_LOCATION_RESULT);
 		            //lat, lng and resultcode received successfully
-		            if (resultCode == RESULT_CANCELED) {
+		            if (locationResult == RESULT_CANCELED) {
 		            	//if RESULT_CANCELLED or lat and long are standard location then no location was received from locationManager in LocationUpdateService
 		            	  Toast.makeText(ActivitySplashScreen.this, "Last user location not received. Standard Location is set",
 		            		  Toast.LENGTH_LONG).show();    
 		            } 
-		            startPOIUpdateService(resultCode, lat, lng);
+		            startPOIUpdateService(lat, lng);
 	          }
-           } else if(action.equals(TAG_POIUPDATE_OK)){//POIUpdateService is finished
+           } else if(action.equals(TagNames.BROADC_POIS)){
         	   //terminate this activity
+        	   Log.d(TAG, "Recieved Broadcast poi list");
         	   if (bundle != null) {
-		        	//Get resultCode, latitude and longitude sent from LocationUpdateService
-		            lat = bundle.getDouble(LocationUpdateService.LAT);
-		            lng = bundle.getDouble(LocationUpdateService.LNG);
-		            int resultCode = bundle.getInt(LocationUpdateService.RESULT);
-		            ArrayList<HashMap<String,String>> poiList = (ArrayList<HashMap<String,String>>) intent.getSerializableExtra("poiList");
+		            ArrayList<HashMap<String,String>> poiList = (ArrayList<HashMap<String,String>>) 
+		            		intent.getSerializableExtra(TagNames.EXTRA_POI_LIST);
 		            if(lat != 0.0 && lng != 0.0 && poiList != null){
 		            	//start activity which shows map
-		            	startMapActivity(lat, lng, poiList, resultCode);
+		            	startMapActivity(lat, lng, poiList, locationResult);
 		            	finish();// terminate this activity
 		            }	            
         	   }        	   
@@ -119,24 +115,19 @@ public class ActivitySplashScreen extends Activity {
 	private void startMapActivity(double userLat, double userLng, ArrayList<HashMap<String,String>> poiList, int result){
 		Intent i = new Intent(this, ActivityMap.class);
         i.putExtra("poiList",(Serializable) poiList);
-        i.putExtra(TAG_LAT, userLat);
-        i.putExtra(TAG_LONG, userLng);
-  	  	//putExtra contentprovider at some point
-  	  	i.putExtra(TAG_RESULT, result);
+        i.putExtra(TagNames.EXTRA_LAT, userLat);
+        i.putExtra(TagNames.EXTRA_LONG, userLng);
+  	  	i.putExtra(TagNames.EXTRA_LOCATION_RESULT, result);
   	  	i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
   	  	startActivity(i); //start Main Activity
 	}
     
     //start POIUpdateService with Intent to get list of POI
-    private void startPOIUpdateService(int resultCode, double lat, double lng){
-     	Intent i2 = new Intent(this, POIUpdateService.class);
-        // add action			     	
-        i2.putExtra(POIUpdateService.POIACTION, TAG_POIUPDATE);
-        //add lat and lng
-        i2.putExtra(TAG_LAT, lat);
-        i2.putExtra(TAG_LONG, lng);
-        i2.putExtra(TAG_RESULT, resultCode);
-        startService(i2);
+    private void startPOIUpdateService(double userLat, double userLng){
+     	Intent i = new Intent(this, POIUpdateService.class);
+     	i.putExtra(TagNames.EXTRA_LAT, userLat);
+        i.putExtra(TagNames.EXTRA_LONG, userLng);
+        startService(i);
     }
     
     
@@ -205,6 +196,7 @@ public class ActivitySplashScreen extends Activity {
     @Override
 	protected void onDestroy(){
     	super.onDestroy();
+    	Log.d(TAG, "onDestroy");
     	if(isReceiverRegistered){
     	  	unregisterReceiver(receiver);
     	  	isReceiverRegistered = false;

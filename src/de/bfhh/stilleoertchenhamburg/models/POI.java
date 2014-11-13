@@ -2,7 +2,11 @@ package de.bfhh.stilleoertchenhamburg.models;
 
 import java.util.HashMap;
 
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+
+import de.bfhh.stilleoertchenhamburg.R;
 
 import android.location.Location;
 import android.os.Parcel;
@@ -129,5 +133,14 @@ public class POI implements Parcelable{
 		map.put(TAG_DESCR, this.description);
 
 		return map;		
+	}
+	
+	public int getMarkerIconRessource(){
+
+		if(isWheelchairAccessible()){// wheelchair accessible POI
+			return R.drawable.yellow_pin_w;
+		}else{
+			return R.drawable.yellow_pin;
+		}	
 	}
 }
