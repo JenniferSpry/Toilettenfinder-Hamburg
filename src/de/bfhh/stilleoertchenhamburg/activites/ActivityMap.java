@@ -159,7 +159,13 @@ public class ActivityMap extends ActivityMenuBase {
             	if(bundle != null){
             		double lat = bundle.getDouble("latitude");
             		double lng = bundle.getDouble("longitude");
-            		Log.d("ActivityMap LocationUpdateReceiver", "Location received: " + lat  + ", " + lng);
+            		String provider = bundle.getString("provider");
+            		
+            		Log.d("ActivityMap LocationUpdateReceiver", "Location received from "+ provider + ": " + lat  + ", " + lng);
+            		//Toast to show updates
+            		Toast.makeText(context, "Location Update from provider: " + provider + ", Location: LAT " + lat + ", LNG " + lng,
+            				Toast.LENGTH_LONG).show();
+            		
             		//update the user location
             		Location nLocation = new Location("");
             		nLocation.setLatitude(lat);
@@ -172,9 +178,13 @@ public class ActivityMap extends ActivityMenuBase {
 						instance.buildAlertMessageGPSSettings();	
                  	}//TODO: Testing
             		// if the old userLocation is same as standardLocation and distance to newly received location is greater 10m -> move camera
-            		else if(userLocation == standardLocation && userLocation.distanceTo(nLocation) > 10.0 ){
+            		if(userLocation.getLatitude() == standardLocation.getLatitude() && userLocation.getLongitude() == standardLocation.getLongitude()
+            				&& userLocation.distanceTo(nLocation) > 10.0 ){
                  		instance.moveToLocation(nLocation, 10);
                  	}
+            		if(bundle.getBoolean("MOVETOLOCATION") == true){
+            			instance.moveToLocation(nLocation, 10);
+            		}
             		setUserLocation(lat, lng );
             		instance.deleteOldMarkersFromList();
             		updateUserAndPOIOnMap(lat, lng);
@@ -182,10 +192,7 @@ public class ActivityMap extends ActivityMenuBase {
             		if(poiController == null){
             			Log.d("ActivityMap LocUpdRec" , "poiController is null");
             		}
-            		String provider = bundle.getString("provider");
-            		//Toast to show updates
-            		Toast.makeText(context, "Location Update from provider: " + provider + ", Location: LAT " + lat + ", LNG " + lng,
-            				Toast.LENGTH_LONG).show();
+            		
             	}
             }        
         }
@@ -305,6 +312,7 @@ public class ActivityMap extends ActivityMenuBase {
             	if( userLocation.getLatitude() != standardLocation.getLatitude()  &&  userLocation.getLongitude() != standardLocation.getLongitude() ){
             		moveToLocation(userLocation, 10); //pass user location and amount of POI to display close to user
             	}else{//if userLocation == standardLocation (-> no userLoc found), show GPS Settings dialog
+            		//
             		buildAlertMessageGPSSettings();
             	}
             }
@@ -732,7 +740,7 @@ public class ActivityMap extends ActivityMenuBase {
           Toast.makeText(ActivityMap.this, "LocService Connected", Toast.LENGTH_SHORT)
               .show();
           Location loc = service.getCurrentUserLocation();
-          if(loc == standardLocation){
+          if(loc == standardLocation || loc == null){
         	  service.updateLocation();
           }
         }

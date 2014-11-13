@@ -7,6 +7,7 @@ import com.google.android.gms.maps.model.LatLng;
 
 import android.app.Activity;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.location.Location;
 import android.location.LocationListener;
@@ -76,12 +77,24 @@ public class LocationUpdateService extends Service {
 		// Starting point for this Service
 		mlocationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
 		locUpdListener = new LocationUpdateListener();
-		//register for location Updates every 20 seconds, minimum distance change: 10 meters
-		mlocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 20000,  5.0f, locUpdListener);
-		mlocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 20000, 5.0f, locUpdListener);
+		//register for location Updates every 5 seconds, minimum distance change: 3 meters
+		requestGPSUpdates(5000, 3.0f);
+		requestNetworkUpdates(15000, 1.0f);
 		//call getLastKnownLocation() from within an AsyncTask and
 		//publish results once location is received
 		new LocationUpdateTask().execute();							
+	}
+	
+	public void requestGPSUpdates(long minTime, float minDistance){
+		mlocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, (long) minTime, minDistance, locUpdListener);
+	}
+	
+	public void requestNetworkUpdates(long minTime, float minDistance){
+		mlocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, minTime,  minDistance, locUpdListener);
+	}
+	
+	public void executeLocationTask(){
+		new LocationUpdateTask().execute();	
 	}
 
 	//broadcast user location
@@ -152,11 +165,16 @@ public class LocationUpdateService extends Service {
         	       	
         	//if the received location is "valid" publish it as RESULT_OK
 			if(currentLocation != null){
-				//set current Location in class
-	        	setCurrentUserLocation(currentLocation);
-	        	
-				result = Activity.RESULT_OK;
-				publishUserLocation(result, currentLocation);
+				//is it better location ?
+				if(isBetterLocation(currentLocation, userLocation)){
+					//set current Location in class
+		        	setCurrentUserLocation(currentLocation);
+		        	
+					result = Activity.RESULT_OK;
+					
+					publishUserLocation(result, currentLocation);
+				}
+				
 			} else { //if the location is null, set location to standard and publish as RESULT_CANCELLED					
 				Location standardLocation = AppController.getInstance().getStandardLocation();
 				if(standardLocation != null){
@@ -241,15 +259,22 @@ public class LocationUpdateService extends Service {
 		  @Override
 		  public void onLocationChanged(Location location) {
 			  //if location is not null and better than current location broadcast it
+			  Location oldLocation = getCurrentUserLocation();
 			  if(location != null){
-				  if(isBetterLocation(location, userLocation)) {
+				  if(isBetterLocation(location, oldLocation)) {
 					  Log.i("LocationUpdateListener.onLocationChanged(): ", "Update of user location received"); 
 					  Intent intent = new Intent("LocationUpdate");
 					  intent.putExtra(LAT, location.getLatitude());
 					  intent.putExtra(LNG, location.getLongitude());    
 		              intent.putExtra(PROVIDER, location.getProvider());
+		              //if the last known user location is the standard location, add Extra to tell ActivityMap to move camera
+		              Location standLocation = AppController.getInstance().getStandardLocation();
+		              if(standLocation.getLatitude() == oldLocation.getLatitude() && standLocation.getLongitude() == oldLocation.getLongitude()){
+		            	  intent.putExtra("MOVETOLOCATION", true);
+		              }
 		              //broadcast to all activities that want location updates
-		              sendBroadcast(intent);          
+		              sendBroadcast(intent);     
+		              setCurrentUserLocation(location);
 		          }   		  
 			  }
 			  
@@ -266,7 +291,6 @@ public class LocationUpdateService extends Service {
 		  public void onProviderEnabled(String provider) {
 			  Toast.makeText(getApplicationContext(), "Provider " + provider + " enabled!",
 		        Toast.LENGTH_SHORT).show();	
-			  new LocationUpdateTask().execute();	
 		  }
 	
 		  @Override

@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import de.bfhh.stilleoertchenhamburg.AppController;
 import de.bfhh.stilleoertchenhamburg.LocationUpdateService;
 import de.bfhh.stilleoertchenhamburg.POIUpdateService;
 import de.bfhh.stilleoertchenhamburg.R;
