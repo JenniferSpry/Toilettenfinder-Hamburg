@@ -9,6 +9,7 @@ import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnCameraChangeListener;
+import com.google.android.gms.maps.GoogleMap.OnMapClickListener;
 import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
@@ -548,6 +549,7 @@ public class ActivityMap extends ActivityMenuBase {
                         //Add the Marker to the Map and keep track of it with the HashMap
                         //getMarkerOptionsForPOI just returns a MarkerOptions object
                     	Marker m = mMap.addMarker(poiController.getMarkerOptionsForPOI(poi));
+                    	//the slidingUpPanel is shown if the user clicks on a marker
                     	mMap.setOnMarkerClickListener(new OnMarkerClickListener()
                         {
                             @Override
@@ -609,6 +611,14 @@ public class ActivityMap extends ActivityMenuBase {
              }			
          });
     	 
+    	//TODO: make transition of map between slidinUpPanel hide / show nicer
+    	//hide the panel if user clicks somewhere on the map where there is no marker
+    	mMap.setOnMapClickListener(new OnMapClickListener() {
+			@Override
+			public void onMapClick(LatLng arg0) {
+				slidingUpPanel.hidePanel();
+			}
+		});
     	
     	//hide the sliding up Panel
     	slidingUpPanel.hidePanel();
