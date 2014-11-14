@@ -9,6 +9,7 @@ import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnCameraChangeListener;
+import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
@@ -16,11 +17,11 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
 import de.bfhh.stilleoertchenhamburg.AppController;
 import de.bfhh.stilleoertchenhamburg.LocationUpdateService;
 import de.bfhh.stilleoertchenhamburg.POIController;
-import de.bfhh.stilleoertchenhamburg.POIUpdateService;
 import de.bfhh.stilleoertchenhamburg.R;
 import de.bfhh.stilleoertchenhamburg.TagNames;
 import de.bfhh.stilleoertchenhamburg.models.POI;
@@ -71,16 +72,12 @@ public class ActivityMap extends ActivityMenuBase {
     
     private ImageButton myLocationButton; //Button to get back to current user location on map
     
-    final private LatLng HAMBURG = new LatLng(53.5509517,9.9936818); //standard position in HH
-    
     private static Marker personInNeedOfToilette; //person's marker
 	private ArrayList<POI> toiletList; //POI received from POIUpdateService
 	private static ArrayList<MarkerOptions> markerList;
 	private static HashMap<Integer, Marker> visiblePOI;
 	private LatLngBounds mapBounds; //bounds of visible map, updated onCameraChange
 	//private List<LatLng> cornersLatLng; // contains two LatLng decribing northeastern and southwestern points on visible map
-	
-	private ArrayList<String> keyNames;
 	
 	private static double userLat;
 	private static double userLng;
@@ -98,6 +95,8 @@ public class ActivityMap extends ActivityMenuBase {
 	protected boolean changeGPSSettings;
 	private static Location standardLocation;
 	private static ActivityMap instance;
+	
+	private SlidingUpPanelLayout slidingUpPanel;
 	
     //not really used right now, but will be needed later
     public static class POIReceiver extends BroadcastReceiver {
@@ -209,6 +208,8 @@ public class ActivityMap extends ActivityMenuBase {
         setContentView(R.layout.activity_main);
         //Button that will animate camera back to user position
         myLocationButton = (ImageButton) findViewById(R.id.mylocation);  
+        //holds the SlidingUpLayout which is wrapper of our layout
+        slidingUpPanel = (SlidingUpPanelLayout) findViewById(R.id.sliding_layout);
         
         //TODO: is it good to register receiver in oncreate() ??
         //Register Receiver for POI Updates
@@ -546,7 +547,16 @@ public class ActivityMap extends ActivityMenuBase {
                     if(!visiblePOI.containsKey(poi.getId())){
                         //Add the Marker to the Map and keep track of it with the HashMap
                         //getMarkerOptionsForPOI just returns a MarkerOptions object
-                        visiblePOI.put(poi.getId(), mMap.addMarker(poiController.getMarkerOptionsForPOI(poi)));
+                    	Marker m = mMap.addMarker(poiController.getMarkerOptionsForPOI(poi));
+                    	mMap.setOnMarkerClickListener(new OnMarkerClickListener()
+                        {
+                            @Override
+                            public boolean onMarkerClick(Marker arg0) { 
+                                slidingUpPanel.showPanel();
+                                return true;
+                            }
+                        });
+                        visiblePOI.put(poi.getId(), m);
                     }
                 }
                 //If the marker is off screen
@@ -599,7 +609,9 @@ public class ActivityMap extends ActivityMenuBase {
              }			
          });
     	 
- 		
+    	
+    	//hide the sliding up Panel
+    	slidingUpPanel.hidePanel();
     }
     
     @Override
