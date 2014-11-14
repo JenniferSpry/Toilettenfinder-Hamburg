@@ -74,7 +74,7 @@ public class ActivityMap extends ActivityMenuBase {
     final private LatLng HAMBURG = new LatLng(53.5509517,9.9936818); //standard position in HH
     
     private static Marker personInNeedOfToilette; //person's marker
-	private ArrayList<HashMap<String, String>> toiletList; //POI received from POIUpdateService
+	private ArrayList<POI> toiletList; //POI received from POIUpdateService
 	private static ArrayList<MarkerOptions> markerList;
 	private static HashMap<Integer, Marker> visiblePOI;
 	private LatLngBounds mapBounds; //bounds of visible map, updated onCameraChange
@@ -245,7 +245,7 @@ public class ActivityMap extends ActivityMenuBase {
          		//TODO: check whether location is standardlocation, if yes dont set userlocation
              	
          	}
-            toiletList = (ArrayList<HashMap<String, String>>) savedInstanceState.getSerializable(BUNDLE_POILIST);
+            toiletList = savedInstanceState.getParcelableArrayList(BUNDLE_POILIST);
             setUpMapIfNeeded();
 
         } else { //activity was started from scratch
@@ -274,7 +274,7 @@ public class ActivityMap extends ActivityMenuBase {
                 	Log.d("MainActivity:", "Activity.RESULT_CANCELED: standard lat and lng");
                 }
                 //get the toiletList
-                toiletList = (ArrayList<HashMap<String,String>>) i.getSerializableExtra("poiList");
+                toiletList = i.getParcelableArrayListExtra(TagNames.EXTRA_POI_LIST);
              }   
         }
         //set up POIController with list of toilets received from POIUpdateService
@@ -623,8 +623,8 @@ public class ActivityMap extends ActivityMenuBase {
     @Override
     protected void onPause(){
     	super.onPause();
-    	unbindService(mConnection);//unbind service
     	service.stopLocationUpdates();
+    	unbindService(mConnection);//unbind service
     	if(poiReceiverRegistered){
     		unregisterReceiver(poiReceiver);
     		poiReceiverRegistered = false;

@@ -1,14 +1,11 @@
 package de.bfhh.stilleoertchenhamburg.activites;
 
-import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.HashMap;
-
-import de.bfhh.stilleoertchenhamburg.AppController;
 import de.bfhh.stilleoertchenhamburg.LocationUpdateService;
 import de.bfhh.stilleoertchenhamburg.POIUpdateService;
 import de.bfhh.stilleoertchenhamburg.R;
 import de.bfhh.stilleoertchenhamburg.TagNames;
+import de.bfhh.stilleoertchenhamburg.models.POI;
 
 import android.app.Activity;
 import android.content.BroadcastReceiver;
@@ -100,8 +97,7 @@ public class ActivitySplashScreen extends Activity {
         	   //terminate this activity
         	   Log.d(TAG, "Recieved Broadcast poi list");
         	   if (bundle != null) {
-		            ArrayList<HashMap<String,String>> poiList = (ArrayList<HashMap<String,String>>) 
-		            		intent.getSerializableExtra(TagNames.EXTRA_POI_LIST);
+		            ArrayList<POI> poiList = intent.getParcelableArrayListExtra(TagNames.EXTRA_POI_LIST);
 		            if(lat != 0.0 && lng != 0.0 && poiList != null){
 		            	//start activity which shows map
 		            	startMapActivity(lat, lng, poiList, locationResult);
@@ -112,9 +108,9 @@ public class ActivitySplashScreen extends Activity {
         }
     };
 
-	private void startMapActivity(double userLat, double userLng, ArrayList<HashMap<String,String>> poiList, int result){
+	private void startMapActivity(double userLat, double userLng, ArrayList<POI> poiList, int result){
 		Intent i = new Intent(this, ActivityMap.class);
-        i.putExtra("poiList",(Serializable) poiList);
+        i.putParcelableArrayListExtra(TagNames.EXTRA_POI_LIST, poiList);
         i.putExtra(TagNames.EXTRA_LAT, userLat);
         i.putExtra(TagNames.EXTRA_LONG, userLng);
   	  	i.putExtra(TagNames.EXTRA_LOCATION_RESULT, result);

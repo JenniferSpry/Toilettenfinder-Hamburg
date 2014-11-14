@@ -1,9 +1,5 @@
 package de.bfhh.stilleoertchenhamburg.models;
 
-import java.util.HashMap;
-
-import com.google.android.gms.maps.model.BitmapDescriptor;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 
 import de.bfhh.stilleoertchenhamburg.R;
@@ -13,44 +9,109 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 public class POI implements Parcelable{
-	
-	//können wir die final machen? 
-	//-> wenn final, müssen sie im constructor initialisiert werden
-	
-	private static final String TAG_ID = "id";
-	private static final String TAG_NAME = "name";
-	private static final String TAG_LAT = "latitude";
-	private static final String TAG_LNG = "longitude";
-	private static final String TAG_ADR = "address";
-	private static final String TAG_DESCR = "description";
-	
-	private final int id; //ID from DB
+		
+	private final int id;
 	private final String name;
-	private final double lat;
-	private final double lng;
 	private final String address;
 	private final String description;
+	private final String website;	
+	private final double lat;
+	private final double lng;
+	
 	private final Location location; //location (lat lng)
 	private final LatLng latLng;
 	
 	private float distanceToUser; //distance to user's current position in meters
 	
 
-	public POI(int id, String name, double lat, double lng, String address, String description){
+	public POI(int id, String name, String address, String description, String website, double lat, double lng){
 		this.id = id;
 		this.name = name;
-		this.lat = lat;
-		this.lng = lng;
 		this.address = address;
 		this.description = description;
-		this.location = new Location("");//empty provider string
+		this.website = website;
+		this.lat = lat;
+		this.lng = lng;
+		
+		this.location = new Location("");
+		location.setLatitude(this.lat);
+        location.setLongitude(this.lng);
+        latLng = new LatLng(lat, lng);
+	}
+	
+	public POI(Parcel in){
+		this.id = in.readInt();
+		this.name = in.readString();
+		this.address = in.readString();
+		this.description = in.readString();
+		this.website = in.readString();
+		this.lat = in.readDouble();
+		this.lng = in.readDouble();
+		
+		this.location = new Location("");
 		location.setLatitude(this.lat);
         location.setLongitude(this.lng);
         latLng = new LatLng(lat, lng);
 	}
 	
 	
-	public int getId() {
+	public boolean isWheelchairAccessible(){
+		//see if description matches the regular expression (...R/rollstuhlgerecht..)
+		if(description.indexOf("Rollstuhlgerechte") != -1 || description.indexOf("rollstuhlgerechte") != -1){
+			return true;
+		}else{
+			return false;
+		}
+	}
+	
+	public Location getLocation(){		
+		return location;	
+	}
+	
+	//so if the user's position changes, every instance of poi/toilet needs to be updated
+	//-> isn't that inefficient? 
+	//-> Listener?? and save userlocation in here as instance variable?
+	public void setDistanceToUser(Location userLocation){
+		this.distanceToUser = this.location.distanceTo(userLocation);
+	}
+	//returns distance to user in meters (float)
+	public float getDistanceToUser(){
+		return distanceToUser;
+	}
+	//returns distance to user in meters (int)
+	public int getDistanceToUserInt(){
+		return (int) distanceToUser;
+	}
+
+	@Override
+	public int describeContents() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public void writeToParcel(Parcel dest, int flags) {
+		dest.writeInt(id);
+		dest.writeString(name);
+	    dest.writeString(address);
+	    dest.writeString(description);
+	    dest.writeString(website);
+	    dest.writeDouble(lat);
+	    dest.writeDouble(lng);
+	}
+	
+	public static final Parcelable.Creator<POI> CREATOR = new Parcelable.Creator<POI>() {
+         public POI createFromParcel(Parcel in) {
+             return new POI(in);
+         }
+
+         public POI[] newArray (int size) {
+             return new POI[size];
+         }
+    };
+	
+    
+    public int getId() {
 		return id;
 	}
 	
@@ -78,65 +139,11 @@ public class POI implements Parcelable{
 		return description;
 	}
 	
-	public boolean isWheelchairAccessible(){
-		//see if description matches the regular expression (...R/rollstuhlgerecht..)
-		//if(description.matches(".*[rR]ollstuhlgerechte.*")){
-		if(description.indexOf("Rollstuhlgerechte") != -1 || description.indexOf("rollstuhlgerechte") != -1){
-			return true;
-		}else{
-			return false;
-		}
-	}
-	
-	public Location getLocation(){		
-		return location;	
-	}
-	//so if the user's position changes, every instance of poi/toilet needs to be updated
-	//-> isn't that inefficient? 
-	//-> Listener?? and save userlocation in here as instance variable?
-	public void setDistanceToUser(Location userLocation){
-		this.distanceToUser = this.location.distanceTo(userLocation);
-	}
-	//returns distance to user in meters (float)
-	public float getDistanceToUser(){
-		return distanceToUser;
-	}
-	//returns distance to user in meters (int)
-	public int getDistanceToUserInt(){
-		return (int) distanceToUser;
-	}
-
-	@Override
-	public int describeContents() {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-
-	@Override
-	public void writeToParcel(Parcel dest, int flags) {
-		// TODO Auto-generated method stub
-		
-	}
-	
-	public HashMap<String, String> getHashMap(){
-		
-		HashMap<String, String> map = new HashMap<String, String>();
-		
-		// adding each child node to HashMap key => value
-		// some have to be typecast
-		map.put(TAG_ID, String.valueOf(this.id));
-		map.put(TAG_NAME, this.name);
-		map.put(TAG_LAT, String.valueOf(this.lat));
-		map.put(TAG_LNG, String.valueOf(this.lng));
-		map.put(TAG_ADR, this.address);
-		map.put(TAG_DESCR, this.description);
-
-		return map;		
+	public String getWebsite() {
+		return website;
 	}
 	
 	public int getMarkerIconRessource(){
-
 		if(isWheelchairAccessible()){// wheelchair accessible POI
 			return R.drawable.yellow_pin_w;
 		}else{

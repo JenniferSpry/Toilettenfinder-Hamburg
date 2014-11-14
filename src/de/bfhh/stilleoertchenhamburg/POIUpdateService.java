@@ -19,6 +19,9 @@ import com.android.volley.VolleyError;
 import com.android.volley.VolleyLog;
 import com.android.volley.toolbox.JsonArrayRequest;
 
+import de.bfhh.stilleoertchenhamburg.helpers.DatabaseHelper;
+import de.bfhh.stilleoertchenhamburg.models.POI;
+
 /*
  * This class makes the JSON request to the bf-hh Server and 
  * fills an ArrayList (poiList) with the results of this request. 
@@ -28,8 +31,6 @@ public class POIUpdateService extends IntentService {
 	
 	private static final String TAG = POIUpdateService.class.getSimpleName();
 	
-	private ArrayList<HashMap<String, String>> poiList; //List with POI data from JSON Request
-
 	public POIUpdateService() {
 		super("POI Update Service");
 	}
@@ -44,8 +45,11 @@ public class POIUpdateService extends IntentService {
 			double userLat = bundle.getDouble(TagNames.EXTRA_LAT);
 			double userLng = bundle.getDouble(TagNames.EXTRA_LONG);
 			//double userRadius = bundle.getDouble(TagNames.EXTRA_RADIUS);
-			//request JSON Array and add results to ArrayList, then send Broadcast with ArrayList
-			makeJsonArrayRequest(userLat, userLng);
+			if (DatabaseHelper.getInstance(getApplicationContext()).isDataStillFresh()) {
+				getPOIFromDatabase(userLat, userLng);
+			} else {
+				refreshDatabaseAndBroadcast(userLat, userLng);
+			}
 		}
 	}
 	
@@ -55,18 +59,23 @@ public class POIUpdateService extends IntentService {
     }	
 	
 	//broadcast results: userLat, userLng and poiList
-	private void broadcastPoiList(double userLat, double userLng){      
+	private void broadcastPoiList(double userLat, double userLng, ArrayList<POI> poiList){      
 		
   	  	Intent i2 = new Intent(TagNames.BROADC_POIS);
-  	  	i2.putExtra(TagNames.EXTRA_POI_LIST,(Serializable) poiList);
+  	  	i2.putParcelableArrayListExtra(TagNames.EXTRA_POI_LIST, poiList);
   	  	i2.putExtra(TagNames.EXTRA_LAT, userLat);
   	  	i2.putExtra(TagNames.EXTRA_LONG, userLng);
   	  	i2.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
   	  	
-  	  	sendBroadcast(i2); 	  	
+  	  	sendBroadcast(i2);
 	}
 	
-	private void makeJsonArrayRequest(final double userLat, final double userLng) {
+	private void getPOIFromDatabase(final double userLat, final double userLng){
+		// TODO: If the data is still fresh just fetch it from the database
+		// will not jet happen
+	}
+	
+	private void refreshDatabaseAndBroadcast(final double userLat, final double userLng) {
 		
 		Log.d(TAG, "makeJsonArrayRequest");
 		
@@ -82,43 +91,36 @@ public class POIUpdateService extends IntentService {
 					final String NAME = "name";
 					final String ADDRESS = "address";
 					final String DESCR = "description";
+					final String WEBSITE = "website";
 					final String LNG = "longitude";
 					final String LAT = "latitude";
 				
 				try {
 					// Parsing json array response
-					Log.d("JSON", json.toString());
+					//Log.d("JSON", json.toString());
 					
-					poiList = new ArrayList<HashMap<String, String>>();
+					ArrayList<POI> poiList = new ArrayList<POI>();
 					
 					// loop through each json object
 					for (int i = 0; i < json.length(); i++) {
 						JSONObject c = json.getJSONObject(i);
 
-						// Storing each json item in variable
-						String id = c.getString(ID);
-						String name = c.getString(NAME);
-						String address = c.getString(ADDRESS);
-						String description = c.getString(DESCR);
-						String latitude = String.valueOf(c.getDouble(LAT));
-						String longitude = String.valueOf(c.getDouble(LNG));
-						
-						// creating new HashMap
-						HashMap<String, String> map = new HashMap<String, String>();
-
-						// adding each child node to HashMap key => value
-						map.put(ID, id);
-						map.put(NAME, name);
-						map.put(ADDRESS, address);
-						map.put(DESCR, description);
-						map.put(LAT, latitude);
-						map.put(LNG, longitude);
+						POI poi = new POI(
+								c.getInt(ID),
+								c.getString(NAME),
+								c.getString(ADDRESS),
+								c.getString(DESCR),
+								c.getString(WEBSITE),
+								c.getDouble(LAT),
+								c.getDouble(LNG));
 						
 						// adding HashMap to ArrayList
-						poiList.add(map);
+						poiList.add(poi);
 					}					
 		            
-					broadcastPoiList(userLat, userLng);
+					DatabaseHelper.getInstance(getApplicationContext()).refreshAllPOI(poiList);
+					// TODO: fetch from database only nearest POIs
+					broadcastPoiList(userLat, userLng, poiList);
 					
 				} catch (JSONException e) {
 					e.printStackTrace();
