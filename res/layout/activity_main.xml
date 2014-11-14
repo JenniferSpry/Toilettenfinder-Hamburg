@@ -1,23 +1,51 @@
-<?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="fill_parent" 
-    android:layout_height="fill_parent">
-    
-    <fragment
-          android:id="@+id/map"
-          android:layout_width="match_parent"
-          android:layout_height="match_parent"
-          android:name="com.google.android.gms.maps.SupportMapFragment"/>
+<!--   <?xml version="1.0" encoding="utf-8"?>-->
+<com.sothree.slidinguppanel.SlidingUpPanelLayout
+		 xmlns:android="http://schemas.android.com/apk/res/android"
+	    xmlns:app="http://schemas.android.com/apk/res-auto"
+	    android:id="@+id/sliding_layout"
+	    android:layout_width="match_parent"
+	    android:layout_height="match_parent"
+	    android:gravity="bottom"
+	    app:shadowHeight="4dp"
+	    app:fadeColor="#ffffff">
 
-        <ImageButton
-            android:id="@+id/mylocation"
-            style="?android:attr/buttonStyleSmall"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_alignParentRight="true"
-            android:layout_marginRight="16dp"
-            android:src="@drawable/mylocation" />
+		<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+		    android:layout_width="match_parent" 
+	    	android:layout_height="match_parent">
+			<fragment
+				android:id="@+id/map"
+			    android:layout_width="match_parent"
+			    android:layout_height="match_parent"
+			    android:gravity="center"
+			    android:name="com.google.android.gms.maps.SupportMapFragment"/>
+			
+			    <ImageButton
+			    	android:id="@+id/mylocation"
+			        style="?android:attr/buttonStyleSmall"
+			        android:layout_width="48dp"
+			        android:layout_height="48dp"
+			        android:layout_alignParentRight="true"
+			        android:layout_marginRight="16dp"
+			        android:src="@drawable/mylocation" />
+		</RelativeLayout>
+		<LinearLayout
+	        android:id="@+id/top_view"
+	        android:layout_width="match_parent"
+	        android:layout_height="match_parent"
+	        android:gravity="center"
+	        android:background="#009588"
+	        android:orientation="vertical">       
+			<TextView
+				android:layout_width="match_parent"
+			    android:layout_height="match_parent"
+			    android:gravity="center|top"
+			    android:text="The Awesome Sliding Up Panel"
+			    android:textSize="16sp" />
+		</LinearLayout>
 
-         
+   	</com.sothree.slidinguppanel.SlidingUpPanelLayout>     
+		     
+
+
+ 
     
-</RelativeLayout>

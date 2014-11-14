@@ -2,9 +2,6 @@ package de.bfhh.stilleoertchenhamburg.adapters;
 
 import java.util.List;
 
-import com.google.android.gms.maps.model.BitmapDescriptor;
-
-import de.bfhh.stilleoertchenhamburg.POIController;
 import de.bfhh.stilleoertchenhamburg.R;
 import de.bfhh.stilleoertchenhamburg.models.POI;
 import android.app.Activity;
@@ -69,6 +66,7 @@ public class AdapterToiletList extends BaseAdapter {
         TextView txtDistance = (TextView) convertView.findViewById(R.id.toilet_distance);
         txtDistance.setText(distance);
          
+        //icon with or without wheelchair 
         ImageView imagePin = (ImageView) convertView.findViewById(R.id.icon);
         imagePin.setImageResource(poi.getMarkerIconRessource());
 
