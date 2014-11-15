@@ -9,7 +9,6 @@ import android.app.IntentService;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.util.Log;
 
 import com.android.volley.Response;
@@ -36,8 +35,7 @@ public class POIUpdateService extends IntentService {
 	@Override
 	protected void onHandleIntent(Intent intent) {
 		Log.d(TAG, "onHandleIntent");
-		// TODO: Get Data from Server and update Database if necessary
-		// Fetch Pois from Database depending on lat, long and radius
+		// TODO: Fetch Pois from Database depending on lat, long and radius
 		Bundle bundle = intent.getExtras();
 		if(bundle != null){
 			Double userLat = bundle.getDouble(TagNames.EXTRA_LAT);
@@ -51,14 +49,9 @@ public class POIUpdateService extends IntentService {
 		}
 	}
 	
-	@Override
-    public IBinder onBind(Intent intent) {
-        return null;
-    }	
 	
 	//broadcast results: userLat, userLng and poiList
 	private void broadcastPoiList(double userLat, double userLng, ArrayList<POI> poiList){      
-		
   	  	Intent i2 = new Intent(TagNames.BROADC_POIS);
   	  	i2.putParcelableArrayListExtra(TagNames.EXTRA_POI_LIST, poiList);
   	  	i2.putExtra(TagNames.EXTRA_LAT, userLat);
@@ -67,6 +60,7 @@ public class POIUpdateService extends IntentService {
   	  	
   	  	sendBroadcast(i2);
 	}
+	
 	
 	class getPOIFromDatabase extends AsyncTask<String, String, String>{
 		@Override
@@ -80,8 +74,8 @@ public class POIUpdateService extends IntentService {
 		}
 	}
 	
+	
 	private void refreshDatabaseAndBroadcast(final double userLat, final double userLng) {
-		
 		Log.d(TAG, "makeJsonArrayRequest");
 		
 		String url = AppController.getInstance().getToiletsURL();
@@ -101,12 +95,10 @@ public class POIUpdateService extends IntentService {
 					final String LAT = "latitude";
 				
 				try {
-					// Parsing json array response
 					//Log.d("JSON", json.toString());
 					
 					ArrayList<POI> poiList = new ArrayList<POI>();
 					
-					// loop through each json object
 					for (int i = 0; i < json.length(); i++) {
 						JSONObject c = json.getJSONObject(i);
 

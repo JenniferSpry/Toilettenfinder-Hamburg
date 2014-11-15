@@ -1,6 +1,5 @@
 package de.bfhh.stilleoertchenhamburg.activites;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -20,13 +19,11 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import de.bfhh.stilleoertchenhamburg.AppController;
 import de.bfhh.stilleoertchenhamburg.LocationUpdateService;
 import de.bfhh.stilleoertchenhamburg.POIController;
-import de.bfhh.stilleoertchenhamburg.POIUpdateService;
 import de.bfhh.stilleoertchenhamburg.R;
 import de.bfhh.stilleoertchenhamburg.TagNames;
 import de.bfhh.stilleoertchenhamburg.models.POI;
 
 import android.util.Log;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewTreeObserver.OnGlobalLayoutListener;
 import android.widget.ImageButton;
@@ -365,23 +362,6 @@ public class ActivityMap extends ActivityMenuBase {
 		return instance;
 	}
 	
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		super.onOptionsItemSelected(item);
-    	switch (item.getItemId()) {
-    		case R.id.menu_toi_list:
-    			Intent activityToiletList = new Intent(this, ActivityToiletList.class);
-    	    	activityToiletList.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-    	    	activityToiletList.putExtra(TagNames.EXTRA_POI_LIST,(Serializable) toiletList);
-    	    	activityToiletList.putExtra(TagNames.EXTRA_LAT, userLat);
-    	    	activityToiletList.putExtra(TagNames.EXTRA_LONG, userLng);
-    	    	startActivity(activityToiletList);
-    	    	return true;
-    		default:
-	            return super.onOptionsItemSelected(item);
-    	}
-		
-	}
 	
     //is called before activity is destroyed
     @Override

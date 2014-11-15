@@ -3,9 +3,9 @@ package de.bfhh.stilleoertchenhamburg;
 public class TagNames {
 	
 	// Broadcast Intent Actions
-	public static final String BROADC_LOCATION_NEW = "com.bfhh.stilleoertchenhamburg.getUserLocation";
+	public static final String BROADC_LOCATION_NEW = "com.bfhh.stilleoertchenhamburg.userLocationNew";
 	public static final String BROADC_LOCATION_UPDATED = "com.bfhh.stilleoertchenhamburg.userLocationUpdated";
-	public static final String BROADC_POIS = "com.bfhh.stilleoertchenhamburg.okPois";
+	public static final String BROADC_POIS = "com.bfhh.stilleoertchenhamburg.POIListAvaliable";
 	
 	// Intent Actions
 	public static final String ACTION_GET_POIS = "com.bfhh.stilleoertchenhamburg.getPois";

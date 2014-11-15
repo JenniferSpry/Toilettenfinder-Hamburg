@@ -1,10 +1,8 @@
 package de.bfhh.stilleoertchenhamburg.adapters;
 
+import java.util.ArrayList;
 import java.util.List;
 
-import com.google.android.gms.maps.model.BitmapDescriptor;
-
-import de.bfhh.stilleoertchenhamburg.POIController;
 import de.bfhh.stilleoertchenhamburg.R;
 import de.bfhh.stilleoertchenhamburg.models.POI;
 import android.app.Activity;
@@ -74,5 +72,4 @@ public class AdapterToiletList extends BaseAdapter {
 
         return convertView;
     }
-
 }
