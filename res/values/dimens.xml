@@ -5,9 +5,8 @@
     <dimen name="activity_vertical_margin">16dp</dimen>
     
     <!-- Splash screen -->
-    <dimen name="splash_headline_text">25sp</dimen>
     <dimen name="splash_logo_width">200dp</dimen>
-    <dimen name="splash_link_text">20sp</dimen>
+    <dimen name="splash_link_text">17sp</dimen>
     
     <!-- toilet item styles -->
     <dimen name="toilet_item_border_width">1dp</dimen>
