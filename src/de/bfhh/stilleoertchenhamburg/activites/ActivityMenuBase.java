@@ -44,7 +44,7 @@ public class ActivityMenuBase extends ActionBarActivity {
 	        case R.id.menu_toi_list:
 	        	Intent activityToiletList = new Intent(getApplicationContext(), ActivityToiletList.class);
 	        	activityToiletList.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-	    		//startActivity(activityToiletList);
+	    		startActivity(activityToiletList);
 	            return true;
 	        default:
 	            return super.onOptionsItemSelected(item);

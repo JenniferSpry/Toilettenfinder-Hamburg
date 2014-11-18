@@ -59,8 +59,8 @@ public class POIController {
 	}
 	
 	//returns the closest ten POI to the user's current location
-	public List<POI> getClosestPOI(int amount){	
-		List<POI> closestPOI = new ArrayList<POI>();
+	public ArrayList<POI> getClosestPOI(int amount){	
+		ArrayList<POI> closestPOI = new ArrayList<POI>();
 		
 		Collections.sort(poiList, new Comparator<POI>() {
 	        @Override 

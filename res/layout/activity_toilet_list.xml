@@ -5,10 +5,11 @@
     android:layout_height="match_parent"
     android:orientation="vertical" >
 
-    <fragment
-        android:id="@+id/fragment1"
-        android:name="de.bfhh.stilleoertchenhamburg.fragments.FragmentToiletList"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+    <LinearLayout
+		android:id="@+id/fragmentToiletList"
+    	android:layout_width="fill_parent"
+    	android:layout_height="fill_parent"
+    	android:orientation="vertical"
+	/>
 
 </LinearLayout>

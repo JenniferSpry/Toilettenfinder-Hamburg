@@ -1,5 +1,6 @@
 package de.bfhh.stilleoertchenhamburg.adapters;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import de.bfhh.stilleoertchenhamburg.R;
@@ -72,5 +73,4 @@ public class AdapterToiletList extends BaseAdapter {
 
         return convertView;
     }
-
 }
