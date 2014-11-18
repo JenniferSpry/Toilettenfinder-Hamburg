@@ -19,6 +19,7 @@ import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
+import com.sothree.slidinguppanel.SlidingUpPanelLayout.PanelSlideListener;
 
 import de.bfhh.stilleoertchenhamburg.AppController;
 import de.bfhh.stilleoertchenhamburg.LocationUpdateService;
@@ -98,6 +99,7 @@ public class ActivityMap extends ActivityMenuBase {
 	private static ActivityMap instance;
 	
 	private SlidingUpPanelLayout slidingUpPanel;
+	
 	
     //not really used right now, but will be needed later
     public static class POIReceiver extends BroadcastReceiver {
@@ -211,6 +213,8 @@ public class ActivityMap extends ActivityMenuBase {
         myLocationButton = (ImageButton) findViewById(R.id.mylocation);  
         //holds the SlidingUpLayout which is wrapper of our layout
         slidingUpPanel = (SlidingUpPanelLayout) findViewById(R.id.sliding_layout);
+        slidingUpPanel.setAnchorPoint(0.75f);
+        
         
         //TODO: is it good to register receiver in oncreate() ??
         //Register Receiver for POI Updates
@@ -622,6 +626,45 @@ public class ActivityMap extends ActivityMenuBase {
     	
     	//hide the sliding up Panel
     	slidingUpPanel.hidePanel();
+    	
+    	//set Listener for different sliding events
+    	slidingUpPanel.setPanelSlideListener(new PanelSlideListener(){
+			@Override
+			public void onPanelSlide(View panel, float slideOffset) {
+				/*if the panel is slid within close vicinity of the anchorPoint 
+				 * (at 0.75f), expand the panel to that anchorPoint (for some reason
+				 * this doesn't work by only setting slidingUpPanel.setAnchorPoint(0.75f);)
+				*/
+				if( Math.abs(slideOffset - 0.75f) < 0.02f ) {
+					slidingUpPanel.expandPanel(0.75f);
+				}	
+			}
+
+			@Override
+			public void onPanelCollapsed(View panel) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void onPanelExpanded(View panel) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void onPanelAnchored(View panel) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void onPanelHidden(View panel) {
+				// TODO Auto-generated method stub
+				
+			}
+        	
+        });
     }
     
     @Override

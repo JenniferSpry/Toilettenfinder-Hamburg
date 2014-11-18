@@ -7,8 +7,11 @@
 	    android:layout_height="match_parent"
 	    android:gravity="bottom"
 	    app:collapsedHeight="0dp"
+	    app:paralaxOffset="68dp"
 	    app:shadowHeight="4dp"
-	    app:fadeColor="#ffffff">
+	    app:fadeColor="#ffffff"
+	    app:overlay="true"
+	    app:flingVelocity="0.1f">
 
 		<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
 		    android:layout_width="match_parent" 
@@ -30,19 +33,106 @@
 			        android:layout_marginRight="16dp"
 			        android:src="@drawable/mylocation" />
 		</RelativeLayout>
-		<LinearLayout
+		
+		<RelativeLayout
 	        android:id="@+id/top_view"
 	        android:layout_width="match_parent"
 	        android:layout_height="match_parent"
-	        android:gravity="center"
+	        android:gravity="top"
 	        android:background="@color/bfhh_green"
-	        android:orientation="vertical">     
+	        android:orientation="vertical"
+	        android:weightSum="2">    
 			<TextView
-				android:layout_width="match_parent"
-			    android:layout_height="match_parent"
-			    android:text="The Awesome Sliding Up Panel"
+			    android:id="@+id/name_detail"
+				android:layout_width="0dp"
+			    android:layout_height="68dp"
+			    android:layout_alignParentTop="true"
+			    android:text="HAHA!"
+			    android:layout_alignParentLeft="true"
+			    android:layout_toLeftOf="@+id/distance_detail" 
 			    android:textSize="16sp" />
-		</LinearLayout>
+			<TextView
+			    android:id="@+id/distance_detail"
+				android:layout_width="96dp"
+			    android:layout_height="68dp"
+			    android:layout_alignParentTop="true"
+			    android:text="300m"
+			    android:layout_alignParentRight="true"
+			    android:textSize="16sp" />
+			<View
+			    android:id="@+id/separator_1"
+			    android:layout_width="fill_parent"
+			    android:layout_height="1dp"
+			    android:layout_below="@id/distance_detail"
+			    android:background="@android:color/darker_gray"/>
+			<TextView
+			    android:id="@+id/address_detail"
+				android:layout_width="match_parent"
+			    android:layout_height="60dp"
+			    android:text="Musterstraße 666"
+			    android:layout_below="@id/separator_1"
+			    android:textSize="16sp" />
+			<TextView
+			    android:id="@+id/description_detail"
+				android:layout_width="match_parent"
+			    android:layout_height="70dp"
+			    android:text="LOREM IPSUM TRLALALALALALALALALALALALLALALAFDSF SGJKDBSF DFGFDS "
+			    android:layout_below="@id/address_detail"
+			    android:textSize="16sp" />
+			<TextView
+			    android:id="@+id/url_detail"
+				android:layout_width="match_parent"
+			    android:layout_height="40dp"
+			    android:text="www.muster.de"
+			    android:layout_below="@id/description_detail"
+			    android:textSize="16sp" />
+			<TextView
+			    android:id="@+id/find_route"
+				android:layout_width="match_parent"
+			    android:layout_height="40dp"
+			    android:text="Route finden:"
+			    android:layout_below="@id/url_detail"
+			    android:textSize="16sp" />
+			<LinearLayout
+			    android:id="@+id/route_btns" 
+			    android:layout_width="fill_parent"
+   				android:layout_height="wrap_content"
+   				android:layout_below="@id/find_route"
+   				android:weightSum="2">
+			    <Button
+				    android:id="@+id/route_map"
+					android:layout_width="0dp"
+				    android:layout_height="40dp"
+				    android:text="Karte"
+				    android:layout_alignParentLeft="true"
+				    android:layout_toLeftOf="@+id/route_text" 
+				    android:layout_weight="1"
+				    android:textSize="16sp" />
+				<Button
+				    android:id="@+id/route_text"
+					android:layout_width="0dp"
+				    android:layout_height="40dp"
+				    android:layout_below="@id/find_route"
+				    android:text="Text"
+				    android:layout_alignParentRight="true"
+				    android:layout_weight="1"
+				    android:textSize="16sp" />
+ 
+			</LinearLayout>
+			
+			<View
+			    android:id="@+id/separator_2"
+			    android:layout_width="fill_parent"
+			    android:layout_height="1dp"
+			    android:layout_below="@id/route_btns"
+			    android:background="@android:color/darker_gray"/>
+			
+			
+			
+			
+			
+			
+		</RelativeLayout>
 
    	</com.sothree.slidinguppanel.SlidingUpPanelLayout>     
 		     
