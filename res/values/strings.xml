@@ -7,7 +7,8 @@
     <string name="menu_map">Karte</string>
     <string name="menu_impressum">Impressum</string>
     <string name="menu_toi_list">Liste</string> 
-    <string name="menu_search">Suchen</string>  
+    <string name="menu_search">Suchen</string> 
+    <string name="menu_poi_detail">Detail</string>  
     
     <string name="latitude">Latitude</string>
     <string name="longitude">Logitude</string>
@@ -23,5 +24,13 @@
     
     <!-- Image descriptions -->
     <string name="image_logo">Logo</string>
+    
+    <string name="toilet_find_way">Route finden:</string>
+    <string name="toilet_button_map_route">Karte</string>
+    <string name="toilet_button_text_route">Beschreibung</string>
+    <string name="toilet_comment">Mir ist aufgefallen:</string>
+    <string name="toilet_label_mail">E-Mail:</string>
+    <string name="toilet_mail_field_description">*freiwillige Angabe</string>
+    <string name="toilet_button_send">Absenden</string>
 
 </resources>

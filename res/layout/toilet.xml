@@ -42,13 +42,13 @@
 			    
 	        <!--adress -->
 		    <TextView
-		        android:id="@+id/toilet_adress"
+		        android:id="@+id/toilet_address"
 		        android:layout_width="wrap_content"
 		        android:layout_height="wrap_content"
 		        android:textColor="@color/black"
 		        android:paddingBottom="5sp"
 		        android:textSize="@dimen/toilet_text"
-		        android:text="adress" />
+		        android:text="address" />
 		    
 		     <!--description -->
 		    <TextView
@@ -76,16 +76,6 @@
 		        android:textStyle="bold"
 		        android:textColor="@color/black"
 		        android:textSize="@dimen/toilet_text" /> 
-			    
-	       
-			<!-- <TextView
-		        android:id="@+id/icon"
-		        android:layout_width="fill_parent"
-		        android:layout_height="fill_parent"
-		        android:gravity="right"
-		        android:textColor="@color/black"
-		        android:textSize="@dimen/toilet_text"
-		        android:text="icon hier" /> -->
 			
 			<ImageView
 			    android:id="@+id/icon"

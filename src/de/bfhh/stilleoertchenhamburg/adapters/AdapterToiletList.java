@@ -1,6 +1,5 @@
 package de.bfhh.stilleoertchenhamburg.adapters;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import de.bfhh.stilleoertchenhamburg.R;
@@ -13,6 +12,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.TextView;
 
 public class AdapterToiletList extends BaseAdapter {
@@ -50,19 +50,19 @@ public class AdapterToiletList extends BaseAdapter {
         }
         
         POI poi = pois.get(position);
-
+        
         TextView txtName = (TextView) convertView.findViewById(R.id.toilet_name);
         txtName.setText(poi.getName());
         
         TextView txtDescription = (TextView) convertView.findViewById(R.id.toilet_description);
         txtDescription.setText(poi.getDescription());
                 
-        TextView txtAdress = (TextView) convertView.findViewById(R.id.toilet_adress);
-        txtAdress.setText(poi.getAddress());        
+        TextView txtAddress = (TextView) convertView.findViewById(R.id.toilet_address);
+        txtAddress.setText(poi.getAddress());      
         
         //distance in int
         int d = (int) Math.round(poi.getDistanceToUser());
-        String distance = String.valueOf(d) + "m";  
+        String distance = String.valueOf(d) + " m";  
         Log.d("distance: ", distance);
         TextView txtDistance = (TextView) convertView.findViewById(R.id.toilet_distance);
         txtDistance.setText(distance);
@@ -72,4 +72,6 @@ public class AdapterToiletList extends BaseAdapter {
 
         return convertView;
     }
+    
+
 }
