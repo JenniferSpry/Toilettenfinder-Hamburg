@@ -200,25 +200,98 @@ public class ActivityMap extends ActivityMenuBase {
     
     
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-    	Log.d(TAG, "onCreate");
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        //Button that will animate camera back to user position
-        myLocationButton = (ImageButton) findViewById(R.id.mylocation);  
+    protected void onResume() {
+        super.onResume();
         
-        //TODO: is it good to register receiver in oncreate() ??
+        if (checkPlayServices()){
+        	
+	        setUpMapIfNeeded();
+	        
+	        if(!poiReceiverRegistered){
+	    		registerReceiver(poiReceiver, new IntentFilter(TagNames.BROADC_POIS));
+	    		poiReceiverRegistered = true;
+	    	} 
+	        if(!locUpdReceiverRegistered){
+	    		registerReceiver(locUpdReceiver, new IntentFilter(TagNames.BROADC_LOCATION_UPDATED));
+	    		locUpdReceiverRegistered = true;
+	    	}
+	        //bind LocationUpdateService
+	        Intent intent= new Intent(this, LocationUpdateService.class);
+	        bindService(intent, mConnection,  Context.BIND_AUTO_CREATE);
+	        
+	        //set/update map markers
+	        updateClosestXMarkers(poiController, userLat, userLng, 10);
+	        //move camera to user location      
+	        moveToLocation(userLocation, 10);
+	        
+//	        mMap.setOnCameraChangeListener(new OnCameraChangeListener() {
+//	            @Override
+//	            public void onCameraChange(CameraPosition pos) {
+//	                // Move camera.
+//	            	CameraUpdate cu = getClosestPOIBoundsOnMap(10);
+//	            	if(mMap != null){
+//	            		mMap.moveCamera(cu);
+//	                    // Remove listener to prevent position reset on camera move.
+//	                	mMap.setOnCameraChangeListener(null);
+//	                	//get LatLngBounds of current camera position
+//	                	mapBounds = mMap.getProjection().getVisibleRegion().latLngBounds;
+//	                    //setLatLngCornersFromBounds(mapBounds);
+//	            	}
+//	            }			
+//	        });
+	        
+	        mMap.setOnCameraChangeListener(new OnCameraChangeListener() {
+	             @Override
+	             public void onCameraChange(CameraPosition pos) {
+	                 // Move camera.	
+	             	if(mMap != null){
+	                 	//get LatLngBounds of current camera position
+	                 	mapBounds = mMap.getProjection().getVisibleRegion().latLngBounds;
+	                 	setLatLngCornersFromBounds(mapBounds);
+	                 	if (poiController != null){
+	                 		addPOIToMap(poiController.getAllPOI());
+	                 	} else {
+	                 		if(toiletList != null){
+	                 			poiController = new POIController(toiletList);
+	                 		}    		
+	                 	}
+	                 	
+	             	}
+	             }			
+	         });
+			
+	      //Button that will animate camera back to user position
+	        myLocationButton = (ImageButton) findViewById(R.id.mylocation);  
+	        
+			//Location Button Listener
+			myLocationButton.setOnClickListener(new View.OnClickListener() {
+	            public void onClick(View v) {
+	            	//Only move to user location if it isn't the standardLocation
+	            	if( userLocation.getLatitude() != standardLocation.getLatitude()  &&  userLocation.getLongitude() != standardLocation.getLongitude() ){
+	            		moveToLocation(userLocation, 10); //pass user location and amount of POI to display close to user
+	            	}else{//if userLocation == standardLocation (-> no userLoc found), show GPS Settings dialog
+	            		//
+	            		buildAlertMessageGPSSettings();
+	            	}
+	            }
+	        });
+        }
+    }
+    
+    
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        Log.d(TAG, "onCreate");
+        setContentView(R.layout.activity_main);
+        
         //Register Receiver for POI Updates
         poiReceiver = new POIReceiver(new Handler());
         poiReceiver.setMainActivityHandler(this);
-        registerReceiver(poiReceiver, new IntentFilter(TagNames.BROADC_POIS));
-        poiReceiverRegistered = true;
         
         //LocUpdateReceiver
         locUpdReceiver = new LocationUpdateReceiver(new Handler());
         locUpdReceiver.setMainActivityHandler(this);
-        registerReceiver(locUpdReceiver, new IntentFilter(TagNames.BROADC_LOCATION_UPDATED));
-        locUpdReceiverRegistered = true;
         
         //list of POI that are currently visible on the map
         visiblePOI = new HashMap<Integer, Marker>();
@@ -243,7 +316,6 @@ public class ActivityMap extends ActivityMenuBase {
              	
          	}
             toiletList = savedInstanceState.getParcelableArrayList(BUNDLE_POILIST);
-            setUpMapIfNeeded();
 
         } else { //activity was started from scratch
         	
@@ -263,7 +335,6 @@ public class ActivityMap extends ActivityMenuBase {
                  		//TODO: check whether location is standardlocation, if yes dont set userlocation
                      	
                  	}
-                 	setUpMapIfNeeded();
              	}
              	
                 int result = bundle.getInt(TagNames.EXTRA_LOCATION_RESULT);
@@ -280,44 +351,6 @@ public class ActivityMap extends ActivityMenuBase {
         }else{
         	Log.d("MainActivity.oncreate():", "toiletList is null");
         }
-        //set up Google Map with current user position
-        setUpMapIfNeeded();
-        
-        //setPeeerOnMap();//needed????
-        
-        //set/update map markers
-        updateClosestXMarkers(poiController, userLat, userLng, 10);
-        //move camera to user location      
-        moveToLocation(userLocation, 10);
-        
-        mMap.setOnCameraChangeListener(new OnCameraChangeListener() {
-            @Override
-            public void onCameraChange(CameraPosition pos) {
-                // Move camera.
-            	CameraUpdate cu = getClosestPOIBoundsOnMap(10);
-            	if(mMap != null){
-            		mMap.moveCamera(cu);
-                    // Remove listener to prevent position reset on camera move.
-                	mMap.setOnCameraChangeListener(null);
-                	//get LatLngBounds of current camera position
-                	mapBounds = mMap.getProjection().getVisibleRegion().latLngBounds;
-                    //setLatLngCornersFromBounds(mapBounds);
-            	}
-            }			
-        });
-		
-		//Location Button Listener
-		myLocationButton.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-            	//Only move to user location if it isn't the standardLocation
-            	if( userLocation.getLatitude() != standardLocation.getLatitude()  &&  userLocation.getLongitude() != standardLocation.getLongitude() ){
-            		moveToLocation(userLocation, 10); //pass user location and amount of POI to display close to user
-            	}else{//if userLocation == standardLocation (-> no userLoc found), show GPS Settings dialog
-            		//
-            		buildAlertMessageGPSSettings();
-            	}
-            }
-        });
 		
 		//TODO: put the settings action check somewhere else (LocationUpdateService)
 		if (userLocation == null) {
@@ -326,7 +359,8 @@ public class ActivityMap extends ActivityMenuBase {
 			Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
 			startActivity(intent);
 		}
-    }
+    } // end onCreate
+    
     
 	DialogInterface.OnClickListener onOkListener = new DialogInterface.OnClickListener() {
         public void onClick(final DialogInterface dialog, final int id) {
@@ -449,8 +483,7 @@ public class ActivityMap extends ActivityMenuBase {
         builder.include(new LatLng(userLat, userLng));
         LatLngBounds bounds = builder.build();
 
-        return CameraUpdateFactory.newLatLngBounds(bounds,
-                30);
+        return CameraUpdateFactory.newLatLngBounds(bounds, 30);
     }
     
     //called every time onCameraChange -> NEEDED?
@@ -548,57 +581,8 @@ public class ActivityMap extends ActivityMenuBase {
     @Override
     protected void onStart(){
     	super.onStart();
-    	//set up Google Map with current user position
-        setUpMapIfNeeded();
-    	if(!poiReceiverRegistered){
-    		registerReceiver(poiReceiver, new IntentFilter(TagNames.BROADC_POIS));
-    		poiReceiverRegistered = true;
-    	}
-    	if(!locUpdReceiverRegistered){
-    		registerReceiver(locUpdReceiver, new IntentFilter(TagNames.BROADC_LOCATION_UPDATED));
-    		locUpdReceiverRegistered = true;
-    	}
-    	
-    	mMap.setOnCameraChangeListener(new OnCameraChangeListener() {
-             @Override
-             public void onCameraChange(CameraPosition pos) {
-                 // Move camera.	
-             	if(mMap != null){
-                 	//get LatLngBounds of current camera position
-                 	mapBounds = mMap.getProjection().getVisibleRegion().latLngBounds;
-                 	setLatLngCornersFromBounds(mapBounds);
-                 	if(poiController != null){
-                 		addPOIToMap(poiController.getAllPOI());
-                 	}else {
-                 		if(toiletList != null){
-                 			poiController = new POIController(toiletList);
-                 		}    		
-                 	}
-                 	
-             	}
-             }			
-         });
-    	 
- 		
     }
     
-    @Override
-    protected void onResume() {
-        super.onResume();
-        setUpMapIfNeeded();
-        if(!poiReceiverRegistered){
-    		registerReceiver(poiReceiver, new IntentFilter(TagNames.BROADC_POIS));
-    		poiReceiverRegistered = true;
-    	} 
-        if(!locUpdReceiverRegistered){
-    		registerReceiver(locUpdReceiver, new IntentFilter(TagNames.BROADC_LOCATION_UPDATED));
-    		locUpdReceiverRegistered = true;
-    	}
-        //bind LocationUpdateService
-        Intent intent= new Intent(this, LocationUpdateService.class);
-        bindService(intent, mConnection,
-            Context.BIND_AUTO_CREATE);
-    }
     
     @Override
     protected void onPause(){
@@ -615,8 +599,10 @@ public class ActivityMap extends ActivityMenuBase {
     	}
     	//fix the map at restart of application, so that user and markers can be seen again
     	//TODO: nullpointer after disabling network in running app and then trying to pause it (back  button)
-    	cp = mMap.getCameraPosition();
-        mMap = null;
+    	if (mMap != null){
+    		cp = mMap.getCameraPosition();
+            mMap = null;
+    	}	
     }
     
     @Override
@@ -704,11 +690,10 @@ public class ActivityMap extends ActivityMenuBase {
      * method in {@link #onResume()} to guarantee that it will be called.
      */
     private void setUpMapIfNeeded() {
-        // Do a null check to confirm that we have nfot already instantiated the map.
+        // Do a null check to confirm that we have not already instantiated the map.
         if (mMap == null) {
             // Try to obtain the map from the SupportMapFragment.
-            mMap = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map))
-                    .getMap();
+            mMap = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map)).getMap();
            
             // Check if we were successful in obtaining the map.
             if (mMap != null) {
@@ -737,12 +722,10 @@ public class ActivityMap extends ActivityMenuBase {
     
     private ServiceConnection mConnection = new ServiceConnection() {
 
-        public void onServiceConnected(ComponentName className, 
-            IBinder binder) {
+        public void onServiceConnected(ComponentName className, IBinder binder) {
           LocationUpdateService.ServiceBinder b = (LocationUpdateService.ServiceBinder) binder;
           service = b.getLocService();
-          Toast.makeText(ActivityMap.this, "LocService Connected", Toast.LENGTH_SHORT)
-              .show();
+          Toast.makeText(ActivityMap.this, "LocService Connected", Toast.LENGTH_SHORT).show();
           Location loc = service.getCurrentUserLocation();
           if(loc == standardLocation || loc == null){
         	  service.updateLocation();//is this called multiple times??
@@ -751,8 +734,7 @@ public class ActivityMap extends ActivityMenuBase {
 
         public void onServiceDisconnected(ComponentName className) {
           service = null;
-          Toast.makeText(ActivityMap.this, "LocService Disconnected", Toast.LENGTH_SHORT)
-          .show();
+          Toast.makeText(ActivityMap.this, "LocService Disconnected", Toast.LENGTH_SHORT).show();
         }
       };
 }

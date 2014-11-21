@@ -3,7 +3,6 @@ package de.bfhh.stilleoertchenhamburg.activites;
 import de.bfhh.stilleoertchenhamburg.R;
 import android.content.Intent;
 import android.support.v4.app.NavUtils;
-import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 
@@ -12,7 +11,7 @@ import android.view.MenuItem;
  * @author Jenne
  */
 
-public class ActivityMenuBase extends ActionBarActivity {
+public class ActivityMenuBase extends ActivityBase {
 	
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
@@ -50,5 +49,5 @@ public class ActivityMenuBase extends ActionBarActivity {
 	            return super.onOptionsItemSelected(item);
 	    }
 	}
-
+	
 }

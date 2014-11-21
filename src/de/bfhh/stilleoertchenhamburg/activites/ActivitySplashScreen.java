@@ -1,6 +1,7 @@
 package de.bfhh.stilleoertchenhamburg.activites;
 
 import java.util.ArrayList;
+
 import de.bfhh.stilleoertchenhamburg.LocationUpdateService;
 import de.bfhh.stilleoertchenhamburg.POIUpdateService;
 import de.bfhh.stilleoertchenhamburg.R;
@@ -32,16 +33,14 @@ import android.widget.Toast;
  * it receives a broadcast from POIUpdateService that it's done processing)
  */
 
-public class ActivitySplashScreen extends Activity {
+public class ActivitySplashScreen extends ActivityBase {
 	
 	private static final String TAG = ActivitySplashScreen.class.getSimpleName();
     
     private boolean isReceiverRegistered;//is the receiver registered?
     
     private boolean locServiceBound;
-    
-    private IntentFilter filter;
-    
+        
     private LocationUpdateService service;
     
     private double lat = 0.0;
@@ -53,19 +52,26 @@ public class ActivitySplashScreen extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
-        
-        // Set receiver to listen to actions from both services
-        filter = new IntentFilter(TagNames.BROADC_LOCATION_NEW);
-    	filter.addAction(TagNames.BROADC_POIS);
-    	registerReceiver(receiver, filter);
-        isReceiverRegistered = true; //shows that a receiver is registered
-        
-        //SOLUTION for Threading: create Asynctask in Service to handle Location stuff	
-        //bind to it rather than starting service
-        Intent intent= new Intent(this, LocationUpdateService.class);
-        bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
-        //set locServiceRegistered to true
-        locServiceBound = true;
+    }
+    
+    @Override
+    protected void onResume(){
+    	super.onResume();
+    	if (checkPlayServices()) {
+    		// Set receiver to listen to actions from both services
+        	if(!isReceiverRegistered){
+        		IntentFilter filter = new IntentFilter(TagNames.BROADC_LOCATION_NEW);
+            	filter.addAction(TagNames.BROADC_POIS);
+        		registerReceiver(receiver, filter);
+        		isReceiverRegistered = true;
+        	}
+        	if(!locServiceBound){
+        		 //bind to service rather than starting it
+                Intent intent = new Intent(this, LocationUpdateService.class);
+                bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+                locServiceBound = true;
+        	}
+    	}
     }
     
 	
@@ -130,12 +136,10 @@ public class ActivitySplashScreen extends Activity {
     //handles what happens when this activity binds to LocationUpdateService
     private ServiceConnection mConnection = new ServiceConnection() {
 
-        public void onServiceConnected(ComponentName className, 
-            IBinder binder) {
+        public void onServiceConnected(ComponentName className, IBinder binder) {
           LocationUpdateService.ServiceBinder b = (LocationUpdateService.ServiceBinder) binder;
           service = b.getLocService();
-          Toast.makeText(ActivitySplashScreen.this, "LocService Connected", Toast.LENGTH_SHORT)
-              .show();
+          Toast.makeText(ActivitySplashScreen.this, "LocService Connected", Toast.LENGTH_SHORT).show();
           Location loc = service.getCurrentUserLocation();
           if(loc == null){
         	  service.updateLocation();//calls AsyncTask and publishes results
@@ -144,8 +148,7 @@ public class ActivitySplashScreen extends Activity {
 
         public void onServiceDisconnected(ComponentName className) {
         	service = null;
-          	Toast.makeText(ActivitySplashScreen.this, "LocService Disconnected", Toast.LENGTH_SHORT)
-          		.show();
+          	Toast.makeText(ActivitySplashScreen.this, "LocService Disconnected", Toast.LENGTH_SHORT).show();
         }
     };
  
@@ -159,22 +162,6 @@ public class ActivitySplashScreen extends Activity {
     	}
     }*/
     
-    
-    @Override
-    protected void onResume(){
-    	super.onResume();
-    	if(!isReceiverRegistered){
-    		registerReceiver(receiver, filter);
-    		isReceiverRegistered = true;
-    	}
-    	if(!locServiceBound){
-    		 //bind to service rather than starting it
-            Intent intent= new Intent(this, LocationUpdateService.class);
-            bindService(intent, mConnection,
-                Context.BIND_AUTO_CREATE);
-            locServiceBound = true;
-    	}
-    }
     
     @Override
     protected void onPause() {

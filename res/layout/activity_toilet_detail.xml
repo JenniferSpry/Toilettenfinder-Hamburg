@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="fill_parent"
+	android:layout_height="wrap_content">
+	
+	<LinearLayout 
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:id="@+id/mainLayout"
+		android:descendantFocusability="beforeDescendants"
+		android:focusableInTouchMode="true"
+        android:padding="20dp" 
+        android:background="@color/white"
+        android:orientation="vertical">
+                       
+              <!-- Name -->
+	    <TextView
+	        android:id="@+id/detail_toilet_name"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:paddingBottom="5sp"
+	        android:text="Toilet Name"
+	        android:textAppearance="?android:attr/textAppearanceLarge"
+	        android:textColor="@color/black"
+	        android:textStyle="bold" />
+	  
+	    <!-- Address -->
+	    <TextView
+	        android:id="@+id/detail_toilet_adress"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:text="adress"
+	        android:textAppearance="?android:attr/textAppearanceMedium"
+	        android:textColor="@color/black" />
+	
+	    <!-- Website -->
+	    <TextView
+	        android:id="@+id/detail_toilet_website"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:text="website"
+	        android:autoLink="web"
+	        android:linksClickable="true"
+	        android:textAppearance="?android:attr/textAppearanceMedium" />
+	    
+	     <!-- Description -->
+	    <TextView
+	        android:id="@+id/detail_toilet_description"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:paddingTop="10sp"
+	        android:text="Description"
+	        android:textStyle="italic"
+	        android:textAppearance="?android:attr/textAppearanceMedium"
+	        android:textColor="@color/black" />
+	
+	    <!-- Subline Find Route-->
+	    <TextView
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:paddingBottom="5sp"
+	        android:paddingTop="10sp"
+	        android:text="@string/toilet_find_way"
+	        android:textColor="@color/black"
+	        android:textAppearance="?android:attr/textAppearanceMedium"
+	        android:textStyle="bold" />
+	
+	    <!-- Find Route Buttons -->
+	    <LinearLayout
+	        android:layout_width="fill_parent"
+	        android:layout_height="wrap_content"
+	        android:orientation="horizontal" >
+	
+	        <Button
+	            android:id="@+id/button_map_route"
+	            android:layout_width="fill_parent"
+	            android:layout_height="wrap_content"
+	            android:layout_weight="1"
+	            android:textAppearance="?android:attr/textAppearanceMedium"
+	            android:gravity="center"
+	            android:text="@string/toilet_button_map_route" />
+	
+	        <Button
+	            android:id="@+id/button_text_route"
+	            android:layout_width="fill_parent"
+	            android:layout_height="wrap_content"
+	            android:layout_weight="1"
+	            android:textAppearance="?android:attr/textAppearanceMedium"
+	            android:gravity="center"
+	            android:text="@string/toilet_button_text_route" />
+	    </LinearLayout>  
+	    
+	    
+	     <!-- Subline Comment on POI-->
+	    <TextView
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:paddingBottom="5sp"
+	        android:paddingTop="15sp"
+	        android:text="@string/toilet_comment"
+	        android:textColor="@color/black"
+	        android:textAppearance="?android:attr/textAppearanceMedium"
+	        android:textStyle="bold" />
+	    
+	    <!-- Comment Field -->
+	    <EditText
+	        android:id="@+id/editText1"
+	        android:layout_width="match_parent"
+	        android:layout_height="wrap_content"
+	        android:layout_weight="0.91"
+	        android:ems="5"
+	        android:inputType="textMultiLine" >
+	    </EditText>
+	
+	    <!-- E-Mail Field Label -->
+	    <TextView 
+	        android:layout_width="fill_parent" 
+	        android:layout_height="wrap_content"
+	        android:textAppearance="?android:attr/textAppearanceSmall"
+	        android:text="@string/toilet_label_mail" 
+	        android:textColor="@color/black" />
+	    
+	    <!-- E-Mail Field -->
+	    <EditText
+	        android:id="@+id/editText2"
+	        android:layout_width="match_parent"
+	        android:layout_height="wrap_content"
+	        android:ems="10"
+	        android:inputType="textEmailAddress" />
+	    
+	    <!-- E-Mail Field comment -->
+	    <TextView
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:paddingBottom="5sp"
+	        android:text="@string/toilet_mail_field_description"
+	        android:textColor="@color/grey"
+	        android:textAppearance="?android:attr/textAppearanceSmall" />
+	      
+	    <!-- Send Comment Button -->
+	    <Button
+	        android:id="@+id/button_send_comment"
+	        android:layout_width="fill_parent"
+	        android:layout_height="wrap_content"
+	        android:layout_weight="1"
+	        android:gravity="center"
+	        android:text="@string/toilet_button_send" />
+
+              
+          </LinearLayout>
+    </ScrollView>

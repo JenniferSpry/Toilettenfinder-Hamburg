@@ -1,7 +1,6 @@
 package de.bfhh.stilleoertchenhamburg;
 
 import java.util.List;
-import org.json.JSONArray;
 
 import android.app.Activity;
 import android.app.Service;
@@ -27,9 +26,7 @@ public class LocationUpdateService extends Service {
 	private LocationManager mlocationManager;
 	private LocationUpdateListener locUpdListener; 
 	private Location userLocation;
-		
-	JSONArray toilets = null;// POI JSONArray
-	
+
 	//Binder to bind activities to this service
 	private final IBinder mBinder = new ServiceBinder();
 	
@@ -132,7 +129,6 @@ public class LocationUpdateService extends Service {
 	    	mlocationManager.removeUpdates(locUpdListener);
 	    }*/
 	    stopSelf();
-	    
 	}
 	
 	/*

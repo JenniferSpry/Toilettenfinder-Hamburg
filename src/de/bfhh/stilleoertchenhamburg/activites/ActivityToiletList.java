@@ -45,16 +45,18 @@ public class ActivityToiletList extends ActivityMenuBase {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_toilet_list);
-		
-		ActionBar actionBar = getSupportActionBar();
+        
+        ActionBar actionBar = getSupportActionBar();
 	    actionBar.setDisplayHomeAsUpEnabled(true);
-        
-        // Set receivers
-        registerReceiver(locationReceiver, new IntentFilter(TagNames.BROADC_LOCATION_NEW));
-        registerReceiver(poiReceiver, new IntentFilter(TagNames.BROADC_POIS));
-        
-        Intent intent= new Intent(this, LocationUpdateService.class);
-        bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+		
+        if (checkPlayServices()) {
+	        // Set receivers
+	        registerReceiver(locationReceiver, new IntentFilter(TagNames.BROADC_LOCATION_NEW));
+	        registerReceiver(poiReceiver, new IntentFilter(TagNames.BROADC_POIS));
+	        
+	        Intent intent= new Intent(this, LocationUpdateService.class);
+	        bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+        }
     }
     
 	
