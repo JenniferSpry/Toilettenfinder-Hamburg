@@ -35,6 +35,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 	// TODO: set to two days
 	private final static Long MAX_TIME_DELTA = 2 * 60 * 60 * 1000L;
 	
+	private int poisInDatabase = 0;
+	
 	private final static String PREF_FILE_NAME = "DataAgeSettings";
 	private final static String PREF_KEY_DATA_AGE = "age_of_data";
 	  
@@ -86,6 +88,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 	}
 	
 	public boolean isDataStillFresh(Context context){
+		if (poisInDatabase < 1){
+			return false;
+		}
 		SharedPreferences pref = context.getApplicationContext().getSharedPreferences(PREF_FILE_NAME, 0); // 0 = private mode
 		Long lastRefreshTime = pref.getLong(PREF_KEY_DATA_AGE, 0L);
 		Long timeDelta = new Date().getTime() - lastRefreshTime;
@@ -106,6 +111,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getWritableDatabase();
         clearData(db);
  
+        poisInDatabase = pois.size();
+        
         for (POI poi : pois){
         	ContentValues values = new ContentValues();
             values.put(KEY_ID, poi.getId());

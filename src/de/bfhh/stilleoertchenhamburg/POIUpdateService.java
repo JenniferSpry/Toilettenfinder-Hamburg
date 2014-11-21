@@ -95,7 +95,7 @@ public class POIUpdateService extends IntentService {
 					final String LAT = "latitude";
 				
 				try {
-					//Log.d("JSON", json.toString());
+					Log.d("JSON", json.toString());
 					
 					ArrayList<POI> poiList = new ArrayList<POI>();
 					

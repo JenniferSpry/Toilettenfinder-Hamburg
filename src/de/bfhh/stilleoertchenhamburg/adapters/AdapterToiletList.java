@@ -67,6 +67,7 @@ public class AdapterToiletList extends BaseAdapter {
         TextView txtDistance = (TextView) convertView.findViewById(R.id.toilet_distance);
         txtDistance.setText(distance);
          
+        //icon with or without wheelchair 
         ImageView imagePin = (ImageView) convertView.findViewById(R.id.icon);
         imagePin.setImageResource(poi.getMarkerIconRessource());
 

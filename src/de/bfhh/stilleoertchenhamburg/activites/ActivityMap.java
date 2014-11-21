@@ -8,6 +8,8 @@ import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnCameraChangeListener;
+import com.google.android.gms.maps.GoogleMap.OnMapClickListener;
+import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
@@ -15,6 +17,8 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.sothree.slidinguppanel.SlidingUpPanelLayout;
+import com.sothree.slidinguppanel.SlidingUpPanelLayout.PanelSlideListener;
 
 import de.bfhh.stilleoertchenhamburg.AppController;
 import de.bfhh.stilleoertchenhamburg.LocationUpdateService;
@@ -55,7 +59,7 @@ import android.provider.Settings;
 
 public class ActivityMap extends ActivityMenuBase {
 	
-	private static final String TAG = ActivitySplashScreen.class.getSimpleName();
+	private static final String TAG = ActivityMap.class.getSimpleName();
 
     private static GoogleMap mMap;
     private static Location userLocation;
@@ -68,16 +72,12 @@ public class ActivityMap extends ActivityMenuBase {
     
     private ImageButton myLocationButton; //Button to get back to current user location on map
     
-    final private LatLng HAMBURG = new LatLng(53.5509517,9.9936818); //standard position in HH
-    
     private static Marker personInNeedOfToilette; //person's marker
 	private ArrayList<POI> toiletList; //POI received from POIUpdateService
 	private static ArrayList<MarkerOptions> markerList;
 	private static HashMap<Integer, Marker> visiblePOI;
 	private LatLngBounds mapBounds; //bounds of visible map, updated onCameraChange
 	//private List<LatLng> cornersLatLng; // contains two LatLng decribing northeastern and southwestern points on visible map
-	
-	private ArrayList<String> keyNames;
 	
 	private static double userLat;
 	private static double userLng;
@@ -95,6 +95,9 @@ public class ActivityMap extends ActivityMenuBase {
 	protected boolean changeGPSSettings;
 	private static Location standardLocation;
 	private static ActivityMap instance;
+	
+	private SlidingUpPanelLayout slidingUpPanel;
+	
 	
     //not really used right now, but will be needed later
     public static class POIReceiver extends BroadcastReceiver {
@@ -259,9 +262,6 @@ public class ActivityMap extends ActivityMenuBase {
 	             	}
 	             }			
 	         });
-			
-	      //Button that will animate camera back to user position
-	        myLocationButton = (ImageButton) findViewById(R.id.mylocation);  
 	        
 			//Location Button Listener
 			myLocationButton.setOnClickListener(new View.OnClickListener() {
@@ -284,7 +284,13 @@ public class ActivityMap extends ActivityMenuBase {
         super.onCreate(savedInstanceState);
         Log.d(TAG, "onCreate");
         setContentView(R.layout.activity_main);
-        
+
+        //Button that will animate camera back to user position
+        myLocationButton = (ImageButton) findViewById(R.id.mylocation);  
+        //holds the SlidingUpLayout which is wrapper of our layout
+        slidingUpPanel = (SlidingUpPanelLayout) findViewById(R.id.sliding_layout);
+        slidingUpPanel.setAnchorPoint(0.75f);
+                
         //Register Receiver for POI Updates
         poiReceiver = new POIReceiver(new Handler());
         poiReceiver.setMainActivityHandler(this);
@@ -559,7 +565,17 @@ public class ActivityMap extends ActivityMenuBase {
                     if(!visiblePOI.containsKey(poi.getId())){
                         //Add the Marker to the Map and keep track of it with the HashMap
                         //getMarkerOptionsForPOI just returns a MarkerOptions object
-                        visiblePOI.put(poi.getId(), mMap.addMarker(poiController.getMarkerOptionsForPOI(poi)));
+                    	Marker m = mMap.addMarker(poiController.getMarkerOptionsForPOI(poi));
+                    	//the slidingUpPanel is shown if the user clicks on a marker
+                    	mMap.setOnMarkerClickListener(new OnMarkerClickListener()
+                        {
+                            @Override
+                            public boolean onMarkerClick(Marker arg0) { 
+                                slidingUpPanel.showPanel();
+                                return true;
+                            }
+                        });
+                        visiblePOI.put(poi.getId(), m);
                     }
                 }
                 //If the marker is off screen
@@ -581,6 +597,89 @@ public class ActivityMap extends ActivityMenuBase {
     @Override
     protected void onStart(){
     	super.onStart();
+
+    	//set up Google Map with current user position
+        setUpMapIfNeeded();
+    	if(!poiReceiverRegistered){
+    		registerReceiver(poiReceiver, new IntentFilter(TagNames.BROADC_POIS));
+    		poiReceiverRegistered = true;
+    	}
+    	if(!locUpdReceiverRegistered){
+    		registerReceiver(locUpdReceiver, new IntentFilter(TagNames.BROADC_LOCATION_UPDATED));
+    		locUpdReceiverRegistered = true;
+    	}
+    	/*
+    	mMap.setOnCameraChangeListener(new OnCameraChangeListener() {
+             @Override
+             public void onCameraChange(CameraPosition pos) {
+                 // Move camera.	
+             	if(mMap != null){
+                 	//get LatLngBounds of current camera position
+                 	mapBounds = mMap.getProjection().getVisibleRegion().latLngBounds;
+                 	setLatLngCornersFromBounds(mapBounds);
+                 	if(poiController != null){
+                 		addPOIToMap(poiController.getAllPOI());
+                 	}else {
+                 		if(toiletList != null){
+                 			poiController = new POIController(toiletList);
+                 		}    		
+                 	}
+                 	
+             	}
+             }			
+         });
+         */
+    	 
+    	//TODO: make transition of map between slidinUpPanel hide / show nicer
+    	//hide the panel if user clicks somewhere on the map where there is no marker
+    	mMap.setOnMapClickListener(new OnMapClickListener() {
+			@Override
+			public void onMapClick(LatLng arg0) {
+				slidingUpPanel.hidePanel();
+			}
+		});
+    	
+    	//hide the sliding up Panel
+    	slidingUpPanel.hidePanel();
+    	
+    	//set Listener for different sliding events
+    	slidingUpPanel.setPanelSlideListener(new PanelSlideListener(){
+			@Override
+			public void onPanelSlide(View panel, float slideOffset) {
+				/*if the panel is slid within close vicinity of the anchorPoint 
+				 * (at 0.75f), expand the panel to that anchorPoint (for some reason
+				 * this doesn't work by only setting slidingUpPanel.setAnchorPoint(0.75f);)
+				*/
+				if( Math.abs(slideOffset - 0.75f) < 0.02f ) {
+					slidingUpPanel.expandPanel(0.75f);
+				}	
+			}
+
+			@Override
+			public void onPanelCollapsed(View panel) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void onPanelExpanded(View panel) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void onPanelAnchored(View panel) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void onPanelHidden(View panel) {
+				// TODO Auto-generated method stub
+				
+			}
+        	
+        });
     }
     
     
