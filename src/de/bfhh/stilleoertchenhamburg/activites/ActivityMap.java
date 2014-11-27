@@ -196,8 +196,8 @@ public class ActivityMap extends ActivityMenuBase {
 	    
 	    if (checkPlayServices()){
 	    	
-	    	setUpMapIfNeeded();
-	    	setPeeerOnMap();
+	    	setUpMapIfNeeded(); 	
+	    	
 	    	//only called after first setup of application 
 	    	if(_mapBounds == null){
 	    		_mMap.clear();
@@ -208,6 +208,7 @@ public class ActivityMap extends ActivityMenuBase {
 	    		CameraUpdate cu = getClosestPOIBoundsOnMap(10);
 	        	moveToLocation(cu);
 	    	}
+	    	setPeeerOnMap();
 	    	
 		    if(!_locUpdReceiverRegistered){
 		    	registerReceiver(_locUpdReceiver, new IntentFilter(TagNames.BROADC_LOCATION_UPDATED));
@@ -252,7 +253,7 @@ public class ActivityMap extends ActivityMenuBase {
 		     _myLocationButton.setOnClickListener(new View.OnClickListener() {
 	            public void onClick(View v) {
 	            	//Only move to user location if it isn't the standardLocation
-	            	if(!_hasUserLocation){
+	            	if(_hasUserLocation){
 	            		CameraUpdate cu = getClosestPOIBoundsOnMap(10);
 	            		moveToLocation(cu); //pass user location and amount of POI to display close to user
 	            	}else{//if userLocation == standardLocation (-> no userLoc found), show GPS Settings dialog
@@ -304,7 +305,7 @@ public class ActivityMap extends ActivityMenuBase {
             		//TODO: Testing
             		// if the old userLocation is same as standardLocation and distance to newly received location is greater 10m -> move camera
             		if(!_instance._hasUserLocation){
-            			_instance.buildAlertMessageGPSSettings();
+            			//_instance.buildAlertMessageGPSSettings();
             			if( _instance._userLocation.distanceTo(nLocation) > 10.0){
             				CameraUpdate cu = _instance.getClosestPOIBoundsOnMap(10);
                      		//CameraPosition cameraPosition = new CameraPosition.Builder().target(
@@ -342,7 +343,7 @@ public class ActivityMap extends ActivityMenuBase {
     //set user marker and closest POI markers on map
     public static void updateUserAndPOIOnMap(double lat, double lng) {
 		// update Markers first
-    	updateClosestXMarkers(_poiController, lat, lng, 10);
+    	updateClosestXMarkers(lat, lng, 10);
 		//set user position TODO: method out of that
     	getInstance().setPeeerOnMap();
 	}
@@ -392,15 +393,17 @@ public class ActivityMap extends ActivityMenuBase {
     private CameraUpdate getClosestPOIBoundsOnMap(int poiAmount){
     	_builder = new LatLngBounds.Builder();
     	//update markerList with ten nearest POI to user position
-    	/*if(poiController != null){
-    		if(mMap != null){
-    			mMap.clear();
+    	if(_poiController != null){
+    		if(_mMap != null){
+    			_mMap.clear();
     			deleteOldMarkersFromList();//delete markers in markerList and visiblePOI
-    			updateUserAndPOIOnMap(userLat, userLng); //put ten closest in markerList and add to map
+    			updateUserAndPOIOnMap(_userLat, _userLng); //put ten closest in markerList and add to map
     		}
-    	}*/
-    	for(MarkerOptions moValue : _markerMap.values()){
-    		_builder.include(moValue.getPosition());
+    	}
+    	List<POI> closestX = new ArrayList<POI>(); //list with closest ten POI to user position
+	    closestX = _poiController.getClosestPOI(10);
+    	for(POI poi : closestX){
+    		_builder.include(poi.getLatLng());
     	}
         //also add peeer, in case there is only toilets on one side, 
         //he / she doesn't get left out of the map view :)
@@ -440,6 +443,9 @@ public class ActivityMap extends ActivityMenuBase {
     	}	
     }   
     
+    /*
+     * 
+     */
     private void addPOIToMap(List<POI> pois){
         if(_mMap != null){
         	Log.d("Contained poi size:", String.valueOf(getContainedPOI().size()));
@@ -511,7 +517,6 @@ public class ActivityMap extends ActivityMenuBase {
     		unregisterReceiver(_locUpdReceiver);
     		_locUpdReceiverRegistered = false;
     	}
-    	
     }
     
     @Override
@@ -541,22 +546,22 @@ public class ActivityMap extends ActivityMenuBase {
     
     
     // Update closest X markers on the map
-    private static void updateClosestXMarkers(POIController poiController, double currLat, double currLng, int x){
+    private static void updateClosestXMarkers(double currLat, double currLng, int x){
     	List<POI> closestX = new ArrayList<POI>(); //list with closest ten POI to user position
     	_markerMap = new HashMap<Integer, MarkerOptions>(); //markers for those POI
     	//check whether the broadcast was received
-    	if(poiController != null ){
-	        if(poiController.poiReceived() ){
+    	if(_poiController != null ){
+	        if(_poiController.poiReceived() ){
 	        	//propagate the user position to all POI and set their distance to user in meters
-	        	poiController.setDistancePOIToUser(currLat, currLng);
+	        	_poiController.setDistancePOIToUser(currLat, currLng);
 	        	//get closest ten POI
-	        	closestX = poiController.getClosestPOI(x); // get ten closest toilets
+	        	closestX = _poiController.getClosestPOI(x); // get ten closest toilets
 	        	if(_mMap != null){
 	        		//add markers to the map  for the ten closest POI
 		        	for(int i = 0; i < closestX.size(); i++){
 		        		POI poi = closestX.get(i);
 		        		//get MarkerOptions for this POI from poiController
-		        		MarkerOptions marker = poiController.getMarkerOptionsForPOI(poi);
+		        		MarkerOptions marker = _poiController.getMarkerOptionsForPOI(poi);
 		                // adding marker
 		                _visiblePOIMap.put(poi.getId(), _mMap.addMarker(marker));
 		                _markerMap.put(poi.getId(), marker); 
@@ -587,6 +592,7 @@ public class ActivityMap extends ActivityMenuBase {
     	// check whether user position is standard position, if not set icon
         if(_hasUserLocation && _mMap != null){
         	if(_personInNeedOfToilette != null){
+        		Log.d("Setting peeer position", "Lat: " + _userLat + ", Long: " +_userLng);
         		_personInNeedOfToilette.setPosition(new LatLng(_userLat, _userLng));
         	}else{
         		_personInNeedOfToilette = _mMap.addMarker(new MarkerOptions()
@@ -631,7 +637,7 @@ public class ActivityMap extends ActivityMenuBase {
 
   	/* show alert dialog with option to change gps settings */
   	private void buildAlertMessageGPSSettings() {
-  		final AlertDialog.Builder builder = new AlertDialog.Builder(getApplicationContext());
+  		final AlertDialog.Builder builder = new AlertDialog.Builder(ActivityMap.this);
   	    builder.setMessage("Dein GPS ist ausgestellt, möchtest du es jetzt anstellen?")
   	           .setCancelable(false)
   	           .setPositiveButton("Ja", onOkListener)
