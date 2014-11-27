@@ -226,8 +226,10 @@ public class ActivityMap extends ActivityMenuBase {
         		}
         	}*/
         	if(mapBounds == null){
+        		mMap.clear();
         		//set/update map markers
-            	updateClosestXMarkers(poiController, userLat, userLng, 10);
+        		deleteOldMarkersFromList();
+            	//updateClosestXMarkers(poiController, userLat, userLng, 10);
             	//move camera to user location     
             	moveToLocation(userLocation, 10);
         		
@@ -310,7 +312,7 @@ public class ActivityMap extends ActivityMenuBase {
         
         //list of POI that are currently visible on the map
         visiblePOI = new HashMap<Integer, Marker>();
-        
+        markerList = new HashMap<Integer, MarkerOptions>();
         //check the saved instance state:
         /*
          * if the activity is closed by pressing back button it is destroyed, but
