@@ -56,6 +56,7 @@ public class LocationUpdateService extends Service {
 	
 	
 	public void updateLocation(){
+		Log.d(TAG, "start polling Location");
 		// Starting point for this Service
 		mlocationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
 		locUpdListener = new LocationUpdateListener();
@@ -72,6 +73,7 @@ public class LocationUpdateService extends Service {
 	}
 	
 	public void stopLocationUpdates(){
+		Log.d(TAG, "stop polling Location");
 		if(mlocationManager != null){
 			Log.i("stopLocationUpdates", "Removing location updates");
 			mlocationManager.removeUpdates(locUpdListener);
