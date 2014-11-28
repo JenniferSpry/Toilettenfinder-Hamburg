@@ -1,12 +1,9 @@
-package de.bfhh.stilleoertchenhamburg;
+package de.bfhh.stilleoertchenhamburg.helpers;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map.Entry;
-
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
@@ -26,29 +23,11 @@ import de.bfhh.stilleoertchenhamburg.models.POI;
  * back to the calling activity.
  */
 
-public class POIController {
-	
-	protected static final int RESULT_OK = -1;
-	private boolean poiReceived;//has the broadcast been received?
-	List<POI> poiList;
-
-	public POIController(ArrayList<POI> poiList ){
-		if(poiList != null){
-			this.poiList = poiList;
-			poiReceived = true;
-		}else {
-			poiReceived = false;
-		}
-	}
-	
-	//return boolean that shows whether broadcast has been received
-	public boolean poiReceived(){
-		return poiReceived;
-	}
+public class POIHelper {
 	
 	//set distance to user for each individual POI in poiList.
 	//TODO:this has to be called when user location is changed
-	public void setDistancePOIToUser(double userLat, double userLng){
+	public static ArrayList<POI> setDistancePOIToUser(ArrayList<POI> poiList, double userLat, double userLng){
 		Location loc = new Location("");
 		loc.setLatitude(userLat);
 		loc.setLongitude(userLng);
@@ -56,18 +35,22 @@ public class POIController {
 		for(int i=0; i < poiList.size(); i++){
 			poiList.get(i).setDistanceToUser(loc);	
 		}
+		return poiList;
 	}
 	
 	//returns the closest ten POI to the user's current location
-	public ArrayList<POI> getClosestPOI(int amount){	
+	public static ArrayList<POI> getClosestPOI(ArrayList<POI> poiList, int amount){	
 		ArrayList<POI> closestPOI = new ArrayList<POI>();
 		
-		Collections.sort(poiList, new Comparator<POI>() {
-	        @Override 
-	        public int compare(POI p1, POI p2) {
-	            return  p1.getDistanceToUserInt() - p2.getDistanceToUserInt(); // Ascending
-	        }
-	    });
+		if (!poiList.isEmpty()){
+			Collections.sort(poiList, new Comparator<POI>() {
+		        @Override 
+		        public int compare(POI p1, POI p2) {
+		            return  p1.getDistanceToUserInt() - p2.getDistanceToUserInt(); // Ascending
+		        }
+		    });
+		}
+		
 		if(amount > 0 && !poiList.isEmpty()){
 			for(int i = 0; i < amount; i++){ //add ten closes points to other List
 				closestPOI.add(poiList.get(i));
@@ -76,12 +59,8 @@ public class POIController {
 		return closestPOI; //could be empty of amount == 0
 	}
 	
-	public List<POI> getAllPOI(){
-		return poiList;
-	}
-	
 	//returns the MarkerOptions for a passed POI
-	public MarkerOptions getMarkerOptionsForPOI(POI poi){
+	public static MarkerOptions getMarkerOptionsForPOI(POI poi){
 		MarkerOptions marker = new MarkerOptions();
 		//poi.getMarkerIconRessource() returns the drawable icon depending on wheelchair accessibility
 		BitmapDescriptor icon = BitmapDescriptorFactory.fromResource(poi.getMarkerIconRessource());

@@ -3,11 +3,11 @@ package de.bfhh.stilleoertchenhamburg.activites;
 import java.util.ArrayList;
 
 import de.bfhh.stilleoertchenhamburg.LocationUpdateService;
-import de.bfhh.stilleoertchenhamburg.POIController;
 import de.bfhh.stilleoertchenhamburg.POIUpdateService;
 import de.bfhh.stilleoertchenhamburg.R;
 import de.bfhh.stilleoertchenhamburg.TagNames;
 import de.bfhh.stilleoertchenhamburg.fragments.FragmentToiletList;
+import de.bfhh.stilleoertchenhamburg.helpers.POIHelper;
 import de.bfhh.stilleoertchenhamburg.models.POI;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
@@ -110,9 +110,8 @@ public class ActivityToiletList extends ActivityMenuBase {
 
     
 	private void fillFragmentList(double userLat, double userLng, ArrayList<POI> poiList, int result){
-		POIController poiController = new POIController(poiList);
-		poiController.setDistancePOIToUser(userLat, userLng);
-		ArrayList<POI> pois = poiController.getClosestPOI(20);
+		poiList = POIHelper.setDistancePOIToUser(poiList, userLat, userLng);
+		ArrayList<POI> pois = POIHelper.getClosestPOI(poiList, 20);
 		
 		Bundle args = new Bundle();  
 		args.putParcelableArrayList(TagNames.EXTRA_POI_LIST, pois);

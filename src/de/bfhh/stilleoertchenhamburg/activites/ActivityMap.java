@@ -21,9 +21,9 @@ import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout.PanelSlideListener;
 
 import de.bfhh.stilleoertchenhamburg.LocationUpdateService;
-import de.bfhh.stilleoertchenhamburg.POIController;
 import de.bfhh.stilleoertchenhamburg.R;
 import de.bfhh.stilleoertchenhamburg.TagNames;
+import de.bfhh.stilleoertchenhamburg.helpers.POIHelper;
 import de.bfhh.stilleoertchenhamburg.models.POI;
 
 import android.util.Log;
@@ -61,8 +61,6 @@ public class ActivityMap extends ActivityMenuBase {
 	private static GoogleMap _mMap;
 	private Location _userLocation;
 
-	private static POIController _poiController; //class that handles Broadcast, methods return List<POI>
-
 	private ImageButton _myLocationButton; //Button to get back to current user location on map
 
 	private static Marker _personInNeedOfToilette; //person's marker
@@ -88,7 +86,6 @@ public class ActivityMap extends ActivityMenuBase {
 	private static ActivityMap _instance;
 
 	private SlidingUpPanelLayout _slidingUpPanel;
-
 
 	/**
 	 * Initiate variables
@@ -148,8 +145,7 @@ public class ActivityMap extends ActivityMenuBase {
 
 		//set up POIController with list of toilets received from POIUpdateService
 		if(_allPOIList != null){
-			_poiController = new POIController(_allPOIList);
-			_poiController.setDistancePOIToUser(_userLat, _userLng);
+			_allPOIList = POIHelper.setDistancePOIToUser(_allPOIList, _userLat, _userLng);
 		}else{
 			Log.d("MainActivity.oncreate():", "_allPOIList is null");
 		}
@@ -230,15 +226,9 @@ public class ActivityMap extends ActivityMenuBase {
 					if(_mMap != null){
 						//get LatLngBounds of current camera position
 						_mapBounds = _mMap.getProjection().getVisibleRegion().latLngBounds;
-						if (_poiController != null){
-							updatePOIMarkers();
-							Log.d("markerlist size:", String.valueOf(_markerMap.size()));
-							Log.d("visible poi size:", String.valueOf(_visiblePOIMap.size()));
-						} else {
-							if(_allPOIList != null){
-								_poiController = new POIController(_allPOIList);
-							}    		
-						}
+						updatePOIMarkers();
+						Log.d("markerlist size:", String.valueOf(_markerMap.size()));
+						Log.d("visible poi size:", String.valueOf(_visiblePOIMap.size()));
 					}
 				}			
 			});
@@ -309,7 +299,7 @@ public class ActivityMap extends ActivityMenuBase {
 					oldLocation.setLongitude(_userLng);
 
 					_instance.setUserLocation(lat, lng );
-					_poiController.setDistancePOIToUser(_userLat, _userLng);
+					_instance._allPOIList = POIHelper.setDistancePOIToUser(_instance._allPOIList, _userLat, _userLng);
 					//TODO: Testing
 					// if the old userLocation is same as standardLocation and distance to newly received location is greater 10m -> move camera
 					if(_instance._hasUserLocation){
@@ -320,11 +310,7 @@ public class ActivityMap extends ActivityMenuBase {
 							_instance.updatePOIMarkers();
 							_instance.setPeeerOnMap();
 						}
-					}
-
-					if(_poiController == null){
-						Log.d("ActivityMap LocUpdRec" , "poiController is null");
-					}         
+					}       
 				}
 			}        
 		}
@@ -381,7 +367,7 @@ public class ActivityMap extends ActivityMenuBase {
 		_builder = new LatLngBounds.Builder();
 
 		List<POI> closestX = new ArrayList<POI>(); //list with closest ten POI to user position
-		closestX = _poiController.getClosestPOI(poiAmount);
+		closestX = POIHelper.getClosestPOI(_allPOIList, poiAmount);
 		for(POI poi : closestX){
 			_builder.include(poi.getLatLng());
 		}
@@ -402,17 +388,17 @@ public class ActivityMap extends ActivityMenuBase {
 	private void updatePOIMarkers(){
 		Log.d(TAG, "updatePOIMarkers");
 
-		if(_mMap != null && _poiController != null && _poiController.poiReceived()){
+		if(_mMap != null){
 			//mapBounds is the current user-viewable region of the map
 			//Loop through all the items that are available to be placed on the map
-			for(POI poi : _poiController.getAllPOI()){
+			for(POI poi : _allPOIList){
 				//If the item is within the the bounds of the screen
 				if(_mapBounds.contains(new LatLng(poi.getLat(), poi.getLng()))){
 					//If the item isn't already being displayed
 					if(!_visiblePOIMap.containsKey(poi.getId())){
 						//Add the Marker to the Map and keep track of it with the HashMap
 						//getMarkerOptionsForPOI just returns a MarkerOptions object
-						MarkerOptions mo = _poiController.getMarkerOptionsForPOI(poi);
+						MarkerOptions mo = POIHelper.getMarkerOptionsForPOI(poi);
 						Marker m = _mMap.addMarker(mo);
 						//the slidingUpPanel is shown if the user clicks on a marker
 						_mMap.setOnMarkerClickListener(new OnMarkerClickListener(){
@@ -498,9 +484,9 @@ public class ActivityMap extends ActivityMenuBase {
 	@Override
 	public void onSaveInstanceState(Bundle savedInstanceState) {
 		// Save the user's current game state
-		savedInstanceState.putSerializable(TagNames.EXTRA_LAT, _allPOIList);
+		savedInstanceState.putParcelableArrayList(TagNames.EXTRA_POI_LIST, _allPOIList);
 		savedInstanceState.putDouble(TagNames.EXTRA_LONG, _userLat);
-		savedInstanceState.putDouble(TagNames.EXTRA_POI_LIST, _userLng);
+		savedInstanceState.putDouble(TagNames.EXTRA_LONG, _userLng);
 		savedInstanceState.putInt(TagNames.EXTRA_LOCATION_RESULT, _hasUserLocation ? -1 : 1);
 
 		// Always call the superclass so it can save the view hierarchy state
