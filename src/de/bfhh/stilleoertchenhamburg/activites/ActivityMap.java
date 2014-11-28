@@ -217,6 +217,8 @@ public class ActivityMap extends ActivityMenuBase {
 		    //bind LocationUpdateService
 		    Intent intent= new Intent(this, LocationUpdateService.class);
 		    bindService(intent, mConnection,  Context.BIND_AUTO_CREATE);
+		    Log.d("Map onResume", "Service bound");
+
 		        
 		    _mMap.setOnCameraChangeListener(new OnCameraChangeListener() {
 		    	@Override
@@ -255,6 +257,7 @@ public class ActivityMap extends ActivityMenuBase {
 	            	//Only move to user location if it isn't the standardLocation
 	            	if(_hasUserLocation){
 	            		CameraUpdate cu = getClosestPOIBoundsOnMap(10);
+	            		setPeeerOnMap();
 	            		moveToLocation(cu); //pass user location and amount of POI to display close to user
 	            	}else{//if userLocation == standardLocation (-> no userLoc found), show GPS Settings dialog
 	            		//
@@ -303,9 +306,8 @@ public class ActivityMap extends ActivityMenuBase {
             		_instance = getInstance();
             		_instance.setUserLocation(lat, lng );            		
             		//TODO: Testing
-            		// if the old userLocation is same as standardLocation and distance to newly received location is greater 10m -> move camera
             		if(!_instance._hasUserLocation){
-            			//_instance.buildAlertMessageGPSSettings();
+            			//only update if old userLocation and new userLocation are further apart than 10 meters
             			if( _instance._userLocation.distanceTo(nLocation) > 10.0){
             				CameraUpdate cu = _instance.getClosestPOIBoundsOnMap(10);
                      		//CameraPosition cameraPosition = new CameraPosition.Builder().target(
@@ -313,9 +315,9 @@ public class ActivityMap extends ActivityMenuBase {
                      		_mMap.animateCamera(cu);
             			}
                  	}
-            		
-            		_instance.deleteOldMarkersFromList();
-            		updateUserAndPOIOnMap(lat, lng);
+
+            		//DONT SET MARKERS AGAIN!
+            		_instance.updateUserAndPOIOnMap(lat, lng);
 
             		if(_poiController == null){
             			Log.d("ActivityMap LocUpdRec" , "poiController is null");
@@ -341,11 +343,11 @@ public class ActivityMap extends ActivityMenuBase {
     }
     
     //set user marker and closest POI markers on map
-    public static void updateUserAndPOIOnMap(double lat, double lng) {
+    public void updateUserAndPOIOnMap(double lat, double lng) {
 		// update Markers first
     	updateClosestXMarkers(lat, lng, 10);
 		//set user position TODO: method out of that
-    	getInstance().setPeeerOnMap();
+    	setPeeerOnMap();
 	}
 
 	private void moveToLocation(final CameraUpdate cu){
@@ -393,12 +395,8 @@ public class ActivityMap extends ActivityMenuBase {
     private CameraUpdate getClosestPOIBoundsOnMap(int poiAmount){
     	_builder = new LatLngBounds.Builder();
     	//update markerList with ten nearest POI to user position
-    	if(_poiController != null){
-    		if(_mMap != null){
-    			_mMap.clear();
-    			deleteOldMarkersFromList();//delete markers in markerList and visiblePOI
-    			updateUserAndPOIOnMap(_userLat, _userLng); //put ten closest in markerList and add to map
-    		}
+    	if(_mMap != null){
+    		updateUserAndPOIOnMap(_userLat, _userLng); //put ten closest in markerList and add to map
     	}
     	List<POI> closestX = new ArrayList<POI>(); //list with closest ten POI to user position
 	    closestX = _poiController.getClosestPOI(10);
@@ -502,12 +500,21 @@ public class ActivityMap extends ActivityMenuBase {
     @Override
     protected void onPause(){
     	super.onPause();
-    	_locUpdateService.stopLocationUpdates();
+    	//NOTE: if service is not set to null here onLocationChanged() is called twice in a row
+    	_locUpdateService = null;   	
     	unbindService(mConnection);//unbind service
+    	Log.d("Map onPause", "service unbound");
+    	
     	if(_locUpdReceiverRegistered){
     		unregisterReceiver(_locUpdReceiver);
     		_locUpdReceiverRegistered = false;
     	}	
+    	//fix the map at restart of application, so that user and markers can be seen again
+    	//TODO: nullpointer after disabling network in running app and then trying to pause it (back  button)
+    	if (_mMap != null){
+    		_cameraPosition = _mMap.getCameraPosition();		    		
+            _mMap = null;
+    	}
     }
     
     @Override
@@ -527,12 +534,8 @@ public class ActivityMap extends ActivityMenuBase {
     		unregisterReceiver(_locUpdReceiver);
     		_locUpdReceiverRegistered = false;
     	}
-    	//fix the map at restart of application, so that user and markers can be seen again
-    	//TODO: nullpointer after disabling network in running app and then trying to pause it (back  button)
-    	if (_mMap != null){
-    		_cameraPosition = _mMap.getCameraPosition();		    		
-            _mMap = null;
-    	}
+    	// set this to false so that when map is brought back to front a new location fix is received
+    	_hasUserLocation = false;
     }
     
     private void setUserLocation(double lat, double lng){
@@ -544,11 +547,10 @@ public class ActivityMap extends ActivityMenuBase {
         _userLocation.setLongitude(lng);
     }
     
-    
     // Update closest X markers on the map
-    private static void updateClosestXMarkers(double currLat, double currLng, int x){
+    private void updateClosestXMarkers(double currLat, double currLng, int x){
     	List<POI> closestX = new ArrayList<POI>(); //list with closest ten POI to user position
-    	_markerMap = new HashMap<Integer, MarkerOptions>(); //markers for those POI
+    	//_markerMap = new HashMap<Integer, MarkerOptions>(); //markers for those POI
     	//check whether the broadcast was received
     	if(_poiController != null ){
 	        if(_poiController.poiReceived() ){
@@ -562,9 +564,12 @@ public class ActivityMap extends ActivityMenuBase {
 		        		POI poi = closestX.get(i);
 		        		//get MarkerOptions for this POI from poiController
 		        		MarkerOptions marker = _poiController.getMarkerOptionsForPOI(poi);
-		                // adding marker
-		                _visiblePOIMap.put(poi.getId(), _mMap.addMarker(marker));
-		                _markerMap.put(poi.getId(), marker); 
+		                // adding marker only if it isn't included in HashMaps already
+		        		if(!_markerMap.containsKey(poi.getId())){
+		        			_visiblePOIMap.put(poi.getId(), _mMap.addMarker(marker));
+			                _markerMap.put(poi.getId(), marker); 
+		        		}
+		                
 		        	}
 	        	}
 	        } else {
@@ -591,14 +596,14 @@ public class ActivityMap extends ActivityMenuBase {
     private void setPeeerOnMap() {
     	// check whether user position is standard position, if not set icon
         if(_hasUserLocation && _mMap != null){
+        	//NOTE: this is the only way of doing it, because marker.setposition(LatLng) doesn't work!
         	if(_personInNeedOfToilette != null){
-        		Log.d("Setting peeer position", "Lat: " + _userLat + ", Long: " +_userLng);
-        		_personInNeedOfToilette.setPosition(new LatLng(_userLat, _userLng));
-        	}else{
-        		_personInNeedOfToilette = _mMap.addMarker(new MarkerOptions()
+        		_personInNeedOfToilette.remove();
+        	}
+        	_personInNeedOfToilette = _mMap.addMarker(new MarkerOptions()
 	    		.position(new LatLng(_userLat, _userLng))
 	    		.icon(BitmapDescriptorFactory.fromResource(R.drawable.peeer)));
-        	}
+        	
         }
     }
     
@@ -609,7 +614,8 @@ public class ActivityMap extends ActivityMenuBase {
           _locUpdateService = b.getLocService();
           Toast.makeText(ActivityMap.this, "LocService Connected", Toast.LENGTH_SHORT).show();
           Location loc = _locUpdateService.getCurrentUserLocation();
-          if(!_hasUserLocation || loc == null){
+          if(!_hasUserLocation || loc == null || _locUpdateService.isBetterLocation(loc, _userLocation) ){
+        	  Log.d("Map onServiceConnected", "call to service.updateLocation");
         	  _locUpdateService.updateLocation();//is this called multiple times??
           }
         }

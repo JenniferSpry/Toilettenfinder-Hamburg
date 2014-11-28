@@ -59,17 +59,21 @@ public class LocationUpdateService extends Service {
 		// Starting point for this Service
 		mlocationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
 		locUpdListener = new LocationUpdateListener();
-		//register for location Updates every 5 seconds, minimum distance change: 3 meters
-		requestGPSUpdates(5000, 3.0f);
-		requestNetworkUpdates(5000, 1.0f);
+		//register for location Updates every 60 / 20 seconds, minimum distance change: 3 meters
+		requestGPSUpdates(60000, 3.0f);
+		requestNetworkUpdates(20000, 1.0f);
 		//call getLastKnownLocation() from within an AsyncTask and
 		//publish results once location is received
 		new LocationUpdateTask().execute();							
 	}
 	
+	public void getTimeSinceLastUpdate(){
+		
+	}
+	
 	public void stopLocationUpdates(){
 		if(mlocationManager != null){
-			Log.d("stopLocationUpdates", "Removing location updates");
+			Log.i("stopLocationUpdates", "Removing location updates");
 			mlocationManager.removeUpdates(locUpdListener);
 		}
 	}
@@ -110,6 +114,7 @@ public class LocationUpdateService extends Service {
 	//return local binder, through which activity can get service instance
 	@Override
 	public IBinder onBind(Intent intent) {
+		Log.d("LocationUpdateService onBind()", "Service is bound");
 		return mBinder;
 	}
 	
@@ -125,9 +130,7 @@ public class LocationUpdateService extends Service {
 	    super.onDestroy();
 	    Log.e(TAG, "in onDestroy in LocationService class");
 	    //unregister from location updates 
-	    /*if(locUpdListener != null){
-	    	mlocationManager.removeUpdates(locUpdListener);
-	    }*/
+	    stopLocationUpdates();
 	    stopSelf();
 	}
 	
@@ -192,7 +195,7 @@ public class LocationUpdateService extends Service {
 	
 	
 	//Returns whether location is a better location than currentBestLocation
-	protected boolean isBetterLocation(Location location, Location currentBestLocation) {
+	public boolean isBetterLocation(Location location, Location currentBestLocation) {
         if (currentBestLocation == null) {
             // A new location is always better than no location
             return true;
@@ -228,7 +231,7 @@ public class LocationUpdateService extends Service {
             return true;
         } else if (isNewer && !isLessAccurate) {
             return true;
-        } else if (isNewer && !isSignificantlyLessAccurate && isFromSameProvider) {
+        } else if (isNewer && isMoreAccurate && isFromSameProvider) {
             return true;
         }
         return false;

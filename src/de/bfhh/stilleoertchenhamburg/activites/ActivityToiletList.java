@@ -56,6 +56,7 @@ public class ActivityToiletList extends ActivityMenuBase {
 	        
 	        Intent intent= new Intent(this, LocationUpdateService.class);
 	        bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+	        Log.d("ToiletList onCreate", "Service bound");
         }
     }
     
@@ -81,6 +82,7 @@ public class ActivityToiletList extends ActivityMenuBase {
 	            } 
 	            unregisterReceiver(locationReceiver);
             	unbindService(mConnection);
+            	Log.d("ToiletList onReceive", "service unbound");
 	            startPOIUpdateService(lat, lng);
 	          }
           
@@ -142,7 +144,10 @@ public class ActivityToiletList extends ActivityMenuBase {
           Toast.makeText(ActivityToiletList.this, "LocService Connected", Toast.LENGTH_SHORT)
               .show();
           Location loc = service.getCurrentUserLocation();
-          if(loc == null){
+          Location oldLoc = new Location("");
+          oldLoc.setLatitude(lat);
+          oldLoc.setLongitude(lng);
+          if(loc == null || service.isBetterLocation(loc, oldLoc) ){
         	  service.updateLocation();//calls AsyncTask and publishes results
           }
         }

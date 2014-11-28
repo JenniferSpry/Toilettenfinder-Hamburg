@@ -37,9 +37,9 @@ public class ActivitySplashScreen extends ActivityBase {
 	
 	private static final String TAG = ActivitySplashScreen.class.getSimpleName();
     
-    private boolean isReceiverRegistered;//is the receiver registered?
+    private boolean isReceiverRegistered = false;;//is the receiver registered?
     
-    private boolean locServiceBound;
+    private boolean locServiceBound = false;
         
     private LocationUpdateService service;
     
@@ -121,6 +121,7 @@ public class ActivitySplashScreen extends ActivityBase {
         i.putExtra(TagNames.EXTRA_LONG, userLng);
   	  	i.putExtra(TagNames.EXTRA_LOCATION_RESULT, result);
   	  	i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+  	  	i.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
   	  	startActivity(i); //start Main Activity
 	}
     
@@ -147,8 +148,10 @@ public class ActivitySplashScreen extends ActivityBase {
         }
 
         public void onServiceDisconnected(ComponentName className) {
+        	service.stopLocationUpdates();
         	service = null;
           	Toast.makeText(ActivitySplashScreen.this, "LocService Disconnected", Toast.LENGTH_SHORT).show();
+        
         }
     };
  
