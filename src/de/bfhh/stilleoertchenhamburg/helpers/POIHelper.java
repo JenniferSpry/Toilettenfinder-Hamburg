@@ -56,7 +56,7 @@ public class POIHelper {
 				closestPOI.add(poiList.get(i));
 			}	
 		}
-		return closestPOI; //could be empty of amount == 0
+		return closestPOI; //could be empty if amount == 0
 	}
 	
 	//returns the MarkerOptions for a passed POI
