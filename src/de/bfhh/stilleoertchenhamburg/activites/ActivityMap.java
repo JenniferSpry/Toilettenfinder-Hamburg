@@ -20,6 +20,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout.PanelSlideListener;
 
+import de.bfhh.stilleoertchenhamburg.AppController;
 import de.bfhh.stilleoertchenhamburg.LocationUpdateService;
 import de.bfhh.stilleoertchenhamburg.R;
 import de.bfhh.stilleoertchenhamburg.TagNames;
@@ -138,7 +139,7 @@ public class ActivityMap extends ActivityMenuBase {
 		
 		//holds the SlidingUpLayout which is wrapper of our layout
 		_slidingUpPanel = (SlidingUpPanelLayout) findViewById(R.id.sliding_layout);
-		_slidingUpPanel.setAnchorPoint(0.75f);
+		_slidingUpPanel.setAnchorPoint(0.5f);
 		_slidingUpPanel.setOverlayed(true);
 
 		//LocUpdateReceiver
@@ -161,12 +162,16 @@ public class ActivityMap extends ActivityMenuBase {
 		}
 
 		if(bundle != null){
-			if(bundle.getDouble(TagNames.EXTRA_LAT) != 0.0 && bundle.getDouble(TagNames.EXTRA_LONG) != 0.0){
+			//if(bundle.getDouble(TagNames.EXTRA_LAT) != 0.0 && bundle.getDouble(TagNames.EXTRA_LONG) != 0.0){
 				//set user Position (might be standard location)
+			//TODO: doubles are 0.0???
 				_userLat = bundle.getDouble(TagNames.EXTRA_LAT);
 				_userLng = bundle.getDouble(TagNames.EXTRA_LONG);
 				//userLocation == standardLocation -> 0 -> false; else -> -1 -> true
 				_hasUserLocation = bundle.getInt(TagNames.EXTRA_LOCATION_RESULT) == -1;
+				Log.d("oncreate _hasUserLocation", ""+_hasUserLocation);
+				Log.d("oncreate _userLat", ""+_userLat);
+				Log.d("oncreate _userLng", ""+_userLng);
 
 				setUserLocation(_userLat, _userLng);
 				//if the location is the standard location, show settings dialog
@@ -174,7 +179,7 @@ public class ActivityMap extends ActivityMenuBase {
 					buildAlertMessageGPSSettings();
 					Log.d("MainActivity:", "Activity.RESULT_CANCELED: standard lat and lng");
 				}
-			}
+			//}
 			//get the toiletList
 			_allPOIList = bundle.getParcelableArrayList(TagNames.EXTRA_POI_LIST);
 		}   
@@ -197,70 +202,7 @@ public class ActivityMap extends ActivityMenuBase {
 		_slidingUpPanel.hidePanel();
 
 		//set Listener for different sliding events
-		_slidingUpPanel.setPanelSlideListener(new PanelSlideListener(){
-			private boolean firstCollapse = true;
-			private boolean firstAnchored = true;
-
-			@Override
-			public void onPanelSlide(View panel, float slideOffset) {
-				/*if the panel is slid within close vicinity of the anchorPoint 
-				 * (at 0.75f), expand the panel to that anchorPoint (for some reason
-				 * this doesn't work by only setting slidingUpPanel.setAnchorPoint(0.75f);)
-				 */
-				if( Math.abs(slideOffset - 0.75f) < 0.02f ) {
-					_slidingUpPanel.expandPanel(0.75f);
-				}	
-				//_mMap.setPadding(0, 0, 0,0);
-			}
-
-			@Override
-			public void onPanelCollapsed(View panel) {
-				//get height of panel in pixels (68dp)
-                int px = (int) Math.ceil(68 * _logicalDensity);
-                //set padding to map so that map controls are moved
-				_mMap.setPadding(0, 0, 0, px);
-				
-				_mapBounds = _mMap.getProjection().getVisibleRegion().latLngBounds;
-				//get distance between map center (gmaps) and clicked marker position
-				float d = getDistanceBewteen(getMapCenter(_mapBounds), _clickedMarker.getPosition());
-				//if panel collapsed for first time (== first shown) and d > 10 meters
-				if(!firstCollapse && d > 10.0f ){
-					_mMap.animateCamera(CameraUpdateFactory.newLatLng(_clickedMarker.getPosition()));
-				}
-				firstCollapse = false;
-				firstAnchored = false;
-				//show location button
-				_myLocationButton.setVisibility(View.VISIBLE);
-				
-			}
-
-			@Override
-			public void onPanelExpanded(View panel) {}
-
-			@Override
-			public void onPanelAnchored(View panel) {
-				//move the map up so that clicked marker is visible
-				if(!firstAnchored ){
-					//set bottom padding
-					_mMap.setPadding(0, 0, 0, (int) (_displayHeight/100*68));
-
-					LatLng markerPos = _clickedMarker.getPosition();
-					//move position to center map to down a bit
-					LatLng mPlusOffset = new LatLng(markerPos.latitude+0.001f, markerPos.longitude);
-					_mMap.animateCamera(CameraUpdateFactory.newLatLng(mPlusOffset));
-					firstAnchored = true;
-				}
-				//hide my location button
-				_myLocationButton.setVisibility(View.INVISIBLE);
-			}
-
-			@Override
-			public void onPanelHidden(View panel) {
-				firstCollapse = true;
-				firstAnchored = true;
-				_mMap.setPadding(0, 0, 0, 0);//reverse padding to default
-			}    	
-		});
+		
 	}// end onStart
 
 
@@ -276,7 +218,9 @@ public class ActivityMap extends ActivityMenuBase {
 		if (checkPlayServices()){
 
 			setUpMapIfNeeded(); //initialize map if it isn't already	
-
+			//set padding to map
+			_mMap.setPadding(5, 5, 5, 5);
+			
 			//only called after first setup of application 
 			if(_mapBounds == null){
 				CameraUpdate cu = getClosestPOIBounds(10);
@@ -342,6 +286,72 @@ public class ActivityMap extends ActivityMenuBase {
 					}
 				}
 			});	    	
+			
+			//Listener for SlidingUpPanel
+			_slidingUpPanel.setPanelSlideListener(new PanelSlideListener(){
+				private boolean firstCollapse = true;
+				private boolean firstAnchored = true;
+
+				@Override
+				public void onPanelSlide(View panel, float slideOffset) {
+					/*if the panel is slid within close vicinity of the anchorPoint 
+					 * (at 0.75f), expand the panel to that anchorPoint (for some reason
+					 * this doesn't work by only setting slidingUpPanel.setAnchorPoint(0.75f);)
+					 */
+					if( Math.abs(slideOffset - 0.5f) < 0.02f ) {
+						_slidingUpPanel.expandPanel(0.5f);
+					}	
+					//_mMap.setPadding(0, 0, 0,0);
+				}
+
+				@Override
+				public void onPanelCollapsed(View panel) {
+					//get height of panel in pixels (68dp)
+	                int px = (int) Math.ceil(68 * _logicalDensity);
+	                //set padding to map so that map controls are moved
+					_mMap.setPadding(5, 5, 5, px);
+					
+					_mapBounds = _mMap.getProjection().getVisibleRegion().latLngBounds;
+					//get distance between map center (gmaps) and clicked marker position
+					float d = getDistanceBewteen(getMapCenter(_mapBounds), _clickedMarker.getPosition());
+					//if panel collapsed for first time (== first shown) and d > 10 meters
+					if(!firstCollapse && d > 10.0f ){
+						_mMap.animateCamera(CameraUpdateFactory.newLatLng(_clickedMarker.getPosition()));
+					}
+					firstCollapse = false;
+					firstAnchored = false;
+					//show location button
+					_myLocationButton.setVisibility(View.VISIBLE);
+					
+				}
+
+				@Override
+				public void onPanelExpanded(View panel) {}
+
+				@Override
+				public void onPanelAnchored(View panel) {
+					//move the map up so that clicked marker is visible
+					if(!firstAnchored ){
+						//set bottom padding
+						_mMap.setPadding(5, 5, 5, (int) (_displayHeight/2));
+						//TODO: Beim Tablet werden die zoom buttons plus copyright noch verdeckt
+						LatLng markerPos = _clickedMarker.getPosition();
+						//move position to center map to down a bit
+						LatLng mPlusOffset = new LatLng(markerPos.latitude+0.001f, markerPos.longitude);
+						_mMap.animateCamera(CameraUpdateFactory.newLatLng(mPlusOffset));
+						firstAnchored = true;
+					}
+					//hide my location button
+					_myLocationButton.setVisibility(View.INVISIBLE);
+				}
+
+				@Override
+				public void onPanelHidden(View panel) {
+					firstCollapse = true;
+					firstAnchored = true;
+					_mMap.setPadding(5, 5, 5, 5);//reverse padding to default
+				}    	
+			});
 		}
 	}
 	
@@ -382,13 +392,17 @@ public class ActivityMap extends ActivityMenuBase {
 					Location oldLocation = new Location("");
 					oldLocation.setLatitude(_userLat);
 					oldLocation.setLongitude(_userLng);
+					Log.d("_hasUserLocation =", ""+ _instance._hasUserLocation);
+					Log.d("userlocation 1", ""+_instance._userLocation);
 
 					_instance.setUserLocation(lat, lng);
 					_instance._allPOIList = POIHelper.setDistancePOIToUser(_instance._allPOIList, lat, lng);
+					
+					Log.d("userlocation 1", ""+_instance._userLocation);
 					//TODO: Testing
 					//old userLocation == standardLocation and distance to newly received location is greater 10m -> move camera
 					if(_instance._hasUserLocation){
-						if( _instance._userLocation.distanceTo(oldLocation) > 10.0){
+						if( _instance._userLocation.distanceTo(oldLocation) > 10.0 || oldLocation == AppController.getInstance().getStandardLocation()){
 							CameraUpdate cu = _instance.getClosestPOIBounds(10);
 							_mMap.animateCamera(cu);
 							_instance.updatePOIMarkers();
@@ -587,11 +601,13 @@ public class ActivityMap extends ActivityMenuBase {
 	 */
 	@Override
 	public void onSaveInstanceState(Bundle savedInstanceState) {
-		// Save the user's current game state
+		// Save current map state
 		savedInstanceState.putParcelableArrayList(TagNames.EXTRA_POI_LIST, _allPOIList);
-		savedInstanceState.putDouble(TagNames.EXTRA_LONG, _userLat);
+		savedInstanceState.putDouble(TagNames.EXTRA_LAT, _userLat);
 		savedInstanceState.putDouble(TagNames.EXTRA_LONG, _userLng);
 		savedInstanceState.putInt(TagNames.EXTRA_LOCATION_RESULT, _hasUserLocation ? -1 : 1);
+		Log.d("saveInstanceState _hasUserLocation", ""+_hasUserLocation);
+		Log.d("saveInstanceState _userLat", ""+_userLat);
 
 		// Always call the superclass so it can save the view hierarchy state
 		super.onSaveInstanceState(savedInstanceState);
