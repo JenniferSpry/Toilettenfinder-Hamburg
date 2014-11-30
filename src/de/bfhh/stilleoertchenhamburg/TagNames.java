@@ -19,4 +19,6 @@ public class TagNames {
 	public static final String EXTRA_POI_LIST = "com.bfhh.stilleoertchenhamburg.poiList";
 	public static final String EXTRA_LOCATION_RESULT = "com.bfhh.stilleoertchenhamburg.LocationResult";
 	public static final String EXTRA_POI = "com.bfhh.stilleoertchenhamburg.POI";
+	public static final String EXTRA_MARKER_ID = "com.bfhh.stilleoertchenhamburg.markerId";
+
 }

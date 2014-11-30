@@ -3,6 +3,7 @@ package de.bfhh.stilleoertchenhamburg.activites;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map.Entry;
 
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -104,6 +105,8 @@ public class ActivityMap extends ActivityMenuBase {
 
 	private float _logicalDensity;
 
+	private int _clickedMarkerId;
+
 	/**
 	 * Initiate variables
 	 * fetch bundle contents
@@ -162,26 +165,28 @@ public class ActivityMap extends ActivityMenuBase {
 		}
 
 		if(bundle != null){
-			//if(bundle.getDouble(TagNames.EXTRA_LAT) != 0.0 && bundle.getDouble(TagNames.EXTRA_LONG) != 0.0){
-				//set user Position (might be standard location)
-			//TODO: doubles are 0.0???
-				_userLat = bundle.getDouble(TagNames.EXTRA_LAT);
-				_userLng = bundle.getDouble(TagNames.EXTRA_LONG);
-				//userLocation == standardLocation -> 0 -> false; else -> -1 -> true
-				_hasUserLocation = bundle.getInt(TagNames.EXTRA_LOCATION_RESULT) == -1;
-				Log.d("oncreate _hasUserLocation", ""+_hasUserLocation);
-				Log.d("oncreate _userLat", ""+_userLat);
-				Log.d("oncreate _userLng", ""+_userLng);
+			//set user Position (might be standard location)
+			_userLat = bundle.getDouble(TagNames.EXTRA_LAT);
+			_userLng = bundle.getDouble(TagNames.EXTRA_LONG);
+			//userLocation == standardLocation -> 0 -> false; else -> -1 -> true
+			_hasUserLocation = bundle.getInt(TagNames.EXTRA_LOCATION_RESULT) == -1;
+			Log.d("oncreate _hasUserLocation", ""+_hasUserLocation);
+			Log.d("oncreate _userLat", ""+_userLat);
+			Log.d("oncreate _userLng", ""+_userLng);
 
-				setUserLocation(_userLat, _userLng);
-				//if the location is the standard location, show settings dialog
-				if(!_hasUserLocation){
-					buildAlertMessageGPSSettings();
-					Log.d("MainActivity:", "Activity.RESULT_CANCELED: standard lat and lng");
-				}
-			//}
-			//get the toiletList
+			setUserLocation(_userLat, _userLng);
+			//if the location is the standard location, show settings dialog
+			if(!_hasUserLocation){
+				buildAlertMessageGPSSettings();
+				Log.d("MainActivity:", "Activity.RESULT_CANCELED: standard lat and lng");
+			}
+			//get the poiList
 			_allPOIList = bundle.getParcelableArrayList(TagNames.EXTRA_POI_LIST);
+			
+			//get clicked marker if it's set
+			//if(bundle.getInt(TagNames.EXTRA_MARKER_ID) != 0){
+				_clickedMarkerId = bundle.getInt(TagNames.EXTRA_MARKER_ID);
+			//}
 		}   
 
 		//set up POIController with list of toilets received from POIUpdateService
@@ -201,7 +206,6 @@ public class ActivityMap extends ActivityMenuBase {
 		//hide the sliding up Panel
 		_slidingUpPanel.hidePanel();
 
-		//set Listener for different sliding events
 		
 	}// end onStart
 
@@ -222,7 +226,9 @@ public class ActivityMap extends ActivityMenuBase {
 			_mMap.setPadding(5, 5, 5, 5);
 			
 			//only called after first setup of application 
-			if(_mapBounds == null){
+			//_clickedMarkerId check so that if a marker was clicked before screen rotation,
+			//it 
+			if(_mapBounds == null && _clickedMarkerId == 0){
 				CameraUpdate cu = getClosestPOIBounds(10);
 				moveToLocation(cu);
 				updatePOIMarkers();
@@ -257,14 +263,6 @@ public class ActivityMap extends ActivityMenuBase {
 			_mMap.setOnMapClickListener(new OnMapClickListener() {
 				@Override
 				public void onMapClick(LatLng arg0) {
-					/*if(!_slidingUpPanel.isPanelHidden()){//returns true if visible
-						DisplayMetrics metrics = new DisplayMetrics();
-						getWindowManager().getDefaultDisplay().getMetrics(metrics);
-						float logicalDensity = metrics.density;
-						//logicalDensity will then contain the factor you need to multiply dp by to get physical pixel dimensions for the device screen.
-						int px = (int) Math.ceil(68 * logicalDensity);
-						_mMap.animateCamera(CameraUpdateFactory.scrollBy(0, -px/3));
-					}*/
 					_slidingUpPanel.hidePanel();
 					
 					_mapBounds = _mMap.getProjection().getVisibleRegion().latLngBounds;
@@ -286,8 +284,8 @@ public class ActivityMap extends ActivityMenuBase {
 					}
 				}
 			});	    	
-			
-			//Listener for SlidingUpPanel
+
+			//Set Listener for different sliding events for SlidingUpPanel
 			_slidingUpPanel.setPanelSlideListener(new PanelSlideListener(){
 				private boolean firstCollapse = true;
 				private boolean firstAnchored = true;
@@ -301,7 +299,6 @@ public class ActivityMap extends ActivityMenuBase {
 					if( Math.abs(slideOffset - 0.5f) < 0.02f ) {
 						_slidingUpPanel.expandPanel(0.5f);
 					}	
-					//_mMap.setPadding(0, 0, 0,0);
 				}
 
 				@Override
@@ -312,17 +309,24 @@ public class ActivityMap extends ActivityMenuBase {
 					_mMap.setPadding(5, 5, 5, px);
 					
 					_mapBounds = _mMap.getProjection().getVisibleRegion().latLngBounds;
-					//get distance between map center (gmaps) and clicked marker position
-					float d = getDistanceBewteen(getMapCenter(_mapBounds), _clickedMarker.getPosition());
-					//if panel collapsed for first time (== first shown) and d > 10 meters
-					if(!firstCollapse && d > 10.0f ){
-						_mMap.animateCamera(CameraUpdateFactory.newLatLng(_clickedMarker.getPosition()));
+					Log.d("onPanelCollapsed _mapBounds", ""+_mapBounds);
+					
+					//clickedMarker may be null
+					if(_clickedMarker == null && _clickedMarkerId != 0 && _visiblePOIMap != null){
+						_clickedMarker = getMarkerValueByID(_visiblePOIMap, _clickedMarkerId);
+					}
+					if(_clickedMarker != null){
+						//get distance between map center (gmaps) and clicked marker position
+						float d = getDistanceBewteen(getMapCenter(_mapBounds), _clickedMarker.getPosition());
+						//if panel collapsed for first time (== first shown) and d > 10 meters
+						if(!firstCollapse && d > 10.0f ){
+							_mMap.animateCamera(CameraUpdateFactory.newLatLng(_clickedMarker.getPosition()));
+						}
 					}
 					firstCollapse = false;
 					firstAnchored = false;
 					//show location button
 					_myLocationButton.setVisibility(View.VISIBLE);
-					
 				}
 
 				@Override
@@ -335,10 +339,15 @@ public class ActivityMap extends ActivityMenuBase {
 						//set bottom padding
 						_mMap.setPadding(5, 5, 5, (int) (_displayHeight/2));
 						//TODO: Beim Tablet werden die zoom buttons plus copyright noch verdeckt
-						LatLng markerPos = _clickedMarker.getPosition();
-						//move position to center map to down a bit
-						LatLng mPlusOffset = new LatLng(markerPos.latitude+0.001f, markerPos.longitude);
-						_mMap.animateCamera(CameraUpdateFactory.newLatLng(mPlusOffset));
+						if(_clickedMarker == null && _clickedMarkerId != 0 && _visiblePOIMap != null){
+							_clickedMarker = getMarkerValueByID(_visiblePOIMap, _clickedMarkerId);
+						}
+						if(_clickedMarker != null){
+							LatLng markerPos = _clickedMarker.getPosition();
+							//move position to center map to down a bit
+							LatLng mPlusOffset = new LatLng(markerPos.latitude+0.001f, markerPos.longitude);
+							_mMap.animateCamera(CameraUpdateFactory.newLatLng(mPlusOffset));
+						}
 						firstAnchored = true;
 					}
 					//hide my location button
@@ -495,6 +504,12 @@ public class ActivityMap extends ActivityMenuBase {
 						//getMarkerOptionsForPOI just returns a MarkerOptions object
 						MarkerOptions mo = POIHelper.getMarkerOptionsForPOI(poi);
 						Marker m = _mMap.addMarker(mo);
+						
+						int id = poi.getId();
+						_visiblePOIMap.put(id, m);
+						if(!_markerMap.containsKey(id)){
+							_markerMap.put(id, mo);
+						}
 						//the slidingUpPanel is shown if the user clicks on a marker
 						_mMap.setOnMarkerClickListener(new OnMarkerClickListener(){
 							@Override
@@ -506,18 +521,14 @@ public class ActivityMap extends ActivityMenuBase {
 								LatLng center = m.getPosition();
 								_mMap.animateCamera(CameraUpdateFactory.newLatLng(center));
 								_mapBounds = _mMap.getProjection().getVisibleRegion().latLngBounds;
-								Log.d("MapBounds.getCenter()", ""+_mapBounds.getCenter());
-								Log.d("m.getPosition()", ""+m.getPosition());
 								_clickedMarker = m;
-								
+								Log.d("_visiblePOIMap", ""+_visiblePOIMap);
+								Log.d("marker", ""+m);
+								_clickedMarkerId = getMarkerIDByValue(_visiblePOIMap, m);
 								return true;
 							}
 						});
-						int id = poi.getId();
-						_visiblePOIMap.put(id, m);
-						if(!_markerMap.containsKey(id)){
-							_markerMap.put(id, mo);
-						}
+						
 					}
 				} else { //If the marker is off screen
 					//If the course was previously on screen
@@ -541,7 +552,33 @@ public class ActivityMap extends ActivityMenuBase {
 		Log.d("markerlist size:", String.valueOf(_markerMap.size()));
 		Log.d("visible poi size:", String.valueOf(_visiblePOIMap.size()));
 	}
-
+	
+	/*
+	 * Returns the Marker ID for a passed Marker and HashMap containing it.
+	 * If HashMap doesn't contain marker null is returned.
+	 */
+	public static <T, E> int getMarkerIDByValue(HashMap<T, E> map, E value) {
+	    for (Entry<T, E> entry : map.entrySet()) {
+	        if (value.equals(entry.getValue())) {
+	            return (Integer) entry.getKey();
+	        }
+	    }
+	    return 0;
+	}
+	
+	/*
+	 * Returns the Marker for a passed ID and HashMap containing it.
+	 * If HashMap doesn't contain ID null is returned.
+	 */
+	public static <T, E> E getMarkerValueByID(HashMap<T, E> map, T id) {
+	    for (Entry<T, E> entry : map.entrySet()) {
+	        if (id.equals(entry.getKey())) {
+	            return entry.getValue();
+	        }
+	    }
+	    return null;
+	}
+	
 	private float getDistanceBewteen(LatLng a, LatLng b){
 		float[] res = new float[1];
 		Location.distanceBetween(a.latitude, a.longitude, b.latitude, b.longitude, res);
@@ -606,8 +643,7 @@ public class ActivityMap extends ActivityMenuBase {
 		savedInstanceState.putDouble(TagNames.EXTRA_LAT, _userLat);
 		savedInstanceState.putDouble(TagNames.EXTRA_LONG, _userLng);
 		savedInstanceState.putInt(TagNames.EXTRA_LOCATION_RESULT, _hasUserLocation ? -1 : 1);
-		Log.d("saveInstanceState _hasUserLocation", ""+_hasUserLocation);
-		Log.d("saveInstanceState _userLat", ""+_userLat);
+		savedInstanceState.putInt(TagNames.EXTRA_MARKER_ID, _clickedMarkerId);		 
 
 		// Always call the superclass so it can save the view hierarchy state
 		super.onSaveInstanceState(savedInstanceState);
@@ -626,6 +662,8 @@ public class ActivityMap extends ActivityMenuBase {
 			unregisterReceiver(_locUpdReceiver);
 			_locUpdReceiverRegistered = false;
 		}
+		
+		_slidingUpPanel.hidePanel();
 		//fix the map at restart of application, so that user and markers can be seen again
 		//TODO: nullpointer after disabling network in running app and then trying to pause it (back  button)
 		if (_mMap != null){
@@ -653,6 +691,8 @@ public class ActivityMap extends ActivityMenuBase {
 		}
 		// set this to false so that when map is brought back to front a new location fix is received
 		_hasUserLocation = false;
+		//hide sliding panel
+		_slidingUpPanel.hidePanel();
 	}
 
 
