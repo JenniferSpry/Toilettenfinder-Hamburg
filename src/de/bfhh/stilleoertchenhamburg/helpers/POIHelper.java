@@ -3,7 +3,10 @@ package de.bfhh.stilleoertchenhamburg.helpers;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map.Entry;
+
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
@@ -70,5 +73,17 @@ public class POIHelper {
 	}
 	
 
+	public static POI getPoiByIdReference(HashMap<String, Integer> markerPOIIdMap, ArrayList<POI> allPOIList, String markerId) {
+		return getPoiById(allPOIList,markerPOIIdMap.get(markerId) );
+	}
+	
+	public static POI getPoiById(ArrayList<POI> allPOIList, Integer id) {
+		for(POI poi: allPOIList){
+			if (poi.getId() == id){
+				return poi;
+			}
+		}
+		return null;
+	}
 	
 }
