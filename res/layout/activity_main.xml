@@ -24,14 +24,36 @@
 			    android:name="com.google.android.gms.maps.SupportMapFragment"/>
 			
 			    <ImageButton
-			    	android:id="@+id/mylocation"
+			    	android:id="@+id/buttonToLocation"
 			        style="?android:attr/buttonStyleSmall"
-			        android:layout_width="48dp"
-			        android:layout_height="48dp"
+			        android:layout_width="wrap_content"
+			        android:layout_height="wrap_content"
 			        android:layout_alignParentRight="true"
 			        android:layout_marginRight="16dp"
 			        android:layout_marginTop="16dp"
-			        android:src="@drawable/mylocation" />
+			        android:background="@drawable/map_button_style"
+			        android:src="@drawable/icon_locate" />
+			    
+			    <ImageButton
+			    	android:id="@+id/buttonZoomOut"	
+			    	android:background="@drawable/map_button_style"
+			        style="?android:attr/buttonStyleSmall"
+			        android:layout_width="wrap_content"
+			        android:layout_height="wrap_content"
+			        android:layout_alignParentLeft="true"
+			        android:layout_marginLeft="16dp"
+			        android:layout_marginTop="16dp"
+			        android:src="@drawable/icon_zoom_out" />
+			    
+			    <ImageButton
+			    	android:id="@+id/buttonZoomIn"	
+			    	android:background="@drawable/map_button_style"
+			        style="?android:attr/buttonStyleSmall"
+			        android:layout_width="wrap_content"
+			        android:layout_height="wrap_content"
+			        android:layout_marginTop="16dp"
+			        android:layout_toRightOf="@+id/buttonZoomOut"
+			        android:src="@drawable/icon_zoom_in" />
 		</RelativeLayout>
 		
 		<RelativeLayout

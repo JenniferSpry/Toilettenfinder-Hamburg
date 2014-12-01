@@ -71,7 +71,11 @@ public class ActivityMap extends ActivityMenuBase {
 	private static final String TAG = ActivityMap.class.getSimpleName();
 
 	private static GoogleMap _mMap;
+	
 	private ImageButton _myLocationButton; //Button to get back to current user location on map
+	private ImageButton _zoomInButton;
+	private ImageButton _zoomOutButton;
+	
 	private static Marker _personInNeedOfToilette; //person's marker
 	private static HashMap<Integer, MarkerOptions> _markerMap;
 	private static HashMap<Integer, Marker> _visiblePOIMap;
@@ -138,7 +142,9 @@ public class ActivityMap extends ActivityMenuBase {
 		_instance = this;
 
 		//Button that will animate camera back to user position
-		_myLocationButton = (ImageButton) findViewById(R.id.mylocation);  
+		_myLocationButton = (ImageButton) findViewById(R.id.buttonToLocation); 
+		_zoomInButton = (ImageButton) findViewById(R.id.buttonZoomIn); 
+		_zoomOutButton = (ImageButton) findViewById(R.id.buttonZoomOut); 
 		
 		//holds the SlidingUpLayout which is wrapper of our layout
 		_slidingUpPanel = (SlidingUpPanelLayout) findViewById(R.id.sliding_layout);
@@ -283,7 +289,19 @@ public class ActivityMap extends ActivityMenuBase {
 						buildAlertMessageGPSSettings();
 					}
 				}
-			});	    	
+			});
+			
+			_zoomInButton.setOnClickListener(new View.OnClickListener() {
+				public void onClick(View v) {
+					if (_mMap != null) {_mMap.animateCamera( CameraUpdateFactory.zoomIn()); }
+				}
+			});  
+			
+			_zoomOutButton.setOnClickListener(new View.OnClickListener() {
+				public void onClick(View v) {
+					if (_mMap != null) {_mMap.animateCamera( CameraUpdateFactory.zoomOut()); }
+				}
+			});
 
 			//Set Listener for different sliding events for SlidingUpPanel
 			_slidingUpPanel.setPanelSlideListener(new PanelSlideListener(){
@@ -327,6 +345,8 @@ public class ActivityMap extends ActivityMenuBase {
 					firstAnchored = false;
 					//show location button
 					_myLocationButton.setVisibility(View.VISIBLE);
+					_zoomInButton.setVisibility(View.VISIBLE);
+					_zoomOutButton.setVisibility(View.VISIBLE);
 				}
 
 				@Override
@@ -352,6 +372,8 @@ public class ActivityMap extends ActivityMenuBase {
 					}
 					//hide my location button
 					_myLocationButton.setVisibility(View.INVISIBLE);
+					_zoomInButton.setVisibility(View.INVISIBLE);
+					_zoomOutButton.setVisibility(View.INVISIBLE);
 				}
 
 				@Override
@@ -592,6 +614,7 @@ public class ActivityMap extends ActivityMenuBase {
 		Log.d(TAG, "setUpMapIfNeeded");
 		if (_mMap == null) {
 			_mMap = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map)).getMap();
+			_mMap.getUiSettings().setZoomControlsEnabled(false);
 		}
 	}
 
