@@ -30,6 +30,7 @@ import de.bfhh.stilleoertchenhamburg.TagNames;
 import de.bfhh.stilleoertchenhamburg.helpers.POIHelper;
 import de.bfhh.stilleoertchenhamburg.models.POI;
 
+import android.text.method.LinkMovementMethod;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Display;
@@ -467,8 +468,7 @@ public class ActivityMap extends ActivityMenuBase {
 					Log.d("userlocation 2", ""+_instance._userLocation.getLatitude());
 					//TODO: Testing
 					//old userLocation == standardLocation and distance to newly received location is greater 10m -> move camera
-					if(_instance._hasUserLocation){
-						
+					if(_instance._hasUserLocation){					
 						if(_instance._userLocation.distanceTo(oldLocation) < 10.0 ){
 							if(!_instance._isLowUpdateInterval){//high update interval
 								Log.d("-------- ", "lower update interval frequency");
@@ -494,7 +494,7 @@ public class ActivityMap extends ActivityMenuBase {
 							_instance.updatePOIMarkers();
 							_instance.setPeeerOnMap();
 						}
-					}
+					}    
 				}
 			}        
 		}
@@ -655,11 +655,24 @@ public class ActivityMap extends ActivityMenuBase {
 			TextView txtName = (TextView) findViewById(R.id.name_detail);
 	        txtName.setText(poi.getName());
 	        
+	        int d = (int) Math.round(poi.getDistanceToUser());
+	        String distance = String.valueOf(d) + " m";  
+	        TextView txtDistance = (TextView) findViewById(R.id.distance_detail);
+	        txtDistance.setText(distance);
+	        
+	        TextView txtAddress = (TextView) findViewById(R.id.address_detail);
+	        txtAddress.setText(poi.getAddress());
+	        
 	        TextView txtDescription = (TextView) findViewById(R.id.description_detail);
 	        txtDescription.setText(poi.getDescription());
 	                
-	        TextView txtAddress = (TextView) findViewById(R.id.address_detail);
-	        txtAddress.setText(poi.getAddress());
+	        TextView txtWebsite = (TextView) findViewById(R.id.url_detail);
+	        txtWebsite.setText(poi.getWebsite());
+	        if (!poi.getWebsite().equals("")){
+	        	txtWebsite.setMovementMethod(LinkMovementMethod.getInstance());
+	        } else {
+	        	txtWebsite.setVisibility(View.GONE);
+	        }
 		}
 	}
 
