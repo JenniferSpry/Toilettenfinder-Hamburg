@@ -2,10 +2,12 @@
 <com.sothree.slidinguppanel.SlidingUpPanelLayout
 		xmlns:android="http://schemas.android.com/apk/res/android"
 	    xmlns:app="http://schemas.android.com/apk/lib/de.bfhh.stilleoertchenhamburg"
+	    xmlns:sothree="http://schemas.android.com/apk/res-auto"
 	    android:id="@+id/sliding_layout"
 	    android:layout_width="match_parent"
 	    android:layout_height="match_parent"
 	    android:gravity="bottom"
+	    sothree:panelHeight="100dp"
 	    app:collapsedHeight="0dp"
 	    app:shadowHeight="4dp"
 	    app:fadeColor="#ffffff"
@@ -64,134 +66,210 @@
        android:layout_width="match_parent"
        android:layout_height="match_parent"
        android:gravity="top"
-       android:padding="20dp"
-       android:background="@color/white"
        android:orientation="vertical"
-       android:weightSum="2">  
+       android:background="@color/white">  
+       
+	    <RelativeLayout
+	       android:id="@+id/header_view"
+	       android:layout_width="match_parent"
+	       android:layout_height="120dp"
+	       android:gravity="top"
+	       android:padding="15dp"
+	       android:orientation="vertical">  
         
-	    <!-- Name -->
-		<TextView
-		    android:id="@+id/name_detail"
-		    android:layout_width="wrap_content"
-	        android:layout_height="wrap_content"
-	        android:layout_alignParentTop="true"
-		    android:layout_alignParentLeft="true"
-		    android:layout_toLeftOf="@+id/distance_detail"
-	        android:text="Toilet Name"
-	        android:textAppearance="?android:attr/textAppearanceMedium"
-	        android:textStyle="bold"
-	        android:textColor="@color/black" />
-		
-		<!-- Distance -->
-		<TextView
-		    android:id="@+id/distance_detail"
-			android:layout_width="wrap_content"
-	        android:layout_height="wrap_content"
-		    android:layout_alignParentTop="true"
-		    android:layout_alignParentRight="true"
-		    android:text="0 m"
-		    android:textAppearance="?android:attr/textAppearanceMedium"
-		    android:textColor="@color/black"/>
-		
-		<View
-		    android:id="@+id/separator_1"
-		    android:layout_width="fill_parent"
-		    android:layout_height="1dp"
-		    android:layout_below="@id/name_detail"
-		    android:paddingTop="10sp"
-		    android:background="@color/bfhh_green"/>
-		
-		<!-- Address -->
-		<TextView
-		    android:id="@+id/address_detail"
-			android:layout_width="wrap_content"
-		    android:layout_height="wrap_content"
-		    android:layout_below="@id/separator_1"
-		    android:paddingTop="10sp"
-		    android:text="Adresse"
-		    android:textColor="@color/black"
-		    android:textAppearance="?android:attr/textAppearanceMedium" />
-		
-		<!-- Description -->
-		<TextView
-		    android:id="@+id/description_detail"
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"
-			android:layout_below="@id/address_detail"
-			android:paddingTop="10sp"
-			android:text="Beschreibung"
-			android:textColor="@color/black"
-			android:textStyle="italic"
-		    android:textAppearance="?android:attr/textAppearanceMedium" />
-		
-		<!-- Website -->
-		<TextView
-		    android:id="@+id/url_detail"
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"
-			android:layout_below="@id/description_detail"
-			android:paddingTop="10sp"
-			android:paddingBottom="10sp"
-			android:autoLink="web"
-	        android:linksClickable="true"
-			android:text="Webseite"
-			android:textColor="@color/black"
-		    android:textAppearance="?android:attr/textAppearanceMedium" />
-		
-		<View
-		    android:id="@+id/separator_2"
-		    android:layout_width="fill_parent"
-		    android:layout_height="1dp"
-		    android:layout_below="@id/url_detail"
-		    android:background="@color/bfhh_green"/>
-		
-		<!-- Route -->
-		<TextView
-		    android:id="@+id/find_route"
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"
-			android:layout_below="@id/separator_2"
-			android:paddingTop="10sp"
-			android:paddingBottom="10sp"
-			android:text="Route finden:"
-			android:textColor="@color/black"
-			android:textStyle="bold"
-		    android:textAppearance="?android:attr/textAppearanceMedium" />
-		
-		<LinearLayout
-		    android:id="@+id/route_btns" 
-		    android:layout_width="fill_parent"
-			android:layout_height="wrap_content"
-			android:layout_below="@id/find_route"
-			android:paddingBottom="10sp"
-			android:weightSum="2">
-		    <Button
-			    android:id="@+id/route_map"
-				android:layout_width="0dp"
-			    android:layout_height="40dp"
+		    <!-- Name -->
+			<TextView
+			    android:id="@+id/name_detail"
+			    android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+		        android:layout_alignParentTop="true"
 			    android:layout_alignParentLeft="true"
-			    android:layout_toLeftOf="@+id/route_text" 
-			    android:layout_weight="1"
-			    android:text="Karte"
-			    android:textAppearance="?android:attr/textAppearanceMedium" />
-			<Button
-			    android:id="@+id/route_text"
-				android:layout_width="0dp"
-			    android:layout_height="40dp"
-			    android:layout_below="@id/find_route"
-			    android:layout_alignParentRight="true"
-			    android:layout_weight="1"
-			    android:text="Text"
-			    android:textAppearance="?android:attr/textAppearanceMedium" />
-	
-		</LinearLayout>	
+		        android:textSize="@dimen/detail_text"
+		        android:textStyle="bold"
+		        android:textColor="@color/black" />
 		
-		<View
-		    android:id="@+id/separator_3"
-		    android:layout_width="fill_parent"
-		    android:layout_height="1dp"
-		    android:layout_below="@id/url_detail"
-		    android:background="@color/bfhh_green"/>
+			<!-- Distance -->
+			<TextView
+			    android:id="@+id/distance_detail"
+				android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+			    android:layout_alignParentRight="true"
+			    android:layout_below="@id/name_detail"
+			    android:textSize="@dimen/detail_text"
+			    android:textColor="@color/black"/>
+		
+		</RelativeLayout>
+		
+		<ScrollView
+			android:layout_width="fill_parent"
+			android:layout_height="wrap_content"
+			android:layout_below="@id/header_view"
+			android:background="@color/light_grey" >
 			
+			<RelativeLayout
+		       android:id="@+id/scroll_view"
+		       android:layout_width="match_parent"
+		       android:layout_height="match_parent"
+		       android:gravity="top"
+		       android:padding="15dp"
+		       android:orientation="vertical"
+		       android:weightSum="2"> 
+			
+				<!-- Address -->
+				<TextView
+				    android:id="@+id/address_detail"
+					android:layout_width="wrap_content"
+				    android:layout_height="wrap_content"
+				    android:layout_alignParentTop="true"
+				    android:textColor="@color/black"
+				    android:textSize="@dimen/detail_text" />
+				
+				<!-- Description -->
+				<TextView
+				    android:id="@+id/description_detail"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:layout_below="@id/address_detail"
+					android:paddingTop="10sp"
+					android:textColor="@color/black"
+					android:textStyle="italic"
+				    android:textSize="@dimen/detail_text" />
+				
+				<!-- Website -->
+				<TextView
+				    android:id="@+id/url_detail"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:layout_below="@id/description_detail"
+					android:paddingTop="10sp"
+					android:autoLink="web"
+			        android:linksClickable="true"
+				    android:textSize="@dimen/detail_text" />
+				
+				<View
+				    android:id="@+id/separator_2"
+				    android:layout_width="fill_parent"
+				    android:layout_height="1dp"
+				    android:layout_below="@id/url_detail"
+				    android:layout_marginBottom="10dp"
+				    android:layout_marginTop="10dp"
+				    android:background="@color/black"/>
+				
+				<!-- Route -->
+				<TextView
+				    android:id="@+id/find_route"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:layout_below="@id/separator_2"
+					android:paddingBottom="10sp"
+					android:text="Route finden:"
+					android:textColor="@color/black"
+					android:textStyle="bold"
+				    android:textSize="@dimen/detail_text" />
+				
+				<LinearLayout
+				    android:id="@+id/route_btns" 
+				    android:layout_width="fill_parent"
+					android:layout_height="wrap_content"
+					android:layout_below="@id/find_route"
+					android:paddingBottom="10sp"
+					android:weightSum="2">
+				    <Button
+					    android:id="@+id/route_map"
+						android:layout_width="0dp"
+					    android:layout_height="40dp"
+					    android:layout_weight="1"
+					    android:text="Karte"
+					    android:textSize="@dimen/detail_text" />
+					<Button
+					    android:id="@+id/route_text"
+						android:layout_width="0dp"
+					    android:layout_height="40dp"
+					    android:layout_weight="1"
+					    android:text="Text"
+					    android:textSize="@dimen/detail_text" />
+			
+				</LinearLayout>	
+				
+				<View
+				    android:id="@+id/separator_3"
+				    android:layout_width="fill_parent"
+				    android:layout_height="1dp"
+				    android:layout_below="@id/route_btns"
+				    android:background="@color/black"/>
+				
+				<!-- Comment on POI-->
+			    <TextView
+			        android:id="@+id/toilet_comment"
+			        android:layout_width="wrap_content"
+			        android:layout_height="wrap_content"
+			        android:layout_below="@id/separator_3"
+			        android:paddingBottom="5sp"
+			        android:paddingTop="15sp"
+			        android:text="@string/toilet_comment"
+			        android:textColor="@color/black"
+			        android:textSize="@dimen/detail_text"
+			        android:textStyle="bold" />
+			    
+			    <!-- Comment Field -->
+			    <EditText
+			        android:id="@+id/comment_field"
+			        android:layout_width="match_parent"
+			        android:layout_height="wrap_content"
+			        android:layout_below="@id/toilet_comment"
+			        android:layout_weight="0.91"
+			        android:ems="5"
+			        android:hint="Kommentar"
+			        android:textColorHint="@color/dark_grey"
+			        android:inputType="textMultiLine" >
+			    </EditText>
+						    
+			    <!-- E-Mail Field -->
+			    <EditText
+			        android:id="@+id/email_field"
+			        android:layout_width="match_parent"
+			        android:layout_height="wrap_content"
+			        android:layout_below="@id/comment_field"
+			        android:ems="10"
+			        android:hint="E-Mail*"
+			        android:textColorHint="@color/dark_grey"
+			        android:inputType="textEmailAddress" />
+			    
+			    <!-- Name Field -->
+			    <EditText
+			        android:id="@+id/name_field"
+			        android:layout_width="match_parent"
+			        android:layout_height="wrap_content"
+			        android:layout_below="@id/email_field"
+			        android:ems="10"
+			        android:hint="Name*"
+			        android:textColorHint="@color/dark_grey"
+			        android:inputType="textEmailAddress" />
+			    
+			    <!-- Field comment -->
+			    <TextView
+			        android:id="@+id/email_field_comment"
+			        android:layout_width="wrap_content"
+			        android:layout_height="wrap_content"
+			        android:layout_below="@id/name_field"
+			        android:paddingBottom="5sp"
+			        android:text="@string/toilet_mail_field_description"
+			        android:textColor="@color/black"
+			        android:textStyle="italic"
+			        android:textSize="@dimen/detail_text_small" />
+			      
+			    <!-- Send Comment Button -->
+			    <Button
+			        android:id="@+id/button_send_comment"
+			        android:layout_width="fill_parent"
+			        android:layout_height="wrap_content"
+			        android:layout_below="@id/email_field_comment"
+			        android:layout_weight="1"
+			        android:gravity="center"
+			        android:text="@string/toilet_button_send" />
+			
+		    </RelativeLayout>	
+		</ScrollView>
 	</RelativeLayout>
+	
 </com.sothree.slidinguppanel.SlidingUpPanelLayout>    

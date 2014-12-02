@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import android.support.v4.app.ListFragment;
 import de.bfhh.stilleoertchenhamburg.R;
 import de.bfhh.stilleoertchenhamburg.TagNames;
-import de.bfhh.stilleoertchenhamburg.activites.ActivityPOIDetail;
 import de.bfhh.stilleoertchenhamburg.adapters.AdapterToiletList;
 import de.bfhh.stilleoertchenhamburg.models.POI;
 import android.content.Intent;
@@ -39,10 +38,11 @@ public class FragmentToiletList extends ListFragment {
     
     @Override 
     public void onListItemClick(ListView l, View v, int position, long id) {
-    	Intent i = new Intent(getActivity(), ActivityPOIDetail.class);
-        i.putExtra(TagNames.EXTRA_POI, (POI) getListView().getItemAtPosition(position));
-  	  	i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-  	  	startActivity(i); //start POI Detail Activity
+//    	Intent i = new Intent(getActivity(), ActivityPOIDetail.class);
+//        i.putExtra(TagNames.EXTRA_POI, (POI) getListView().getItemAtPosition(position));
+//  	  	i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+//  	  	startActivity(i); //start POI Detail Activity
+    	//TODO: go back to Map
     }
     
 

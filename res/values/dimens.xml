@@ -13,5 +13,7 @@
     <dimen name="toilet_item_corner_radius">10dp</dimen>
     
     <dimen name="toilet_text">15sp</dimen>
+    <dimen name="detail_text">18dp</dimen>
+    <dimen name="detail_text_small">13dp</dimen>
 
 </resources>

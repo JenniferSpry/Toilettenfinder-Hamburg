@@ -5,8 +5,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -37,6 +35,7 @@ import android.view.Display;
 import android.view.View;
 import android.view.ViewTreeObserver.OnGlobalLayoutListener;
 import android.widget.ImageButton;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.annotation.SuppressLint;
@@ -79,6 +78,12 @@ public class ActivityMap extends ActivityMenuBase {
 	private ImageButton _myLocationButton; //Button to get back to current user location on map
 	private ImageButton _zoomInButton;
 	private ImageButton _zoomOutButton;
+	
+	TextView txtName;   
+    TextView txtDistance;    
+    TextView txtAddress;   
+    TextView txtDescription;            
+    TextView txtWebsite;
 	
 	private static Marker _personInNeedOfToilette; //person's marker
 	private static HashMap<Integer, Marker> _markerMap;
@@ -153,7 +158,7 @@ public class ActivityMap extends ActivityMenuBase {
 		_myLocationButton = (ImageButton) findViewById(R.id.buttonToLocation); 
 		_zoomInButton = (ImageButton) findViewById(R.id.buttonZoomIn); 
 		_zoomOutButton = (ImageButton) findViewById(R.id.buttonZoomOut); 
-		
+				
 		//holds the SlidingUpLayout which is wrapper of our layout
 		_slidingUpPanel = (SlidingUpPanelLayout) findViewById(R.id.sliding_layout);
 		_slidingUpPanel.setAnchorPoint(0.5f);
@@ -286,9 +291,6 @@ public class ActivityMap extends ActivityMenuBase {
 			_mMap.setOnMarkerClickListener(new OnMarkerClickListener(){
 				@Override
 				public boolean onMarkerClick(Marker marker) { 
-					//show panel
-					_slidingUpPanel.showPanel();
-					
 					//center map on clicked marker
 					LatLng center = marker.getPosition();
 					_mMap.animateCamera(CameraUpdateFactory.newLatLng(center));
@@ -299,6 +301,10 @@ public class ActivityMap extends ActivityMenuBase {
 					_clickedPOIId = poi.getId();
 					Log.d("marker id", "" + _clickedPOIId);
 					updateSliderContent(poi);
+					
+					//show panel
+					_slidingUpPanel.showPanel();
+					
 					return true;
 				}
 			});
@@ -630,7 +636,6 @@ public class ActivityMap extends ActivityMenuBase {
 		}
 		Log.d("visible marker size:", String.valueOf(_markerMap.size()));
 	}
-
 	
 	private float getDistanceBewteen(LatLng a, LatLng b){
 		float[] res = new float[1];
@@ -652,23 +657,24 @@ public class ActivityMap extends ActivityMenuBase {
 
 	protected void updateSliderContent(POI poi) {
 		if (poi != null){
-			TextView txtName = (TextView) findViewById(R.id.name_detail);
+			txtName = (TextView) findViewById(R.id.name_detail);
 	        txtName.setText(poi.getName());
 	        
 	        int d = (int) Math.round(poi.getDistanceToUser());
 	        String distance = String.valueOf(d) + " m";  
-	        TextView txtDistance = (TextView) findViewById(R.id.distance_detail);
+	        txtDistance = (TextView) findViewById(R.id.distance_detail);
 	        txtDistance.setText(distance);
 	        
-	        TextView txtAddress = (TextView) findViewById(R.id.address_detail);
+	        txtAddress = (TextView) findViewById(R.id.address_detail);
 	        txtAddress.setText(poi.getAddress());
 	        
-	        TextView txtDescription = (TextView) findViewById(R.id.description_detail);
+	        txtDescription = (TextView) findViewById(R.id.description_detail);
 	        txtDescription.setText(poi.getDescription());
 	                
-	        TextView txtWebsite = (TextView) findViewById(R.id.url_detail);
+	        txtWebsite = (TextView) findViewById(R.id.url_detail);
 	        txtWebsite.setText(poi.getWebsite());
 	        if (!poi.getWebsite().equals("")){
+	        	txtWebsite.setVisibility(View.VISIBLE);
 	        	txtWebsite.setMovementMethod(LinkMovementMethod.getInstance());
 	        } else {
 	        	txtWebsite.setVisibility(View.GONE);

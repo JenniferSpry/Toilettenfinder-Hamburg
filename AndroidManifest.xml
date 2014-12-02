@@ -67,17 +67,6 @@ s        <!-- Location Service -->
                 android:value="de.bfhh.stilleoertchenhamburg.activites.ActivityMap" />
         </activity>
         
-        <!--  Toilet Detail Activity -->
-        <activity
-            android:name="de.bfhh.stilleoertchenhamburg.activites.ActivityPOIDetail"
-            android:label="@string/menu_poi_detail"
-            android:windowSoftInputMode="stateUnchanged"
-            android:parentActivityName="de.bfhh.stilleoertchenhamburg.activites.ActivityMap" >
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="de.bfhh.stilleoertchenhamburg.activites.ActivityMap" />
-        </activity>
-        
         <!--  Impress Activity -->
         <activity
             android:name="de.bfhh.stilleoertchenhamburg.activites.ActivityImpressum"
@@ -91,6 +80,7 @@ s        <!-- Location Service -->
         <!-- Main Activity -->
         <activity
             android:name="de.bfhh.stilleoertchenhamburg.activites.ActivityMap"
+            android:windowSoftInputMode="stateUnchanged"
             android:label="@string/menu_map" >
         </activity>
         
