@@ -12,153 +12,186 @@
 	    app:overlay="true"
 	    app:flingVelocity="0.1f">
 
-		<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-		    android:layout_width="match_parent" 
-	    	android:layout_height="match_parent"
-	    	android:gravity="center|top">
-			<fragment
-				android:id="@+id/map"
-			    android:layout_width="match_parent"
-			    android:layout_height="match_parent"
-			    android:gravity="center"
-			    android:name="com.google.android.gms.maps.SupportMapFragment"/>
-			
-			    <ImageButton
-			    	android:id="@+id/buttonToLocation"
-			        style="?android:attr/buttonStyleSmall"
-			        android:layout_width="wrap_content"
-			        android:layout_height="wrap_content"
-			        android:layout_alignParentRight="true"
-			        android:layout_marginRight="16dp"
-			        android:layout_marginTop="16dp"
-			        android:background="@drawable/map_button_style"
-			        android:src="@drawable/icon_locate" />
-			    
-			    <ImageButton
-			    	android:id="@+id/buttonZoomOut"	
-			    	android:background="@drawable/map_button_style"
-			        style="?android:attr/buttonStyleSmall"
-			        android:layout_width="wrap_content"
-			        android:layout_height="wrap_content"
-			        android:layout_alignParentLeft="true"
-			        android:layout_marginLeft="16dp"
-			        android:layout_marginTop="16dp"
-			        android:src="@drawable/icon_zoom_out" />
-			    
-			    <ImageButton
-			    	android:id="@+id/buttonZoomIn"	
-			    	android:background="@drawable/map_button_style"
-			        style="?android:attr/buttonStyleSmall"
-			        android:layout_width="wrap_content"
-			        android:layout_height="wrap_content"
-			        android:layout_marginTop="16dp"
-			        android:layout_toRightOf="@+id/buttonZoomOut"
-			        android:src="@drawable/icon_zoom_in" />
-		</RelativeLayout>
-		
-		<RelativeLayout
-	        android:id="@+id/top_view"
-	        android:layout_width="match_parent"
-	        android:layout_height="match_parent"
-	        android:gravity="top"
-	        android:background="@color/bfhh_green"
-	        android:orientation="vertical"
-	        android:weightSum="2">    
-			<TextView
-			    android:id="@+id/name_detail"
-				android:layout_width="0dp"
-			    android:layout_height="68dp"
-			    android:layout_alignParentTop="true"
-			    android:text="HAHA!"
-			    android:layout_alignParentLeft="true"
-			    android:layout_toLeftOf="@+id/distance_detail" 
-			    android:textSize="16sp" />
-			<TextView
-			    android:id="@+id/distance_detail"
-				android:layout_width="96dp"
-			    android:layout_height="68dp"
-			    android:layout_alignParentTop="true"
-			    android:text="300m"
-			    android:layout_alignParentRight="true"
-			    android:textSize="16sp" />
-			<View
-			    android:id="@+id/separator_1"
-			    android:layout_width="fill_parent"
-			    android:layout_height="1dp"
-			    android:layout_below="@id/distance_detail"
-			    android:background="@android:color/darker_gray"/>
-			<TextView
-			    android:id="@+id/address_detail"
-				android:layout_width="match_parent"
-			    android:layout_height="60dp"
-			    android:text="Musterstraße 666"
-			    android:layout_below="@id/separator_1"
-			    android:textSize="16sp" />
-			<TextView
-			    android:id="@+id/description_detail"
-				android:layout_width="match_parent"
-			    android:layout_height="70dp"
-			    android:text="LOREM IPSUM TRLALALALALALALALALALALALLALALAFDSF SGJKDBSF DFGFDS "
-			    android:layout_below="@id/address_detail"
-			    android:textSize="16sp" />
-			<TextView
-			    android:id="@+id/url_detail"
-				android:layout_width="match_parent"
-			    android:layout_height="40dp"
-			    android:text="www.muster.de"
-			    android:layout_below="@id/description_detail"
-			    android:textSize="16sp" />
-			<TextView
-			    android:id="@+id/find_route"
-				android:layout_width="match_parent"
-			    android:layout_height="40dp"
-			    android:text="Route finden:"
-			    android:layout_below="@id/url_detail"
-			    android:textSize="16sp" />
-			<LinearLayout
-			    android:id="@+id/route_btns" 
-			    android:layout_width="fill_parent"
-   				android:layout_height="wrap_content"
-   				android:layout_below="@id/find_route"
-   				android:weightSum="2">
-			    <Button
-				    android:id="@+id/route_map"
-					android:layout_width="0dp"
-				    android:layout_height="40dp"
-				    android:text="Karte"
-				    android:layout_alignParentLeft="true"
-				    android:layout_toLeftOf="@+id/route_text" 
-				    android:layout_weight="1"
-				    android:textSize="16sp" />
-				<Button
-				    android:id="@+id/route_text"
-					android:layout_width="0dp"
-				    android:layout_height="40dp"
-				    android:layout_below="@id/find_route"
-				    android:text="Text"
-				    android:layout_alignParentRight="true"
-				    android:layout_weight="1"
-				    android:textSize="16sp" />
- 
-			</LinearLayout>
-			
-			<View
-			    android:id="@+id/separator_2"
-			    android:layout_width="fill_parent"
-			    android:layout_height="1dp"
-			    android:layout_below="@id/route_btns"
-			    android:background="@android:color/darker_gray"/>
-			
-			
-			
-			
-			
-			
-		</RelativeLayout>
-
-   	</com.sothree.slidinguppanel.SlidingUpPanelLayout>     
-		     
-
-
- 
     
+    <!-- Map and Buttons -->
+	<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	    android:layout_width="match_parent" 
+    	android:layout_height="match_parent"
+    	android:gravity="center|top">
+		<fragment
+			android:id="@+id/map"
+		    android:layout_width="match_parent"
+		    android:layout_height="match_parent"
+		    android:gravity="center"
+		    android:name="com.google.android.gms.maps.SupportMapFragment"/>
+		
+	    <ImageButton
+	    	android:id="@+id/buttonToLocation"
+	        style="?android:attr/buttonStyleSmall"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_alignParentRight="true"
+	        android:layout_marginRight="16dp"
+	        android:layout_marginTop="16dp"
+	        android:background="@drawable/map_button_style"
+	        android:src="@drawable/icon_locate" />
+	    
+	    <ImageButton
+	    	android:id="@+id/buttonZoomOut"	
+	    	android:background="@drawable/map_button_style"
+	        style="?android:attr/buttonStyleSmall"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_alignParentLeft="true"
+	        android:layout_marginLeft="16dp"
+	        android:layout_marginTop="16dp"
+	        android:src="@drawable/icon_zoom_out" />
+	    
+	    <ImageButton
+	    	android:id="@+id/buttonZoomIn"	
+	    	android:background="@drawable/map_button_style"
+	        style="?android:attr/buttonStyleSmall"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_marginTop="16dp"
+	        android:layout_toRightOf="@+id/buttonZoomOut"
+	        android:src="@drawable/icon_zoom_in" />
+	</RelativeLayout>
+		
+	<!-- POI Details -->
+	<RelativeLayout
+       android:id="@+id/top_view"
+       android:layout_width="match_parent"
+       android:layout_height="match_parent"
+       android:gravity="top"
+       android:padding="20dp"
+       android:background="@color/white"
+       android:orientation="vertical"
+       android:weightSum="2">  
+        
+	    <!-- Name -->
+		<TextView
+		    android:id="@+id/name_detail"
+		    android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_alignParentTop="true"
+		    android:layout_alignParentLeft="true"
+		    android:layout_toLeftOf="@+id/distance_detail"
+	        android:text="Toilet Name"
+	        android:textAppearance="?android:attr/textAppearanceMedium"
+	        android:textStyle="bold"
+	        android:textColor="@color/black" />
+		
+		<!-- Distance -->
+		<TextView
+		    android:id="@+id/distance_detail"
+			android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+		    android:layout_alignParentTop="true"
+		    android:layout_alignParentRight="true"
+		    android:text="0 m"
+		    android:textAppearance="?android:attr/textAppearanceMedium"
+		    android:textColor="@color/black"/>
+		
+		<View
+		    android:id="@+id/separator_1"
+		    android:layout_width="fill_parent"
+		    android:layout_height="1dp"
+		    android:layout_below="@id/name_detail"
+		    android:paddingTop="10sp"
+		    android:background="@color/bfhh_green"/>
+		
+		<!-- Address -->
+		<TextView
+		    android:id="@+id/address_detail"
+			android:layout_width="wrap_content"
+		    android:layout_height="wrap_content"
+		    android:layout_below="@id/separator_1"
+		    android:paddingTop="10sp"
+		    android:text="Adresse"
+		    android:textColor="@color/black"
+		    android:textAppearance="?android:attr/textAppearanceMedium" />
+		
+		<!-- Description -->
+		<TextView
+		    android:id="@+id/description_detail"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_below="@id/address_detail"
+			android:paddingTop="10sp"
+			android:text="Beschreibung"
+			android:textColor="@color/black"
+			android:textStyle="italic"
+		    android:textAppearance="?android:attr/textAppearanceMedium" />
+		
+		<!-- Website -->
+		<TextView
+		    android:id="@+id/url_detail"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_below="@id/description_detail"
+			android:paddingTop="10sp"
+			android:paddingBottom="10sp"
+			android:autoLink="web"
+	        android:linksClickable="true"
+			android:text="Webseite"
+			android:textColor="@color/black"
+		    android:textAppearance="?android:attr/textAppearanceMedium" />
+		
+		<View
+		    android:id="@+id/separator_2"
+		    android:layout_width="fill_parent"
+		    android:layout_height="1dp"
+		    android:layout_below="@id/url_detail"
+		    android:background="@color/bfhh_green"/>
+		
+		<!-- Route -->
+		<TextView
+		    android:id="@+id/find_route"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_below="@id/separator_2"
+			android:paddingTop="10sp"
+			android:paddingBottom="10sp"
+			android:text="Route finden:"
+			android:textColor="@color/black"
+			android:textStyle="bold"
+		    android:textAppearance="?android:attr/textAppearanceMedium" />
+		
+		<LinearLayout
+		    android:id="@+id/route_btns" 
+		    android:layout_width="fill_parent"
+			android:layout_height="wrap_content"
+			android:layout_below="@id/find_route"
+			android:paddingBottom="10sp"
+			android:weightSum="2">
+		    <Button
+			    android:id="@+id/route_map"
+				android:layout_width="0dp"
+			    android:layout_height="40dp"
+			    android:layout_alignParentLeft="true"
+			    android:layout_toLeftOf="@+id/route_text" 
+			    android:layout_weight="1"
+			    android:text="Karte"
+			    android:textAppearance="?android:attr/textAppearanceMedium" />
+			<Button
+			    android:id="@+id/route_text"
+				android:layout_width="0dp"
+			    android:layout_height="40dp"
+			    android:layout_below="@id/find_route"
+			    android:layout_alignParentRight="true"
+			    android:layout_weight="1"
+			    android:text="Text"
+			    android:textAppearance="?android:attr/textAppearanceMedium" />
+	
+		</LinearLayout>	
+		
+		<View
+		    android:id="@+id/separator_3"
+		    android:layout_width="fill_parent"
+		    android:layout_height="1dp"
+		    android:layout_below="@id/url_detail"
+		    android:background="@color/bfhh_green"/>
+			
+	</RelativeLayout>
+</com.sothree.slidinguppanel.SlidingUpPanelLayout>    

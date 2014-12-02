@@ -63,7 +63,6 @@ public class AdapterToiletList extends BaseAdapter {
         //distance in int
         int d = (int) Math.round(poi.getDistanceToUser());
         String distance = String.valueOf(d) + " m";  
-        Log.d("distance: ", distance);
         TextView txtDistance = (TextView) convertView.findViewById(R.id.toilet_distance);
         txtDistance.setText(distance);
          
