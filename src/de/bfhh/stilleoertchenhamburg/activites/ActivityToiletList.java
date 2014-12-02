@@ -147,11 +147,12 @@ public class ActivityToiletList extends ActivityMenuBase {
           oldLoc.setLatitude(lat);
           oldLoc.setLongitude(lng);
           if(loc == null || service.isBetterLocation(loc, oldLoc) ){
-        	  service.updateLocation();//calls AsyncTask and publishes results
+        	  service.updateLocation(60000, 3.0f, 5000, 1.0f);//calls AsyncTask and publishes results
           }
         }
 
         public void onServiceDisconnected(ComponentName className) {
+        	service.stopLocationUpdates();
         	service = null;
           	Toast.makeText(ActivityToiletList.this, "LocService Disconnected", Toast.LENGTH_SHORT)
           		.show();

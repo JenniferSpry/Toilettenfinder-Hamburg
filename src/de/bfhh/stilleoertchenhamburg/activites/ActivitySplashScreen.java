@@ -143,7 +143,7 @@ public class ActivitySplashScreen extends ActivityBase {
           Toast.makeText(ActivitySplashScreen.this, "LocService Connected", Toast.LENGTH_SHORT).show();
           Location loc = service.getCurrentUserLocation();
           if(loc == null){
-        	  service.updateLocation();//calls AsyncTask and publishes results
+        	  service.updateLocation(60000, 3.0f, 5000, 1.0f);//calls AsyncTask and publishes results
           }
         }
 

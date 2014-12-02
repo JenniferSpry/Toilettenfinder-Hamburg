@@ -49,6 +49,7 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.graphics.Point;
 import android.location.Location;
+import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -113,6 +114,10 @@ public class ActivityMap extends ActivityMenuBase {
 
 	private int _clickedPOIId;
 
+	public boolean _isLowUpdateInterval;
+
+	protected boolean _firstLocationPull;
+
 	/**
 	 * Initiate variables
 	 * fetch bundle contents
@@ -156,6 +161,8 @@ public class ActivityMap extends ActivityMenuBase {
 		//LocUpdateReceiver
 		_locUpdReceiver = new LocationUpdateReceiver(new Handler());
 		_locUpdReceiver.setMainActivityHandler(this);
+		//
+		_instance._isLowUpdateInterval = false;
 
 		//list of POI markers that are currently visible on the map
 		_markerMap = new HashMap<Integer, Marker>();
@@ -178,9 +185,6 @@ public class ActivityMap extends ActivityMenuBase {
 			_userLng = bundle.getDouble(TagNames.EXTRA_LONG);
 			//userLocation == standardLocation -> 0 -> false; else -> -1 -> true
 			_hasUserLocation = bundle.getInt(TagNames.EXTRA_LOCATION_RESULT) == -1;
-			Log.d("oncreate _hasUserLocation", ""+_hasUserLocation);
-			Log.d("oncreate _userLat", ""+_userLat);
-			Log.d("oncreate _userLng", ""+_userLng);
 
 			setUserLocation(_userLat, _userLng);
 			//if the location is the standard location, show settings dialog
@@ -259,7 +263,6 @@ public class ActivityMap extends ActivityMenuBase {
 						//get LatLngBounds of current camera position
 						_mapBounds = _mMap.getProjection().getVisibleRegion().latLngBounds;
 						updatePOIMarkers();
-						Log.d("visible marker size:", String.valueOf(_markerMap.size()));
 					}
 				}			
 			});
@@ -271,7 +274,8 @@ public class ActivityMap extends ActivityMenuBase {
 				public void onMapClick(LatLng arg0) {
 					_slidingUpPanel.hidePanel();
 					
-					_mapBounds = _mMap.getProjection().getVisibleRegion().latLngBounds;
+					//_mapBounds = _mMap.getProjection().getVisibleRegion().latLngBounds;
+					_mapBounds = getMapBounds();
 					LatLng center = getMapCenter(_mapBounds);
 					_mMap.animateCamera(CameraUpdateFactory.newLatLng(center));
 				}
@@ -289,7 +293,6 @@ public class ActivityMap extends ActivityMenuBase {
 					_mMap.animateCamera(CameraUpdateFactory.newLatLng(center));
 					_mapBounds = _mMap.getProjection().getVisibleRegion().latLngBounds;
 					_clickedMarker = marker;
-					Log.d("_visiblePOIMap", ""+_markerMap);
 					POI poi = POIHelper.getPoiByIdReference(_markerPOIIdMap, _allPOIList, marker.getId());
 					Log.d("POI NAME", "" + poi.getName());
 					_clickedPOIId = poi.getId();
@@ -349,7 +352,6 @@ public class ActivityMap extends ActivityMenuBase {
 					_mMap.setPadding(5, 5, 5, px);
 					
 					_mapBounds = _mMap.getProjection().getVisibleRegion().latLngBounds;
-					Log.d("onPanelCollapsed _mapBounds", ""+_mapBounds);
 					
 					//clickedMarker may be null
 					if(_clickedMarker == null && _clickedPOIId != 0 && _markerMap != null){
@@ -436,34 +438,63 @@ public class ActivityMap extends ActivityMenuBase {
 			//Location has been updated (by provider in LocService)
 			if(action.equals(TagNames.BROADC_LOCATION_UPDATED)){
 				if(bundle != null){
+					//Retrieve latitude, longitude, provider and result
 					double lat = bundle.getDouble(TagNames.EXTRA_LAT);
 					double lng = bundle.getDouble(TagNames.EXTRA_LONG);
 					String provider = bundle.getString(TagNames.EXTRA_PROVIDER);
+					int result = bundle.getInt(TagNames.EXTRA_LOCATION_RESULT);
+					
 					Log.d("ActivityMap LocationUpdateReceiver", "Location received from "+ provider + ": " + lat  + ", " + lng);
 					//Toast to show updates
-					Toast.makeText(context, "Location Update from provider: " + provider + ", Location: LAT " + lat + ", LNG " + lng,
-							Toast.LENGTH_LONG).show();
-					//update the user location
+					//Toast.makeText(context, "Location Update from provider: " + provider + ", Location: LAT " + lat + ", LNG " + lng,
+						//	Toast.LENGTH_LONG).show();
+					
+					//Result_ok -> true, Result_cancelled -> false
+					_instance._hasUserLocation =  result == -1;
+
+					//get previous user Location (might be standardLocation)
 					Location oldLocation = new Location("");
 					oldLocation.setLatitude(_userLat);
 					oldLocation.setLongitude(_userLng);
-					Log.d("_hasUserLocation =", ""+ _instance._hasUserLocation);
-					Log.d("userlocation 1", ""+_instance._userLocation);
 
+					Log.d("_hasUserLocation =", ""+ _instance._hasUserLocation);
+					Log.d("userlocation 1", ""+_instance._userLocation.getLatitude());
+					
+					//update the user location
 					_instance.setUserLocation(lat, lng);
 					_instance._allPOIList = POIHelper.setDistancePOIToUser(_instance._allPOIList, lat, lng);
 					
-					Log.d("userlocation 1", ""+_instance._userLocation);
+					Log.d("userlocation 2", ""+_instance._userLocation.getLatitude());
 					//TODO: Testing
 					//old userLocation == standardLocation and distance to newly received location is greater 10m -> move camera
 					if(_instance._hasUserLocation){
-						if( _instance._userLocation.distanceTo(oldLocation) > 10.0 || oldLocation == AppController.getInstance().getStandardLocation()){
+						
+						if(_instance._userLocation.distanceTo(oldLocation) < 10.0 ){
+							if(!_instance._isLowUpdateInterval){//high update interval
+								Log.d("-------- ", "lower update interval frequency");
+								_instance.callForLocationUpdates(120000, 8.0f, 60000, 5.0f );
+								_instance._isLowUpdateInterval = true;
+							}
+						}else{//distance > 10 meters (because user moved or because old loc is standard loc)
+							Location s = AppController.getInstance().getStandardLocation();
+							//oldLocation == standardLocation -> we have jumped quite far
+							if(oldLocation.getLatitude() == s.getLatitude() && oldLocation.getLongitude() == s.getLongitude()){
+								Log.d("-------- ", "lower update interval frequency");
+								_instance.callForLocationUpdates(120000, 8.0f, 60000, 5.0f );
+								_instance._isLowUpdateInterval = true;
+								Toast.makeText(context, "Position wird bestimmt...",
+										Toast.LENGTH_LONG).show();
+							}else if(_instance._userLocation.distanceTo(oldLocation) > 84.0 && _instance._isLowUpdateInterval){
+								Log.d("+++++++++ ", "higher update interval frequency");
+								_instance.callForLocationUpdates(60000, 3.0f, 5000, 1.0f );
+								_instance._isLowUpdateInterval = false;
+							}
 							CameraUpdate cu = _instance.getClosestPOIBounds(10);
 							_mMap.animateCamera(cu);
 							_instance.updatePOIMarkers();
 							_instance.setPeeerOnMap();
 						}
-					}       
+					}
 				}
 			}        
 		}
@@ -507,6 +538,36 @@ public class ActivityMap extends ActivityMenuBase {
 			}
 		}
 		_mapBounds = _mMap.getProjection().getVisibleRegion().latLngBounds;
+	}
+	
+	private LatLngBounds getMapBounds(){
+		try {
+			_mapBounds = _mMap.getProjection().getVisibleRegion().latLngBounds;
+		} catch (IllegalStateException e) {
+			// fragment layout with map not yet initialized
+			final View mapView = getSupportFragmentManager().findFragmentById(R.id.map).getView();
+
+			if (mapView.getViewTreeObserver().isAlive()) {
+				mapView.getViewTreeObserver().addOnGlobalLayoutListener(
+						new OnGlobalLayoutListener() {
+							@SuppressWarnings("deprecation")
+							@SuppressLint("NewApi")
+							// We check which build version we are using.
+							@Override
+							public void onGlobalLayout() {
+								if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) { //below API Level 16 ?
+									mapView.getViewTreeObserver()
+									.removeGlobalOnLayoutListener(this);
+								} else {
+									mapView.getViewTreeObserver()
+									.removeOnGlobalLayoutListener(this);
+								}
+								_mapBounds = _mMap.getProjection().getVisibleRegion().latLngBounds;
+							}
+						});
+			}
+		}
+		return _mapBounds;
 	}
 
 
@@ -703,25 +764,46 @@ public class ActivityMap extends ActivityMenuBase {
 		_slidingUpPanel.hidePanel();
 	}
 
-
+	private void callForLocationUpdates(int gpsInterval, float gpsDistanceChange, int networkInterval, float networkDistanceChange){
+		if(_locUpdateService != null){
+			_locUpdateService.stopLocationUpdates();
+			_locUpdateService.updateLocation(gpsInterval, gpsDistanceChange, networkInterval, networkDistanceChange );
+		}
+	}
+	
 	/**
 	 * Manage connection to LocationUpdateService
 	 */
 	private ServiceConnection _mConnection = new ServiceConnection() {
 
 		public void onServiceConnected(ComponentName className, IBinder binder) {
+			//boolean to see whether the location is pulled for the first time after service reconnect or not
+			_firstLocationPull = true;
 			LocationUpdateService.ServiceBinder b = (LocationUpdateService.ServiceBinder) binder;
 			_locUpdateService = b.getLocService();
-			Toast.makeText(ActivityMap.this, "LocService Connected", Toast.LENGTH_SHORT).show();
+			//Toast.makeText(ActivityMap.this, "LocService Connected", Toast.LENGTH_SHORT).show();
 			Location loc = _locUpdateService.getCurrentUserLocation();
-			if(!_hasUserLocation || loc == null || _locUpdateService.isBetterLocation(loc, _userLocation)) {
-				_locUpdateService.updateLocation();//is this called multiple times??
+			Log.d("##### userLocation", ""+_userLat + ", "+ _userLng);
+			//beim ersten mal öfter location updates fordern
+			if(_locUpdateService.isProviderEnabled(LocationManager.GPS_PROVIDER) || _locUpdateService.isProviderEnabled(LocationManager.NETWORK_PROVIDER)){
+				loc = _locUpdateService.getLastKnownLocation();
+			}
+			if(_userLocation.getLatitude() == AppController.getInstance().getStandardLocation().getLatitude() && _userLocation.getLongitude() == AppController.getInstance().getStandardLocation().getLongitude() ) {
+				callForLocationUpdates(60000, 3.0f, 5000, 1.0f );
+				Log.d("******onServiceConnected", "updateLocation call, HIGH update interval");
+				_instance._isLowUpdateInterval = false;
+			}else{
+				Log.d("******onServiceConnected", "updateLocation call, LOW update interval");
+				//request new location updates less frequently
+				callForLocationUpdates(120000, 8.0f, 60000, 5.0f );
+				_instance._isLowUpdateInterval = true;
 			}
 		}
 
 		public void onServiceDisconnected(ComponentName className) {
+			_locUpdateService.stopLocationUpdates();
 			_locUpdateService = null;
-			Toast.makeText(ActivityMap.this, "LocService Disconnected", Toast.LENGTH_SHORT).show();
+			//Toast.makeText(ActivityMap.this, "LocService Disconnected", Toast.LENGTH_SHORT).show();
 		}
 	};
 
