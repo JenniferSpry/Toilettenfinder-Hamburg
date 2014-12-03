@@ -11,5 +11,8 @@
     <color name="bfhh_blue">#000033</color>
     
     <color name="text">#ffffff</color>
+    <color name="lime_light">#deffab</color>
+    <color name="lime_superlight">#eeffd5</color>
+    <color name="lime_dark_button">#567f17</color>
     
 </resources>

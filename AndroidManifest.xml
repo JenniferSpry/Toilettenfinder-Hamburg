@@ -80,7 +80,7 @@ s        <!-- Location Service -->
         <!-- Main Activity -->
         <activity
             android:name="de.bfhh.stilleoertchenhamburg.activites.ActivityMap"
-            android:windowSoftInputMode="stateUnchanged"
+            android:windowSoftInputMode="stateHidden" 
             android:label="@string/menu_map" >
         </activity>
         

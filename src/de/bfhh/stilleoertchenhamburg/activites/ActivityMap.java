@@ -35,7 +35,6 @@ import android.view.Display;
 import android.view.View;
 import android.view.ViewTreeObserver.OnGlobalLayoutListener;
 import android.widget.ImageButton;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.annotation.SuppressLint;
@@ -136,7 +135,7 @@ public class ActivityMap extends ActivityMenuBase {
 		Log.d(TAG, "onCreate");
 		setContentView(R.layout.activity_main);
 		
-		//Display size
+		//Display size in pixel
 		Display display = getWindowManager().getDefaultDisplay();
 		Point size = new Point();
 		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) {
@@ -163,6 +162,7 @@ public class ActivityMap extends ActivityMenuBase {
 		_slidingUpPanel = (SlidingUpPanelLayout) findViewById(R.id.sliding_layout);
 		_slidingUpPanel.setAnchorPoint(0.5f);
 		_slidingUpPanel.setOverlayed(true);
+		_slidingUpPanel.setPanelHeight((int)(_displayHeight/4.5));
 
 		//LocUpdateReceiver
 		_locUpdReceiver = new LocationUpdateReceiver(new Handler());
@@ -223,7 +223,7 @@ public class ActivityMap extends ActivityMenuBase {
 
 		//hide the sliding up Panel
 		_slidingUpPanel.hidePanel();
-	}// end onStart
+	}
 
 
 	/**
@@ -305,13 +305,15 @@ public class ActivityMap extends ActivityMenuBase {
 						Log.d("POI NAME", "" + poi.getName());
 						_clickedPOIId = poi.getId();
 						Log.d("marker id", "" + _clickedPOIId);
+						//TODO: stop keyboard from popping up all the time
+						
 						updateSliderContent(poi);
 						return true;
 					}else{
 						if(_slidingUpPanel.isShown()){//hide panel if it's showing
 							_slidingUpPanel.hidePanel();
 						}
-						return false;
+						return true;
 					}
 				}
 			});
@@ -424,7 +426,7 @@ public class ActivityMap extends ActivityMenuBase {
 				}    	
 			});
 		}
-	}
+	}//end onResume
 	
 
 	/**
@@ -518,7 +520,7 @@ public class ActivityMap extends ActivityMenuBase {
 				}
 			}        
 		}
-	}
+	}//end LocationUpdateReceiver
 
 
 	private void moveToLocation(final CameraUpdate cu){
@@ -558,7 +560,7 @@ public class ActivityMap extends ActivityMenuBase {
 			}
 		}
 		_mapBounds = _mMap.getProjection().getVisibleRegion().latLngBounds;
-	}
+	}//end moveToLocation
 	
 	private LatLngBounds getMapBounds(){
 		try {
@@ -588,7 +590,7 @@ public class ActivityMap extends ActivityMenuBase {
 			}
 		}
 		return _mapBounds;
-	}
+	}//end getMapBounds
 
 
 	/**
@@ -866,4 +868,5 @@ public class ActivityMap extends ActivityMenuBase {
 		alert.show();
 		//TODO: check if user has turned location services on (onActivityResult)
 	}
+
 }
