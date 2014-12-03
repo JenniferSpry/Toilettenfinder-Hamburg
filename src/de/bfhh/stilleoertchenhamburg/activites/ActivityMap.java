@@ -296,16 +296,23 @@ public class ActivityMap extends ActivityMenuBase {
 					_mMap.animateCamera(CameraUpdateFactory.newLatLng(center));
 					_mapBounds = _mMap.getProjection().getVisibleRegion().latLngBounds;
 					_clickedMarker = marker;
-					POI poi = POIHelper.getPoiByIdReference(_markerPOIIdMap, _allPOIList, marker.getId());
-					Log.d("POI NAME", "" + poi.getName());
-					_clickedPOIId = poi.getId();
-					Log.d("marker id", "" + _clickedPOIId);
-					updateSliderContent(poi);
-					
-					//show panel
-					_slidingUpPanel.showPanel();
-					
-					return true;
+
+					if(_markerPOIIdMap.get(marker.getId()) != null){//is this markers id in the list (if not it is user marker)
+						//show panel
+						_slidingUpPanel.showPanel();
+												
+						POI poi = POIHelper.getPoiByIdReference(_markerPOIIdMap, _allPOIList, marker.getId());
+						Log.d("POI NAME", "" + poi.getName());
+						_clickedPOIId = poi.getId();
+						Log.d("marker id", "" + _clickedPOIId);
+						updateSliderContent(poi);
+						return true;
+					}else{
+						if(_slidingUpPanel.isShown()){//hide panel if it's showing
+							_slidingUpPanel.hidePanel();
+						}
+						return false;
+					}
 				}
 			});
 
@@ -482,6 +489,8 @@ public class ActivityMap extends ActivityMenuBase {
 								_instance._isLowUpdateInterval = true;
 							}
 						}else{//distance > 10 meters (because user moved or because old loc is standard loc)
+							Log.d("======= distance to old loc", ""+_instance._userLocation.distanceTo(oldLocation));
+							
 							Location s = AppController.getInstance().getStandardLocation();
 							//oldLocation == standardLocation -> we have jumped quite far
 							if(oldLocation.getLatitude() == s.getLatitude() && oldLocation.getLongitude() == s.getLongitude()){
@@ -490,15 +499,20 @@ public class ActivityMap extends ActivityMenuBase {
 								_instance._isLowUpdateInterval = true;
 								Toast.makeText(context, "Position wird bestimmt...",
 										Toast.LENGTH_LONG).show();
+								CameraUpdate cu = _instance.getClosestPOIBounds(10);
+								_mMap.animateCamera(cu);
+								_instance.updatePOIMarkers();
+								_instance.setPeeerOnMap();
 							}else if(_instance._userLocation.distanceTo(oldLocation) > 84.0 && _instance._isLowUpdateInterval){
 								Log.d("+++++++++ ", "higher update interval frequency");
 								_instance.callForLocationUpdates(60000, 3.0f, 5000, 1.0f );
 								_instance._isLowUpdateInterval = false;
+								CameraUpdate cu = _instance.getClosestPOIBounds(10);
+								_mMap.animateCamera(cu);
+								_instance.updatePOIMarkers();
+								_instance.setPeeerOnMap();
 							}
-							CameraUpdate cu = _instance.getClosestPOIBounds(10);
-							_mMap.animateCamera(cu);
-							_instance.updatePOIMarkers();
-							_instance.setPeeerOnMap();
+							
 						}
 					}    
 				}
