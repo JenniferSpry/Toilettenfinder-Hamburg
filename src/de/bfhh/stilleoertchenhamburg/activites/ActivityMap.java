@@ -169,7 +169,8 @@ public class ActivityMap extends ActivityMenuBase {
 		_slidingUpPanel = (SlidingUpPanelLayout) findViewById(R.id.sliding_layout);
 		_slidingUpPanel.setAnchorPoint(0.5f);
 		_slidingUpPanel.setOverlayed(true);
-		_slidingUpPanel.setPanelHeight((int)(_displayHeight/4.5));
+		int pxHeight = (int) Math.ceil(110 * _logicalDensity);
+		_slidingUpPanel.setPanelHeight(pxHeight);
 
 		//LocUpdateReceiver
 		_locUpdReceiver = new LocationUpdateReceiver(new Handler());
@@ -309,22 +310,16 @@ public class ActivityMap extends ActivityMenuBase {
 					if(_markerPOIIdMap.get(marker.getId()) != null){//is this markers id in the list (if not it is user marker)
 												
 						POI poi = POIHelper.getPoiByIdReference(_markerPOIIdMap, _allPOIList, marker.getId());
+						
 						_oldClickedPOIId = _clickedPOIId;
 						_clickedPOIId = poi.getId();
 						//TODO: stop keyboard from popping up all the time
+
+						updateSliderContent(poi);
 						
-					
-							//_slidingUpPanel.hidePanel();
-							updateSliderContent(poi);
-							//anstatt collapsePanel setze panel auf derzeitige größe plus 1
+						_slidingUpPanel.showPanel();
 							
-							//show panel
-							_slidingUpPanel.showPanel();
-							
-							_slidingUpPanel.collapsePanel();
-							_slidingUpPanel.expandPanel(0.2f);
-						
-		
+	
 						return true;
 					}else{
 						if(_slidingUpPanel.isShown()){//hide panel if it's showing
@@ -405,12 +400,7 @@ public class ActivityMap extends ActivityMenuBase {
 					_zoomInButton.setVisibility(View.VISIBLE);
 					_zoomOutButton.setVisibility(View.VISIBLE);
 					
-					//set panel height
-					//return height of relative layout in header of panel
-					Log.d("#######slidinguppanel header height", "= "+getSliderHeaderContentHeight());
-					_headerHeight = getSliderHeaderContentHeight();
-					_slidingUpPanel.setPanelHeight(_headerHeight);
-					//_slidingUpPanel.collapsePanel();
+					
 				}
 
 				@Override

@@ -7,8 +7,8 @@
 	    android:layout_width="match_parent"
 	    android:layout_height="match_parent"
 	    android:gravity="bottom"
-	    sothree:panelHeight="100dp"
-	    app:collapsedHeight="0dp"
+	    sothree:panelHeight="110dp"
+	    app:collapsedHeight="110dp"
 	    app:shadowHeight="4dp"
 	    app:fadeColor="#ffffff"
 	    app:overlay="true"
@@ -72,10 +72,10 @@
        android:orientation="vertical"
        android:background="@color/white">  
        
-	    <RelativeLayout
+	     <RelativeLayout
 	       android:id="@+id/header_view"
 	       android:layout_width="match_parent"
-	       android:layout_height="wrap_content"
+	       android:layout_height="110dp"
 	       android:gravity="top"
 	       android:padding="10dp"
 	       android:background="@color/lime_light"
@@ -84,9 +84,10 @@
 		    <!-- Name -->
 			<TextView
 			    android:id="@+id/name_detail"
-			    android:layout_width="wrap_content"
-			    android:minWidth="200dp"
+			    android:layout_width="0dp"
 		        android:layout_height="wrap_content"
+		        android:layout_alignParentLeft="true"
+		        android:layout_toLeftOf="@+id/distance_detail"
 		        android:textSize="@dimen/detail_text"
 		        android:textStyle="bold"
 		        android:textColor="@color/lime_superdark_text" />
@@ -96,7 +97,8 @@
 			    android:id="@+id/distance_detail"
 				android:layout_width="70dp"
 		        android:layout_height="wrap_content"
-		        android:layout_toRightOf="@+id/name_detail"
+		        android:layout_alignParentRight="true"
+		        android:layout_marginLeft="10sp"
 			    android:gravity="right"
 			    android:textSize="@dimen/detail_text"
 			    android:textColor="@color/lime_superdark_text"/>
