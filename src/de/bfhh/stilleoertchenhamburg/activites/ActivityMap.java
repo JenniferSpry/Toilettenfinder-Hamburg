@@ -33,8 +33,11 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Display;
 import android.view.View;
+import android.view.View.MeasureSpec;
+import android.view.ViewGroup;
 import android.view.ViewTreeObserver.OnGlobalLayoutListener;
 import android.widget.ImageButton;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.annotation.SuppressLint;
@@ -122,6 +125,10 @@ public class ActivityMap extends ActivityMenuBase {
 	public boolean _isLowUpdateInterval;
 
 	protected boolean _firstLocationPull;
+
+	protected int _oldClickedPOIId;
+
+	protected int _headerHeight;
 
 	/**
 	 * Initiate variables
@@ -284,6 +291,8 @@ public class ActivityMap extends ActivityMenuBase {
 					_mapBounds = getMapBounds();
 					LatLng center = getMapCenter(_mapBounds);
 					_mMap.animateCamera(CameraUpdateFactory.newLatLng(center));
+					
+					_oldClickedPOIId = 0;
 				}
 			});
 			
@@ -298,16 +307,24 @@ public class ActivityMap extends ActivityMenuBase {
 					_clickedMarker = marker;
 
 					if(_markerPOIIdMap.get(marker.getId()) != null){//is this markers id in the list (if not it is user marker)
-						//show panel
-						_slidingUpPanel.showPanel();
 												
 						POI poi = POIHelper.getPoiByIdReference(_markerPOIIdMap, _allPOIList, marker.getId());
-						Log.d("POI NAME", "" + poi.getName());
+						_oldClickedPOIId = _clickedPOIId;
 						_clickedPOIId = poi.getId();
-						Log.d("marker id", "" + _clickedPOIId);
 						//TODO: stop keyboard from popping up all the time
 						
-						updateSliderContent(poi);
+					
+							//_slidingUpPanel.hidePanel();
+							updateSliderContent(poi);
+							//anstatt collapsePanel setze panel auf derzeitige grˆﬂe plus 1
+							
+							//show panel
+							_slidingUpPanel.showPanel();
+							
+							_slidingUpPanel.collapsePanel();
+							_slidingUpPanel.expandPanel(0.2f);
+						
+		
 						return true;
 					}else{
 						if(_slidingUpPanel.isShown()){//hide panel if it's showing
@@ -387,6 +404,13 @@ public class ActivityMap extends ActivityMenuBase {
 					_myLocationButton.setVisibility(View.VISIBLE);
 					_zoomInButton.setVisibility(View.VISIBLE);
 					_zoomOutButton.setVisibility(View.VISIBLE);
+					
+					//set panel height
+					//return height of relative layout in header of panel
+					Log.d("#######slidinguppanel header height", "= "+getSliderHeaderContentHeight());
+					_headerHeight = getSliderHeaderContentHeight();
+					_slidingUpPanel.setPanelHeight(_headerHeight);
+					//_slidingUpPanel.collapsePanel();
 				}
 
 				@Override
@@ -414,6 +438,7 @@ public class ActivityMap extends ActivityMenuBase {
 					_myLocationButton.setVisibility(View.INVISIBLE);
 					_zoomInButton.setVisibility(View.INVISIBLE);
 					_zoomOutButton.setVisibility(View.INVISIBLE);
+					Log.d("HELL÷÷÷÷÷÷", "");
 				}
 
 				@Override
@@ -670,7 +695,16 @@ public class ActivityMap extends ActivityMenuBase {
 		}
 	}
 	
-
+	/** ----- SLIDING PANEL ----**/
+	
+	//update height of sliding panel depending on content height
+	private int getSliderHeaderContentHeight(){
+		RelativeLayout headerView = (RelativeLayout)findViewById(R.id.header_view);
+		int height =  headerView.getMeasuredHeight();		
+		return height;
+	}
+	
+	//Update info displayed in sliding panel
 	protected void updateSliderContent(POI poi) {
 		if (poi != null){
 			txtName = (TextView) findViewById(R.id.name_detail);
@@ -682,10 +716,13 @@ public class ActivityMap extends ActivityMenuBase {
 	        txtDistance.setText(distance);
 	        
 	        txtAddress = (TextView) findViewById(R.id.address_detail);
-	        txtAddress.setText(poi.getAddress());
+	        //trim end of line characters off address text
+	        String address = poi.getAddress().trim();
+	        txtAddress.setText(address);
 	        
 	        txtDescription = (TextView) findViewById(R.id.description_detail);
-	        txtDescription.setText(poi.getDescription());
+	        String descr = poi.getDescription().trim();
+	        txtDescription.setText(descr);
 	                
 	        txtWebsite = (TextView) findViewById(R.id.url_detail);
 	        txtWebsite.setText(poi.getWebsite());
@@ -695,6 +732,8 @@ public class ActivityMap extends ActivityMenuBase {
 	        } else {
 	        	txtWebsite.setVisibility(View.GONE);
 	        }
+	        
+			
 		}
 	}
 

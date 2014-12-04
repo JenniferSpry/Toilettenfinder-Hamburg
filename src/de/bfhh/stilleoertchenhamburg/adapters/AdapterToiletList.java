@@ -7,6 +7,7 @@ import de.bfhh.stilleoertchenhamburg.models.POI;
 import android.app.Activity;
 import android.content.Context;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -55,7 +56,9 @@ public class AdapterToiletList extends BaseAdapter {
         txtName.setText(poi.getName());
         
         TextView txtDescription = (TextView) convertView.findViewById(R.id.toilet_description);
-        txtDescription.setText(poi.getDescription());
+        //trim end of line characters off description text
+        String descr = poi.getDescription().trim();
+        txtDescription.setText(descr);
                 
         TextView txtAddress = (TextView) convertView.findViewById(R.id.toilet_address);
         txtAddress.setText(poi.getAddress());      
@@ -65,6 +68,7 @@ public class AdapterToiletList extends BaseAdapter {
         String distance = String.valueOf(d) + " m";  
         TextView txtDistance = (TextView) convertView.findViewById(R.id.toilet_distance);
         txtDistance.setText(distance);
+        txtDistance.setGravity(Gravity.CENTER);
          
         if (poi.isWheelchairAccessible()){
         	ImageView imagePin = (ImageView) convertView.findViewById(R.id.icon);

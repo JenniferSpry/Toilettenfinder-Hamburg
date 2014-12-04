@@ -75,7 +75,7 @@
 	    <RelativeLayout
 	       android:id="@+id/header_view"
 	       android:layout_width="match_parent"
-	       android:layout_height="120dp"
+	       android:layout_height="wrap_content"
 	       android:gravity="top"
 	       android:padding="10dp"
 	       android:background="@color/lime_light"
@@ -84,25 +84,22 @@
 		    <!-- Name -->
 			<TextView
 			    android:id="@+id/name_detail"
-			    android:layout_width="0dp"
+			    android:layout_width="wrap_content"
+			    android:minWidth="200dp"
 		        android:layout_height="wrap_content"
-		        android:layout_alignParentTop="true"
-			    android:layout_alignParentLeft="true"
-			    android:layout_toLeftOf="@+id/distance_detail"
 		        android:textSize="@dimen/detail_text"
 		        android:textStyle="bold"
-		        android:textColor="@color/black" />
+		        android:textColor="@color/lime_superdark_text" />
 		
 			<!-- Distance -->
 			<TextView
 			    android:id="@+id/distance_detail"
 				android:layout_width="70dp"
 		        android:layout_height="wrap_content"
-		        android:layout_alignParentTop="true"
-			    android:layout_alignParentRight="true"
+		        android:layout_toRightOf="@+id/name_detail"
 			    android:gravity="right"
 			    android:textSize="@dimen/detail_text"
-			    android:textColor="@color/black"/>
+			    android:textColor="@color/lime_superdark_text"/>
 		
 		<!-- Address -->
 			<TextView
@@ -111,8 +108,7 @@
 				android:layout_height="wrap_content"
 				android:layout_marginTop="2dp"
 				android:layout_below="@id/name_detail"
-				android:layout_alignParentBottom="true"
-				android:textColor="@color/black"
+				android:textColor="@color/lime_superdark_text"
 				android:textSize="@dimen/detail_text" />		
 		
 		</RelativeLayout>
@@ -137,8 +133,7 @@
 				    android:id="@+id/description_detail"
 					android:layout_width="wrap_content"
 					android:layout_height="wrap_content"
-					android:paddingTop="5sp"
-					android:textColor="@color/black"
+					android:textColor="@color/lime_superdark_text"
 					android:textStyle="italic"
 				    android:textSize="@dimen/detail_text" />
 				
@@ -160,7 +155,7 @@
 				    android:layout_below="@id/url_detail"
 				    android:layout_marginBottom="10dp"
 				    android:layout_marginTop="10dp"
-				    android:background="@color/black"/>
+				    android:background="@color/lime_superdark_text"/>
 				
 				<!-- Route -->
 				<TextView
@@ -170,7 +165,7 @@
 					android:layout_below="@id/separator_2"
 					android:paddingBottom="10sp"
 					android:text="Route finden:"
-					android:textColor="@color/black"
+					android:textColor="@color/lime_superdark_text"
 					android:textStyle="bold"
 				    android:textSize="@dimen/detail_text" />
 				
@@ -208,7 +203,7 @@
 				    android:layout_width="fill_parent"
 				    android:layout_height="1dp"
 				    android:layout_below="@id/route_btns"
-				    android:background="@color/black"/>
+				    android:background="@color/lime_superdark_text"/>
 				
 				<!-- Comment on POI-->
 			    <TextView
@@ -219,7 +214,7 @@
 			        android:paddingBottom="5sp"
 			        android:paddingTop="15sp"
 			        android:text="@string/toilet_comment"
-			        android:textColor="@color/black"
+			        android:textColor="@color/lime_superdark_text"
 			        android:textSize="@dimen/detail_text"
 			        android:textStyle="bold" />
 			    
@@ -231,7 +226,7 @@
 			        android:layout_below="@id/toilet_comment"
 			        android:paddingBottom="5sp"
 			        android:text="@string/toilet_mail_field_description"
-			        android:textColor="@color/black"
+			        android:textColor="@color/lime_superdark_text"
 			        android:textStyle="italic"
 			        android:textSize="@dimen/detail_text_small" />
 			    
@@ -243,7 +238,7 @@
 			        android:layout_below="@id/email_field_comment"
 			        android:ems="10"
 			        android:hint="E-Mail*"
-			        android:textColorHint="@color/dark_grey"
+			        android:textColorHint="@color/lime_grey_medium"
 			        android:inputType="textEmailAddress" />
 			    
 			    <!-- Name Field -->
@@ -254,7 +249,7 @@
 			        android:layout_below="@id/email_field"
 			        android:ems="10"
 			        android:hint="Name*"
-			        android:textColorHint="@color/dark_grey"
+			        android:textColorHint="@color/lime_grey_medium"
 			        android:inputType="textEmailAddress" />
    
 			    
@@ -267,7 +262,7 @@
 			        android:layout_weight="0.91"
 			        android:ems="5"
 			        android:hint="Kommentar"
-			        android:textColorHint="@color/dark_grey"
+			        android:textColorHint="@color/lime_grey_medium"
 			        android:inputType="textMultiLine" >
 			    </EditText>
 						    
@@ -281,6 +276,7 @@
 			        android:minHeight="60dp"
 			        android:layout_below="@id/comment_field"
 			        android:layout_weight="1"
+			        android:layout_marginTop="15sp"
 			        android:gravity="center"
 			        android:text="@string/toilet_button_send"
 			        android:background="@color/lime_dark_button"
