@@ -32,6 +32,7 @@ import android.text.method.LinkMovementMethod;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Display;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.MeasureSpec;
 import android.view.ViewGroup;
@@ -167,7 +168,7 @@ public class ActivityMap extends ActivityMenuBase {
 				
 		//holds the SlidingUpLayout which is wrapper of our layout
 		_slidingUpPanel = (SlidingUpPanelLayout) findViewById(R.id.sliding_layout);
-		_slidingUpPanel.setAnchorPoint(0.5f);
+		_slidingUpPanel.setAnchorPoint(0.45f);
 		_slidingUpPanel.setOverlayed(true);
 		int pxHeight = (int) Math.ceil(110 * _logicalDensity);
 		_slidingUpPanel.setPanelHeight(pxHeight);
@@ -367,15 +368,15 @@ public class ActivityMap extends ActivityMenuBase {
 					 * (at 0.75f), expand the panel to that anchorPoint (for some reason
 					 * this doesn't work by only setting slidingUpPanel.setAnchorPoint(0.75f);)
 					 */
-					if( Math.abs(slideOffset - 0.5f) < 0.02f ) {
-						_slidingUpPanel.expandPanel(0.5f);
+					if( Math.abs(slideOffset - 0.45f) < 0.02f ) {
+						_slidingUpPanel.expandPanel(0.45f);
 					}	
 				}
 
 				@Override
 				public void onPanelCollapsed(View panel) {
 					//get height of panel in pixels (68dp)
-	                int px = (int) Math.ceil(68 * _logicalDensity);
+	                int px = (int) Math.ceil(110 * _logicalDensity);
 	                //set padding to map so that map controls are moved
 					_mMap.setPadding(5, 5, 5, px);
 					
@@ -428,7 +429,6 @@ public class ActivityMap extends ActivityMenuBase {
 					_myLocationButton.setVisibility(View.INVISIBLE);
 					_zoomInButton.setVisibility(View.INVISIBLE);
 					_zoomOutButton.setVisibility(View.INVISIBLE);
-					Log.d("HELLÖÖÖÖÖÖ", "");
 				}
 
 				@Override
@@ -897,5 +897,19 @@ public class ActivityMap extends ActivityMenuBase {
 		alert.show();
 		//TODO: check if user has turned location services on (onActivityResult)
 	}
+	
+	//overwrite back key behaviour
+	@Override
+	public void onBackPressed() {		
+	   Log.d("CDA", "onBackPressed Called");
+	   Log.d("ispnaleHidden", ""+_slidingUpPanel.isPanelHidden());
+	   if(_slidingUpPanel.isPanelHidden()){
+		   ActivityMap.super.onBackPressed();
+	   }else{
+		   Log.d("slider ", "is shown");
+		   _slidingUpPanel.hidePanel();
+	   }
+	}
+
 
 }
