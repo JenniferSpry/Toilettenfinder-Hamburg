@@ -41,6 +41,15 @@ public class POIHelper {
 		return poiList;
 	}
 	
+	public static POI setDistanceSinglePOIToUser(POI poi, double userLat, double userLng){
+		Location loc = new Location("");
+		loc.setLatitude(userLat);
+		loc.setLongitude(userLng);
+		//set distance to current user position for every POI in the List
+		poi.setDistanceToUser(loc);	
+		return poi;
+	}
+	
 	//returns the closest ten POI to the user's current location
 	public static ArrayList<POI> getClosestPOI(ArrayList<POI> poiList, int amount){	
 		ArrayList<POI> closestPOI = new ArrayList<POI>();

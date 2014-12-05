@@ -9,6 +9,7 @@ public class TagNames {
 	
 	// Intent Actions
 	public static final String ACTION_GET_POIS = "com.bfhh.stilleoertchenhamburg.getPois";
+	public static final String ACTION_SHOW_SLIDER = "com.bfhh.stilleoertchenhamburg.showSlider";
 	
 	// Intent Extras
 	public static final String EXTRA_LAT = "com.bfhh.stilleoertchenhamburg.latitude";

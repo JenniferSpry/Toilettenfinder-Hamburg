@@ -35,8 +35,10 @@ import android.view.Display;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.MeasureSpec;
+import android.view.View.OnFocusChangeListener;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver.OnGlobalLayoutListener;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -87,7 +89,11 @@ public class ActivityMap extends ActivityMenuBase {
     TextView txtAddress;   
     TextView txtDescription;            
     TextView txtWebsite;
-	
+    
+    EditText editName;
+    EditText editEmail;
+    EditText editComment;
+    
 	private static Marker _personInNeedOfToilette; //person's marker
 	private static HashMap<Integer, Marker> _markerMap;
 	private static HashMap<String, Integer> _markerPOIIdMap; // marker ids mapped to poi ids
@@ -131,6 +137,12 @@ public class ActivityMap extends ActivityMenuBase {
 
 	protected int _headerHeight;
 
+	private ArrayList<EditText> _editTexts;
+
+	private RelativeLayout _sliderHeader;
+
+	private POI _clickedPoi;
+
 	/**
 	 * Initiate variables
 	 * fetch bundle contents
@@ -170,14 +182,23 @@ public class ActivityMap extends ActivityMenuBase {
 		_slidingUpPanel = (SlidingUpPanelLayout) findViewById(R.id.sliding_layout);
 		_slidingUpPanel.setAnchorPoint(0.45f);
 		_slidingUpPanel.setOverlayed(true);
-		int pxHeight = (int) Math.ceil(110 * _logicalDensity);
-		_slidingUpPanel.setPanelHeight(pxHeight);
+		_slidingUpPanel.setPanelHeight((int) Math.ceil(110 * _logicalDensity));//dp to px
+		_slidingUpPanel.hidePanel();
+		
+		//text input fields in slider
+		_editTexts = new ArrayList<EditText>();
+		editName = (EditText) findViewById(R.id.name_field);
+		editEmail = (EditText) findViewById(R.id.email_field);
+		editComment = (EditText) findViewById(R.id.comment_field);
+		_editTexts.add(editName);
+		_editTexts.add(editEmail);
+		_editTexts.add(editComment);
 
-		//LocUpdateReceiver
+
+		//LocationUpdateReceiver
 		_locUpdReceiver = new LocationUpdateReceiver(new Handler());
 		_locUpdReceiver.setMainActivityHandler(this);
-		//
-		_instance._isLowUpdateInterval = false;
+		_instance._isLowUpdateInterval = false; 
 
 		//list of POI markers that are currently visible on the map
 		_markerMap = new HashMap<Integer, Marker>();
@@ -188,7 +209,7 @@ public class ActivityMap extends ActivityMenuBase {
 		if(savedInstanceState != null){ //activity was destroyed and recreated
 			bundle = savedInstanceState;
 			Log.d(TAG, "onCreate from savedInstanceState");
-		} else { //activity was started from scratch
+		} else { 						//activity was started from scratch
 			Log.d(TAG, "onCreate from SplashScreen");
 			Intent i = getIntent();
 			bundle = i.getExtras();
@@ -213,6 +234,7 @@ public class ActivityMap extends ActivityMenuBase {
 			//get clicked marker if it's set
 			_clickedPOIId = bundle.getInt(TagNames.EXTRA_POI_ID);
 			updateSliderContent(POIHelper.getPoiById(_allPOIList, _clickedPOIId));
+			
 		}   
 
 		//set up POIController with list of toilets received from POIUpdateService
@@ -231,10 +253,32 @@ public class ActivityMap extends ActivityMenuBase {
 		Log.d(TAG, "onStart");
 
 		//hide the sliding up Panel
-		_slidingUpPanel.hidePanel();
+		//_slidingUpPanel.hidePanel();
+	
 	}
 
-
+	/** Override onNewIntent() so that intents sent from other activities
+	 *  are processed when ActivityMap is already running, but in background.
+	 */
+	@Override
+	protected void onNewIntent(Intent intent) {
+	    super.onNewIntent(intent);
+	    setIntent(intent);
+	    
+	    //intent from FragmentToiletList on list item click
+		String action = intent.getAction();
+		Bundle bundle = intent.getExtras();
+		Log.d("onNewIntent Intent received? ", "intent: "+ intent);
+		Log.d("action ",  ""+ action);
+		
+		if(action != null && action.equals(TagNames.ACTION_SHOW_SLIDER)){
+			Log.d("###**** intent from FragmentToiletList", "receeeeived");
+			//center map on marker, show slider
+			_clickedPoi = (POI) bundle.get(TagNames.EXTRA_POI);
+			_clickedPOIId = _clickedPoi.getId();
+		}
+	}
+	
 	/**
 	 * Check google play store availability before anything else
 	 * on first opening go to user location and draw POI markers
@@ -247,7 +291,8 @@ public class ActivityMap extends ActivityMenuBase {
 		if (checkPlayServices()){
 
 			setUpMapIfNeeded(); //initialize map if it isn't already
-			
+
+			//_slidingUpPanel.hidePanel();
 			//set padding to map
 			_mMap.setPadding(5, 5, 5, 5);
 			
@@ -319,8 +364,7 @@ public class ActivityMap extends ActivityMenuBase {
 						updateSliderContent(poi);
 						
 						_slidingUpPanel.showPanel();
-							
-	
+								
 						return true;
 					}else{
 						if(_slidingUpPanel.isShown()){//hide panel if it's showing
@@ -439,7 +483,35 @@ public class ActivityMap extends ActivityMenuBase {
 						_mMap.setPadding(5, 5, 5, 5);//reverse padding to default
 					}
 				}    	
-			});
+			});			
+			
+			if(_clickedPoi != null){				
+				if (_mMap != null){
+					//set distance to user, otherwise slider will show 0 m
+					if(_userLat != 0.0d && _userLng != 0.0d){
+						_clickedPoi = POIHelper.setDistanceSinglePOIToUser(_clickedPoi, _userLat, _userLng);
+					}
+					//center camera on marker
+					_mMap.animateCamera(CameraUpdateFactory.newLatLng(_clickedPoi.getLatLng()));
+					updateSliderContent(_clickedPoi);
+					Marker marker = null;
+					//marker not on map (not one of the closest ten markers?)
+					if(!_markerMap.containsKey(_clickedPoi.getId())){
+						Log.d("3454564653w4r onResume _clickedPOI", "adding marker to map and showing panel");
+						//add marker to mMap and to lists
+						marker = _mMap.addMarker(POIHelper.getMarkerOptionsForPOI(_clickedPoi));	
+						_markerMap.put(_clickedPoi.getId(), marker);
+						_markerPOIIdMap.put(marker.getId(), _clickedPoi.getId());
+					}else{ //marker already set
+						Log.d("{{{{{{7{ onResume _clickedPOI", "marker already on map");
+						marker = _markerMap.get(_clickedPoi.getId());
+						_clickedMarker = marker;
+					}
+					
+					_slidingUpPanel.showPanel();
+				}
+			}	
+				
 		}
 	}//end onResume
 	
@@ -692,7 +764,7 @@ public class ActivityMap extends ActivityMenuBase {
 		RelativeLayout headerView = (RelativeLayout)findViewById(R.id.header_view);
 		int height =  headerView.getMeasuredHeight();		
 		return height;
-	}
+	}		
 	
 	//Update info displayed in sliding panel
 	protected void updateSliderContent(POI poi) {
@@ -722,8 +794,6 @@ public class ActivityMap extends ActivityMenuBase {
 	        } else {
 	        	txtWebsite.setVisibility(View.GONE);
 	        }
-	        
-			
 		}
 	}
 
@@ -791,12 +861,14 @@ public class ActivityMap extends ActivityMenuBase {
 		unbindService(_mConnection);//unbind service
 		Log.d("Map onPause", "service unbound");
 
+		//_slidingUpPanel.hidePanel();
+		
 		if(_locUpdReceiverRegistered){
 			unregisterReceiver(_locUpdReceiver);
 			_locUpdReceiverRegistered = false;
 		}
 		
-		_slidingUpPanel.hidePanel();
+		
 		//fix the map at restart of application, so that user and markers can be seen again
 		//TODO: nullpointer after disabling network in running app and then trying to pause it (back  button)
 		if (_mMap != null){
