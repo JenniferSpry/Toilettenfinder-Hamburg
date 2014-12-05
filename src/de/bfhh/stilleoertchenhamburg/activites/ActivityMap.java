@@ -300,7 +300,7 @@ public class ActivityMap extends ActivityMenuBase {
 			//_clickedMarkerId check so that if a marker was clicked before screen rotation,
 			//it 
 			if(_mapBounds == null && _clickedPOIId == 0){
-				CameraUpdate cu = getClosestPOIBounds(10);
+				CameraUpdate cu = getCameraUpdateForClosestPOIBounds(10);
 				moveToLocation(cu);
 				updatePOIMarkers();
 			}
@@ -334,12 +334,10 @@ public class ActivityMap extends ActivityMenuBase {
 				public void onMapClick(LatLng arg0) {
 					_slidingUpPanel.hidePanel();
 					
-					//_mapBounds = _mMap.getProjection().getVisibleRegion().latLngBounds;
-					_mapBounds = getMapBounds();
-					LatLng center = getMapCenter(_mapBounds);
-					_mMap.animateCamera(CameraUpdateFactory.newLatLng(center));
-					
 					_oldClickedPOIId = 0;
+//					_mapBounds = getMapBounds();
+//					LatLng center = getMapCenter(_mapBounds);
+//					_mMap.animateCamera(CameraUpdateFactory.newLatLng(center));
 				}
 			});
 			
@@ -380,7 +378,7 @@ public class ActivityMap extends ActivityMenuBase {
 				public void onClick(View v) {
 					//Only move to user location if it isn't the standardLocation
 					if (_hasUserLocation){
-						CameraUpdate cu = getClosestPOIBounds(10);
+						CameraUpdate cu = getCameraUpdateForClosestPOIBounds(10);
 						moveToLocation(cu);
 						updatePOIMarkers();
 					} else {//show GPS Settings dialog
@@ -588,7 +586,7 @@ public class ActivityMap extends ActivityMenuBase {
 								_instance._isLowUpdateInterval = true;
 								Toast.makeText(context, "Position wird bestimmt...",
 										Toast.LENGTH_LONG).show();
-								CameraUpdate cu = _instance.getClosestPOIBounds(10);
+								CameraUpdate cu = _instance.getCameraUpdateForClosestPOIBounds(10);
 								_mMap.animateCamera(cu);
 								_instance.updatePOIMarkers();
 								_instance.setPeeerOnMap();
@@ -596,12 +594,11 @@ public class ActivityMap extends ActivityMenuBase {
 								Log.d("+++++++++ ", "higher update interval frequency");
 								_instance.callForLocationUpdates(60000, 3.0f, 5000, 1.0f );
 								_instance._isLowUpdateInterval = false;
-								CameraUpdate cu = _instance.getClosestPOIBounds(10);
+								CameraUpdate cu = _instance.getCameraUpdateForClosestPOIBounds(10);
 								_mMap.animateCamera(cu);
 								_instance.updatePOIMarkers();
 								_instance.setPeeerOnMap();
 							}
-							
 						}
 					}    
 				}
@@ -683,7 +680,7 @@ public class ActivityMap extends ActivityMenuBase {
 	/**
 	 * Returns the CameraUpdate around the user and the X nearest POI
 	 */
-	private CameraUpdate getClosestPOIBounds(int poiAmount){
+	private CameraUpdate getCameraUpdateForClosestPOIBounds(int poiAmount){
 		Log.d(TAG, "getClosestPOIBounds");
 		_builder = new LatLngBounds.Builder();
 

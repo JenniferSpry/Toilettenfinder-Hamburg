@@ -19,9 +19,7 @@ import android.widget.Toast;
 public class LocationUpdateService extends Service {
 	
 	private static final String TAG = LocationUpdateService.class.getSimpleName();
-	
-	private int result = Activity.RESULT_CANCELED;
-	
+		
 	private static final int TWO_MINUTES = 1000 * 60 * 2;
 		
 	private LocationManager mlocationManager;
@@ -63,22 +61,24 @@ public class LocationUpdateService extends Service {
 		}
 	}
 	
-	
+	/**
+	 * 
+	 * @param gpsInterval how often to ask for gps update in milliseconds
+	 * @param gpsDistanceChange minimum distance between location gps updates, in meters
+	 * @param networkInterval gpsInterval how often to ask for network update in milliseconds
+	 * @param networkDistanceChange minimum distance between location network updates, in meters
+	 */
 	public void updateLocation(int gpsInterval, float gpsDistanceChange, int networkInterval, float networkDistanceChange){
 		Log.d(TAG, "start polling Location");
 		// Starting point for this Service
 		mlocationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
 		locUpdListener = new LocationUpdateListener();
-		//register for location Updates every 60 / 20 seconds, minimum distance change: 3 meters
+		//register for location Updates
 		requestGPSUpdates(gpsInterval, gpsDistanceChange);
 		requestNetworkUpdates(networkInterval, networkDistanceChange);
 		//call getLastKnownLocation() from within an AsyncTask and
 		//publish results once location is received
 		new LocationUpdateTask().execute();							
-	}
-	
-	public void getTimeSinceLastUpdate(){
-		
 	}
 	
 	public void stopLocationUpdates(){
