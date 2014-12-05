@@ -485,6 +485,7 @@ public class ActivityMap extends ActivityMenuBase {
 				}    	
 			});			
 			
+			//check whether Activity was started by onclick in List, if so _clickedPoi is set (see onNewIntent())
 			if(_clickedPoi != null){				
 				if (_mMap != null){
 					//set distance to user, otherwise slider will show 0 m
@@ -507,7 +508,6 @@ public class ActivityMap extends ActivityMenuBase {
 						marker = _markerMap.get(_clickedPoi.getId());
 						_clickedMarker = marker;
 					}
-					
 					_slidingUpPanel.showPanel();
 				}
 			}	

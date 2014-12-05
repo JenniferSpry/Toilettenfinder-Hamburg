@@ -9,14 +9,20 @@ import de.bfhh.stilleoertchenhamburg.TagNames;
 import de.bfhh.stilleoertchenhamburg.models.POI;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.location.Location;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.net.NetworkInfo.State;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
 import android.widget.Toast;
@@ -45,37 +51,63 @@ public class ActivitySplashScreen extends ActivityBase {
     
     private double lat = 0.0;
 	private double lng = 0.0;
-	private int locationResult = Activity.RESULT_CANCELED;
+	private int locationResult = Activity.RESULT_CANCELED;	
+
+	private ConnectivityManager _connecMan;
+	private NetworkInfo _mobileInfo;
+	private NetworkInfo _wifiInfo;
+
+	protected boolean _networkConnected;
+
+	private boolean isNetworkReceiverRegistered;
     
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
+        //TODO:check for network connection
+        _connecMan = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        
+        IntentFilter filter = new IntentFilter();
+    	filter.addAction(android.net.ConnectivityManager.CONNECTIVITY_ACTION);
+		registerReceiver(networkConnectionReceiver, filter);
+		isNetworkReceiverRegistered = true;
+		//network state as boolean
+		_networkConnected = isConnectedToNetwork(this) || isConnectingToNetwork(this);
+		if(!_networkConnected ){
+            showAlertMessageNetworkSettings();
+		}
     }
     
+
     @Override
     protected void onResume(){
     	super.onResume();
     	if (checkPlayServices()) {
-    		// Set receiver to listen to actions from both services
+        	// Set receiver to listen to actions from both services
         	if(!isReceiverRegistered){
         		IntentFilter filter = new IntentFilter(TagNames.BROADC_LOCATION_NEW);
             	filter.addAction(TagNames.BROADC_POIS);
+            	filter.addAction(android.net.ConnectivityManager.CONNECTIVITY_ACTION);
         		registerReceiver(receiver, filter);
         		isReceiverRegistered = true;
         	}
-        	if(!locServiceBound){
-        		 //bind to service rather than starting it
-                Intent intent = new Intent(this, LocationUpdateService.class);
-                bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
-                locServiceBound = true;
-        	}
+        	//check whether connected or connecting to network
+           //if(!_networkConnected ){
+             //   showAlertMessageNetworkSettings();
+           //else{
+            	if(!locServiceBound){
+            		 //bind to service rather than starting it
+                    Intent intent = new Intent(this, LocationUpdateService.class);
+                    bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+                    locServiceBound = true;
+            	}
+            //}
     	}
     }
     
-	
-    // BroadcastReceiver for Broadcasts from LocationUpdateService and POIUpdateService
+	// BroadcastReceiver for Broadcasts from LocationUpdateService and POIUpdateService
     private BroadcastReceiver receiver = new BroadcastReceiver() {
 
         @Override
@@ -110,9 +142,83 @@ public class ActivitySplashScreen extends ActivityBase {
 		            	finish();// terminate this activity
 		            }	            
         	   }        	   
-           }
+           } 
         }
     };
+    
+    private BroadcastReceiver networkConnectionReceiver = new BroadcastReceiver() {
+
+        private Object mState;
+
+		@Override
+        public void onReceive(Context context, Intent intent) { 
+        	//Get Extras
+        	String action = intent.getAction();
+        	if(action.equals(action.equals(android.net.ConnectivityManager.CONNECTIVITY_ACTION))){
+         	   Log.d("Receiver Connectivity changed", "Connected");
+         	   boolean noConnectivity = intent.getBooleanExtra(
+                      ConnectivityManager.EXTRA_NO_CONNECTIVITY, false);
+         	   if (noConnectivity) {
+         		   mState = State.DISCONNECTED;
+         	   } else {
+         		   mState = State.CONNECTED;
+         		  _networkConnected = true;
+	         		if(!locServiceBound){
+	            		//bind to service rather than starting it
+	                    Intent i = new Intent(context, LocationUpdateService.class);
+	                    bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+	                    locServiceBound = true;
+	            	}
+         	   }
+         	   
+            }
+        }
+    };
+    
+    public boolean isConnectedToNetwork(Context ctx){
+        _mobileInfo = _connecMan.getNetworkInfo(ConnectivityManager.TYPE_MOBILE);
+        _wifiInfo = _connecMan.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+        return _mobileInfo.isConnected() || _wifiInfo.isConnected();
+    }
+    
+    private boolean isConnectingToNetwork(Context ctx) {
+    	_mobileInfo = _connecMan.getNetworkInfo(ConnectivityManager.TYPE_MOBILE);
+        _wifiInfo = _connecMan.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+        return _mobileInfo.isConnectedOrConnecting() || _wifiInfo.isConnectedOrConnecting();
+	}
+
+	DialogInterface.OnClickListener onWifiOkListener = new DialogInterface.OnClickListener() {
+		public void onClick(final DialogInterface dialog, final int id) {
+			startActivityForResult(new Intent(android.provider.Settings.ACTION_WIFI_SETTINGS), -1);	
+		}
+	};
+	
+	DialogInterface.OnClickListener onMobileNetworkOkListener = new DialogInterface.OnClickListener() {
+		public void onClick(final DialogInterface dialog, final int id) {
+			startActivityForResult(new Intent(android.provider.Settings.ACTION_DATA_ROAMING_SETTINGS), -1);
+		}
+	};
+	
+	DialogInterface.OnClickListener onGeneralNetworkOkListener = new DialogInterface.OnClickListener() {
+		public void onClick(final DialogInterface dialog, final int id) {
+			startActivityForResult(new Intent(android.provider.Settings.ACTION_WIRELESS_SETTINGS), -1);
+		}
+	};
+
+	/** show alert dialog with option to change network settings */
+	private void showAlertMessageNetworkSettings() {
+		final AlertDialog.Builder builder = new AlertDialog.Builder(ActivitySplashScreen.this);
+		builder.setMessage("Du hast keine Internetverbindung. Bitte überprüfe Deine Netzwerkeinstellungen!")
+		.setCancelable(false);
+		if(!_mobileInfo.isConnectedOrConnecting()){
+			builder.setPositiveButton("OK", onWifiOkListener);
+		}else{
+			builder.setPositiveButton("OK", onMobileNetworkOkListener);
+		}
+		final AlertDialog alert = builder.create();
+		alert.show();
+	}
+	
 
 	private void startMapActivity(double userLat, double userLng, ArrayList<POI> poiList, int result){
 		Intent i = new Intent(this, ActivityMap.class);
@@ -169,10 +275,6 @@ public class ActivitySplashScreen extends ActivityBase {
     @Override
     protected void onPause() {
     	super.onPause();
-    	if(isReceiverRegistered){
-    	  	unregisterReceiver(receiver);
-    	  	isReceiverRegistered = false;
-      	}
     	if(locServiceBound){
     		unbindService(mConnection);
     		locServiceBound = false;
@@ -187,6 +289,10 @@ public class ActivitySplashScreen extends ActivityBase {
     	  	unregisterReceiver(receiver);
     	  	isReceiverRegistered = false;
       	}
+    	if(isNetworkReceiverRegistered){
+    		unregisterReceiver(networkConnectionReceiver);
+    		isNetworkReceiverRegistered = false;
+    	}
     	if(locServiceBound){
     		unbindService(mConnection);
     		locServiceBound = false;

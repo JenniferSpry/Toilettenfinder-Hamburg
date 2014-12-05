@@ -22,4 +22,8 @@ public class TagNames {
 	public static final String EXTRA_POI = "com.bfhh.stilleoertchenhamburg.POI";
 	public static final String EXTRA_POI_ID = "com.bfhh.stilleoertchenhamburg.poiId";
 
+	//Internet Connection Check
+	public static final String SETTINGS_WIFI = "com.bfhh.stilleoertchenhamburg.settingsWifi";
+	public static final String SETTINGS_MOBILE = "com.bfhh.stilleoertchenhamburg.settingsMobile";
+	public static final String SETTINGS_NETWORK_GENERAL = "com.bfhh.stilleoertchenhamburg.settingsNetworkGeneral";
 }
