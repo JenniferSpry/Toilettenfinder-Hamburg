@@ -75,12 +75,11 @@ public class POIHelper {
 	public static MarkerOptions getMarkerOptionsForPOI(POI poi){
 		MarkerOptions marker = new MarkerOptions();
 		//poi.getMarkerIconRessource() returns the drawable icon depending on wheelchair accessibility
-		BitmapDescriptor icon = BitmapDescriptorFactory.fromResource(poi.getMarkerIconRessource());
+		BitmapDescriptor icon = BitmapDescriptorFactory.fromResource(poi.getIcon());
 		return marker.position(new LatLng(poi.getLat(), poi.getLng()))
 					 .title(poi.getName())
 					 .icon(icon);
 	}
-	
 
 	public static POI getPoiByIdReference(HashMap<String, Integer> markerPOIIdMap, ArrayList<POI> allPOIList, String markerId) {
 		return getPoiById(allPOIList,markerPOIIdMap.get(markerId) );

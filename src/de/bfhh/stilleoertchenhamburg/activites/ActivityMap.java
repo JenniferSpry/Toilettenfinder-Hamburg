@@ -32,15 +32,10 @@ import android.text.method.LinkMovementMethod;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Display;
-import android.view.KeyEvent;
 import android.view.View;
-import android.view.View.MeasureSpec;
-import android.view.View.OnFocusChangeListener;
-import android.view.ViewGroup;
 import android.view.ViewTreeObserver.OnGlobalLayoutListener;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.annotation.SuppressLint;
@@ -69,7 +64,6 @@ import android.os.IBinder;
  */
 
 /* TODO
- * 1. Map nach oben schieben, wenn Slider geöffnet wird
  * 2. ActivityResult von GPS check zurückgeben
  * 3. Prüfung, wie weit sich der User vom letzten Standpunkt bewegt hat -> erst ab mind 10m user icon neu zeichnen
  */
@@ -109,6 +103,8 @@ public class ActivityMap extends ActivityMenuBase {
 	private static double _userLat;
 	private static double _userLng;
 	private boolean _hasUserLocation;
+	public boolean _isLowUpdateInterval;
+	protected boolean _firstLocationPull;
 
 	private LocationUpdateService _locUpdateService;
 	private LocationUpdateReceiver _locUpdReceiver;
@@ -122,26 +118,13 @@ public class ActivityMap extends ActivityMenuBase {
 	//Display dimensions
 	private int _displayWidth;
 	private int _displayHeight;
-
-	protected Marker _clickedMarker;
-
 	private float _logicalDensity;
 
-	private int _clickedPOIId;
-
-	public boolean _isLowUpdateInterval;
-
-	protected boolean _firstLocationPull;
-
-	protected int _oldClickedPOIId;
-
-	protected int _headerHeight;
+	private POI _selectedPoi;
+	protected Marker _selectedMarker;
 
 	private ArrayList<EditText> _editTexts;
 
-	private RelativeLayout _sliderHeader;
-
-	private POI _clickedPoi;
 
 	/**
 	 * Initiate variables
@@ -232,9 +215,8 @@ public class ActivityMap extends ActivityMenuBase {
 			_allPOIList = bundle.getParcelableArrayList(TagNames.EXTRA_POI_LIST);
 			
 			//get clicked marker if it's set
-			_clickedPOIId = bundle.getInt(TagNames.EXTRA_POI_ID);
-			updateSliderContent(POIHelper.getPoiById(_allPOIList, _clickedPOIId));
-			
+			_selectedPoi = bundle.getParcelable(TagNames.EXTRA_POI);
+			updateSliderContent(_selectedPoi);
 		}   
 
 		//set up POIController with list of toilets received from POIUpdateService
@@ -251,10 +233,6 @@ public class ActivityMap extends ActivityMenuBase {
 	protected void onStart(){
 		super.onStart();
 		Log.d(TAG, "onStart");
-
-		//hide the sliding up Panel
-		//_slidingUpPanel.hidePanel();
-	
 	}
 
 	/** Override onNewIntent() so that intents sent from other activities
@@ -274,8 +252,7 @@ public class ActivityMap extends ActivityMenuBase {
 		if(action != null && action.equals(TagNames.ACTION_SHOW_SLIDER)){
 			Log.d("###**** intent from FragmentToiletList", "receeeeived");
 			//center map on marker, show slider
-			_clickedPoi = (POI) bundle.get(TagNames.EXTRA_POI);
-			_clickedPOIId = _clickedPoi.getId();
+			_selectedPoi = bundle.getParcelable(TagNames.EXTRA_POI);
 		}
 	}
 	
@@ -292,19 +269,20 @@ public class ActivityMap extends ActivityMenuBase {
 
 			setUpMapIfNeeded(); //initialize map if it isn't already
 
-			//_slidingUpPanel.hidePanel();
 			//set padding to map
 			_mMap.setPadding(5, 5, 5, 5);
 			
 			//only called after first setup of application 
 			//_clickedMarkerId check so that if a marker was clicked before screen rotation,
 			//it 
-			if(_mapBounds == null && _clickedPOIId == 0){
+			if(_mapBounds == null && _selectedPoi == null){
 				CameraUpdate cu = getCameraUpdateForClosestPOIBounds(10);
 				moveToLocation(cu);
 				updatePOIMarkers();
 			}
-			setPeeerOnMap(); //user marker
+			setPeeerOnMap();
+			
+			updateAllMarkerColor();
 
 			if(!_locUpdReceiverRegistered){
 				registerReceiver(_locUpdReceiver, new IntentFilter(TagNames.BROADC_LOCATION_UPDATED));
@@ -321,7 +299,7 @@ public class ActivityMap extends ActivityMenuBase {
 					// Move camera.	
 					if(_mMap != null){
 						//get LatLngBounds of current camera position
-						_mapBounds = _mMap.getProjection().getVisibleRegion().latLngBounds;
+						refreshtMapBounds();
 						updatePOIMarkers();
 					}
 				}			
@@ -333,11 +311,11 @@ public class ActivityMap extends ActivityMenuBase {
 				@Override
 				public void onMapClick(LatLng arg0) {
 					_slidingUpPanel.hidePanel();
-					
-					_oldClickedPOIId = 0;
-//					_mapBounds = getMapBounds();
-//					LatLng center = getMapCenter(_mapBounds);
-//					_mMap.animateCamera(CameraUpdateFactory.newLatLng(center));
+					if (_selectedMarker != null){
+						_selectedMarker.setIcon(BitmapDescriptorFactory.fromResource(_selectedPoi.getIcon()));
+					}
+					_selectedMarker = null;
+					_selectedPoi = null;
 				}
 			});
 			
@@ -348,28 +326,24 @@ public class ActivityMap extends ActivityMenuBase {
 					//center map on clicked marker
 					LatLng center = marker.getPosition();
 					_mMap.animateCamera(CameraUpdateFactory.newLatLng(center));
-					_mapBounds = _mMap.getProjection().getVisibleRegion().latLngBounds;
-					_clickedMarker = marker;
+					refreshtMapBounds();
+					// set last selected marker back to unselected
+					if (_selectedMarker != null & _selectedPoi != null) {
+						_selectedMarker.setIcon(BitmapDescriptorFactory.fromResource(_selectedPoi.getIcon()));
+					}
 
 					if(_markerPOIIdMap.get(marker.getId()) != null){//is this markers id in the list (if not it is user marker)
-												
-						POI poi = POIHelper.getPoiByIdReference(_markerPOIIdMap, _allPOIList, marker.getId());
-						
-						_oldClickedPOIId = _clickedPOIId;
-						_clickedPOIId = poi.getId();
-						//TODO: stop keyboard from popping up all the time
-
-						updateSliderContent(poi);
-						
+						_selectedPoi = POIHelper.getPoiByIdReference(_markerPOIIdMap, _allPOIList, marker.getId());
+						marker.setIcon(BitmapDescriptorFactory.fromResource(_selectedPoi.getActiveIcon()));
+						updateSliderContent(_selectedPoi);
 						_slidingUpPanel.showPanel();
-								
-						return true;
-					}else{
+						_selectedMarker = marker;
+					} else {
 						if(_slidingUpPanel.isShown()){//hide panel if it's showing
 							_slidingUpPanel.hidePanel();
 						}
-						return true;
 					}
+					return true;
 				}
 			});
 
@@ -422,18 +396,18 @@ public class ActivityMap extends ActivityMenuBase {
 	                //set padding to map so that map controls are moved
 					_mMap.setPadding(5, 5, 5, px);
 					
-					_mapBounds = _mMap.getProjection().getVisibleRegion().latLngBounds;
+					refreshtMapBounds();
 					
 					//clickedMarker may be null
-					if(_clickedMarker == null && _clickedPOIId != 0 && _markerMap != null){
-						_clickedMarker = _markerMap.get(_clickedPOIId);
+					if(_selectedMarker == null && _selectedPoi != null && _markerMap != null){
+						_selectedMarker = _markerMap.get(_selectedPoi.getId());
 					}
-					if(_clickedMarker != null){
+					if(_selectedMarker != null){
 						//get distance between map center (gmaps) and clicked marker position
-						float d = getDistanceBewteen(getMapCenter(_mapBounds), _clickedMarker.getPosition());
+						float d = getDistanceBewteen(getMapCenter(_mapBounds), _selectedMarker.getPosition());
 						//if panel collapsed for first time (== first shown) and d > 10 meters
 						if(!firstCollapse && d > 10.0f ){
-							_mMap.animateCamera(CameraUpdateFactory.newLatLng(_clickedMarker.getPosition()));
+							_mMap.animateCamera(CameraUpdateFactory.newLatLng(_selectedMarker.getPosition()));
 						}
 					}
 					firstCollapse = false;
@@ -456,11 +430,11 @@ public class ActivityMap extends ActivityMenuBase {
 						//set bottom padding
 						_mMap.setPadding(5, 5, 5, (int) (_displayHeight/2));
 
-						if(_clickedMarker == null && _clickedPOIId != 0 && _markerMap != null){
-							_clickedMarker = _markerMap.get(_clickedPOIId);
+						if(_selectedMarker == null && _selectedPoi != null && _markerMap != null){
+							_selectedMarker = _markerMap.get(_selectedPoi.getId());
 						}
-						if(_clickedMarker != null){
-							LatLng markerPos = _clickedMarker.getPosition();
+						if(_selectedMarker != null){
+							LatLng markerPos = _selectedMarker.getPosition();
 							//move position to center map to down a bit
 							LatLng mPlusOffset = new LatLng(markerPos.latitude+0.001f, markerPos.longitude);
 							_mMap.animateCamera(CameraUpdateFactory.newLatLng(mPlusOffset));
@@ -483,31 +457,25 @@ public class ActivityMap extends ActivityMenuBase {
 				}    	
 			});			
 			
-			if(_clickedPoi != null){				
-				if (_mMap != null){
-					//set distance to user, otherwise slider will show 0 m
-					if(_userLat != 0.0d && _userLng != 0.0d){
-						_clickedPoi = POIHelper.setDistanceSinglePOIToUser(_clickedPoi, _userLat, _userLng);
-					}
-					//center camera on marker
-					_mMap.animateCamera(CameraUpdateFactory.newLatLng(_clickedPoi.getLatLng()));
-					updateSliderContent(_clickedPoi);
-					Marker marker = null;
-					//marker not on map (not one of the closest ten markers?)
-					if(!_markerMap.containsKey(_clickedPoi.getId())){
-						Log.d("3454564653w4r onResume _clickedPOI", "adding marker to map and showing panel");
-						//add marker to mMap and to lists
-						marker = _mMap.addMarker(POIHelper.getMarkerOptionsForPOI(_clickedPoi));	
-						_markerMap.put(_clickedPoi.getId(), marker);
-						_markerPOIIdMap.put(marker.getId(), _clickedPoi.getId());
-					}else{ //marker already set
-						Log.d("{{{{{{7{ onResume _clickedPOI", "marker already on map");
-						marker = _markerMap.get(_clickedPoi.getId());
-						_clickedMarker = marker;
-					}
-					
-					_slidingUpPanel.showPanel();
+			if ((_selectedPoi != null) && (_mMap != null)) {
+				// 
+				//center camera on marker
+				_mMap.animateCamera(CameraUpdateFactory.newLatLng(_selectedPoi.getLatLng()));
+				updateSliderContent(_selectedPoi);
+				Marker marker = null;
+				//marker not on map (not one of the closest ten markers?)
+				if(!_markerMap.containsKey(_selectedPoi.getId())){
+					Log.d("3454564653w4r onResume _clickedPOI", "adding marker to map and showing panel");
+					//add marker to mMap and to lists
+					marker = _mMap.addMarker(POIHelper.getMarkerOptionsForPOI(_selectedPoi));	
+					_markerMap.put(_selectedPoi.getId(), marker);
+					_markerPOIIdMap.put(marker.getId(), _selectedPoi.getId());
+				} else { //marker already set
+					Log.d("{{{{{{7{ onResume _clickedPOI", "marker already on map");
+					marker = _markerMap.get(_selectedPoi.getId());
 				}
+				_selectedMarker = marker;
+				_slidingUpPanel.showPanel();
 			}	
 				
 		}
@@ -643,10 +611,11 @@ public class ActivityMap extends ActivityMenuBase {
 						});
 			}
 		}
-		_mapBounds = _mMap.getProjection().getVisibleRegion().latLngBounds;
+		refreshtMapBounds();
 	}//end moveToLocation
 	
-	private LatLngBounds getMapBounds(){
+	
+	private void refreshtMapBounds(){
 		try {
 			_mapBounds = _mMap.getProjection().getVisibleRegion().latLngBounds;
 		} catch (IllegalStateException e) {
@@ -673,7 +642,6 @@ public class ActivityMap extends ActivityMenuBase {
 						});
 			}
 		}
-		return _mapBounds;
 	}//end getMapBounds
 
 
@@ -718,23 +686,41 @@ public class ActivityMap extends ActivityMenuBase {
 						
 						_markerMap.put(poi.getId(), marker);
 						_markerPOIIdMap.put(marker.getId(), poi.getId());
-					}
-				} else if(_markerMap.containsKey(poi.getId())) { // delete marker outside of bounds
-					//1. Remove the Marker from the GoogleMap
-					_markerMap.get(poi.getId()).remove();
-					//2. Remove the reference to the Marker from the HashMap
-					_markerMap.remove(poi.getId());
-					// remove marker id to poi id mapping
-					for(Iterator<Map.Entry<String, Integer>> it = _markerPOIIdMap.entrySet().iterator(); it.hasNext(); ) {
-						Map.Entry<String, Integer> entry = it.next();
-						if (poi.getId() == entry.getValue()) {
-					        it.remove();
-					    }
+					} 
+				} else if(_markerMap.containsKey(poi.getId()) && _selectedPoi != null) { // delete marker outside of bounds
+					if (_selectedPoi.getId() != poi.getId()){ // do not remove selected marker 
+						//1. Remove the Marker from the GoogleMap
+						_markerMap.get(poi.getId()).remove();
+						//2. Remove the reference to the Marker from the HashMap
+						_markerMap.remove(poi.getId());
+						// remove marker id to poi id mapping
+						for(Iterator<Map.Entry<String, Integer>> it = _markerPOIIdMap.entrySet().iterator(); it.hasNext(); ) {
+							Map.Entry<String, Integer> entry = it.next();
+							if (poi.getId() == entry.getValue()) {
+						        it.remove();
+						    }
+						}
 					}
 				}
 			}
 		}
-		Log.d("visible marker size:", String.valueOf(_markerMap.size()));
+	}
+	
+	// TODO
+	private void updateAllMarkerColor(){
+		if (_allPOIList != null && _markerMap != null){
+			for(POI poi : _allPOIList){
+				if(_markerMap.containsKey(poi.getId())){
+					if (_selectedPoi != null && poi.getId() == _selectedPoi.getId()){
+						_markerMap.get(poi.getId()).setIcon(
+				    			BitmapDescriptorFactory.fromResource(poi.getActiveIcon()));
+					} else {
+						_markerMap.get(poi.getId()).setIcon(
+				    			BitmapDescriptorFactory.fromResource(poi.getIcon()));
+					}
+				}
+			}
+		}
 	}
 	
 	private float getDistanceBewteen(LatLng a, LatLng b){
@@ -754,14 +740,7 @@ public class ActivityMap extends ActivityMenuBase {
 		}
 	}
 	
-	/** ----- SLIDING PANEL ----**/
-	
-	//update height of sliding panel depending on content height
-	private int getSliderHeaderContentHeight(){
-		RelativeLayout headerView = (RelativeLayout)findViewById(R.id.header_view);
-		int height =  headerView.getMeasuredHeight();		
-		return height;
-	}		
+	/** ----- SLIDING PANEL ----**/		
 	
 	//Update info displayed in sliding panel
 	protected void updateSliderContent(POI poi) {
@@ -775,13 +754,10 @@ public class ActivityMap extends ActivityMenuBase {
 	        txtDistance.setText(distance);
 	        
 	        txtAddress = (TextView) findViewById(R.id.address_detail);
-	        //trim end of line characters off address text
-	        String address = poi.getAddress().trim();
-	        txtAddress.setText(address);
+	        txtAddress.setText(poi.getAddress());
 	        
 	        txtDescription = (TextView) findViewById(R.id.description_detail);
-	        String descr = poi.getDescription().trim();
-	        txtDescription.setText(descr);
+	        txtDescription.setText(poi.getDescription());
 	                
 	        txtWebsite = (TextView) findViewById(R.id.url_detail);
 	        txtWebsite.setText(poi.getWebsite());
@@ -843,7 +819,7 @@ public class ActivityMap extends ActivityMenuBase {
 		savedInstanceState.putDouble(TagNames.EXTRA_LAT, _userLat);
 		savedInstanceState.putDouble(TagNames.EXTRA_LONG, _userLng);
 		savedInstanceState.putInt(TagNames.EXTRA_LOCATION_RESULT, _hasUserLocation ? -1 : 1);
-		savedInstanceState.putInt(TagNames.EXTRA_POI_ID, _clickedPOIId);		 
+		savedInstanceState.putParcelable(TagNames.EXTRA_POI, _selectedPoi);		 
 
 		// Always call the superclass so it can save the view hierarchy state
 		super.onSaveInstanceState(savedInstanceState);
@@ -857,15 +833,12 @@ public class ActivityMap extends ActivityMenuBase {
 
 		unbindService(_mConnection);//unbind service
 		Log.d("Map onPause", "service unbound");
-
-		//_slidingUpPanel.hidePanel();
 		
 		if(_locUpdReceiverRegistered){
 			unregisterReceiver(_locUpdReceiver);
 			_locUpdReceiverRegistered = false;
 		}
-		
-		
+				
 		//fix the map at restart of application, so that user and markers can be seen again
 		//TODO: nullpointer after disabling network in running app and then trying to pause it (back  button)
 		if (_mMap != null){
@@ -967,7 +940,7 @@ public class ActivityMap extends ActivityMenuBase {
 		//TODO: check if user has turned location services on (onActivityResult)
 	}
 	
-	//overwrite back key behaviour
+	//overwrite back key behavior
 	@Override
 	public void onBackPressed() {		
 	   Log.d("CDA", "onBackPressed Called");
@@ -977,6 +950,9 @@ public class ActivityMap extends ActivityMenuBase {
 	   }else{
 		   Log.d("slider ", "is shown");
 		   _slidingUpPanel.hidePanel();
+		   _myLocationButton.setVisibility(View.VISIBLE);
+			_zoomInButton.setVisibility(View.VISIBLE);
+			_zoomOutButton.setVisibility(View.VISIBLE);
 	   }
 	}
 
