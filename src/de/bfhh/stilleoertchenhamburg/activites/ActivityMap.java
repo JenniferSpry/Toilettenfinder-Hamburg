@@ -36,6 +36,7 @@ import android.view.View;
 import android.view.ViewTreeObserver.OnGlobalLayoutListener;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.annotation.SuppressLint;
@@ -114,6 +115,7 @@ public class ActivityMap extends ActivityMenuBase {
 	private static ActivityMap _instance;
 
 	private SlidingUpPanelLayout _slidingUpPanel;
+	private RelativeLayout _buttonsContainer;
 
 	//Display dimensions
 	private int _displayWidth;
@@ -160,6 +162,8 @@ public class ActivityMap extends ActivityMenuBase {
 		_myLocationButton = (ImageButton) findViewById(R.id.buttonToLocation); 
 		_zoomInButton = (ImageButton) findViewById(R.id.buttonZoomIn); 
 		_zoomOutButton = (ImageButton) findViewById(R.id.buttonZoomOut); 
+		
+		_buttonsContainer = (RelativeLayout) findViewById(R.id.mapButtons);
 				
 		//holds the SlidingUpLayout which is wrapper of our layout
 		_slidingUpPanel = (SlidingUpPanelLayout) findViewById(R.id.sliding_layout);
@@ -268,9 +272,7 @@ public class ActivityMap extends ActivityMenuBase {
 		if (checkPlayServices()){
 
 			setUpMapIfNeeded(); //initialize map if it isn't already
-
-			//set padding to map
-			_mMap.setPadding(5, 5, 5, 5);
+			setPaddingBottom(0);
 			
 			//only called after first setup of application 
 			//_clickedMarkerId check so that if a marker was clicked before screen rotation,
@@ -392,9 +394,8 @@ public class ActivityMap extends ActivityMenuBase {
 				@Override
 				public void onPanelCollapsed(View panel) {
 					//get height of panel in pixels (68dp)
-	                int px = (int) Math.ceil(110 * _logicalDensity);
 	                //set padding to map so that map controls are moved
-					_mMap.setPadding(5, 5, 5, px);
+	                setPaddingBottom(110);
 					
 					refreshtMapBounds();
 					
@@ -412,12 +413,7 @@ public class ActivityMap extends ActivityMenuBase {
 					}
 					firstCollapse = false;
 					firstAnchored = false;
-					//show location button
-					_myLocationButton.setVisibility(View.VISIBLE);
-					_zoomInButton.setVisibility(View.VISIBLE);
-					_zoomOutButton.setVisibility(View.VISIBLE);
-					
-					
+					_buttonsContainer.setVisibility(View.VISIBLE);
 				}
 
 				@Override
@@ -428,8 +424,8 @@ public class ActivityMap extends ActivityMenuBase {
 					//move the map up so that clicked marker is visible
 					if(!firstAnchored ){
 						//set bottom padding
-						_mMap.setPadding(5, 5, 5, (int) (_displayHeight/2));
-
+						setPaddingBottom((int) (_displayHeight/2));
+						
 						if(_selectedMarker == null && _selectedPoi != null && _markerMap != null){
 							_selectedMarker = _markerMap.get(_selectedPoi.getId());
 						}
@@ -441,19 +437,14 @@ public class ActivityMap extends ActivityMenuBase {
 						}
 						firstAnchored = true;
 					}
-					//hide my location button
-					_myLocationButton.setVisibility(View.INVISIBLE);
-					_zoomInButton.setVisibility(View.INVISIBLE);
-					_zoomOutButton.setVisibility(View.INVISIBLE);
+					_buttonsContainer.setVisibility(View.INVISIBLE);
 				}
 
 				@Override
 				public void onPanelHidden(View panel) {
 					firstCollapse = true;
 					firstAnchored = true;
-					if (_mMap != null){
-						_mMap.setPadding(5, 5, 5, 5);//reverse padding to default
-					}
+					setPaddingBottom(0);
 				}    	
 			});			
 			
@@ -798,6 +789,16 @@ public class ActivityMap extends ActivityMenuBase {
 				.icon(BitmapDescriptorFactory.fromResource(R.drawable.peeer)));
 		}
 	}
+	
+	private void setPaddingBottom(int height){
+		height = (int) Math.ceil(height * _logicalDensity);
+		if (_mMap != null) {
+			_mMap.setPadding(5, 5, 5, height+5);
+		}
+		RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams)_buttonsContainer.getLayoutParams();
+	    params.setMargins(10, 10, 10, height+10); 
+	    _buttonsContainer.setLayoutParams(params);
+	}
 
 	private void setUserLocation(double lat, double lng){
 		_userLat = lat;
@@ -950,9 +951,7 @@ public class ActivityMap extends ActivityMenuBase {
 	   }else{
 		   Log.d("slider ", "is shown");
 		   _slidingUpPanel.hidePanel();
-		   _myLocationButton.setVisibility(View.VISIBLE);
-			_zoomInButton.setVisibility(View.VISIBLE);
-			_zoomOutButton.setVisibility(View.VISIBLE);
+		   _buttonsContainer.setVisibility(View.VISIBLE);
 	   }
 	}
 

@@ -27,39 +27,41 @@
 		    android:gravity="center"
 		    android:name="com.google.android.gms.maps.SupportMapFragment"/>
 		
-	    <ImageButton
-	    	android:id="@+id/buttonToLocation"
-	        style="?android:attr/buttonStyleSmall"
-	        android:layout_width="wrap_content"
-	        android:layout_height="wrap_content"
-	        android:layout_alignParentRight="true"
-	        android:layout_marginRight="16dp"
-	        android:layout_marginTop="16dp"
-	        android:background="@drawable/map_button_style"
-	        android:src="@drawable/icon_locate" />
-	    
-	    <ImageButton
-	    	android:id="@+id/buttonZoomOut"	
-	    	android:background="@drawable/map_button_style"
-	        style="?android:attr/buttonStyleSmall"
-	        android:layout_width="wrap_content"
-	        android:layout_height="wrap_content"
-	        android:layout_alignParentLeft="true"
-	        android:layout_marginLeft="16dp"
-	        android:layout_marginTop="16dp"
-	        android:src="@drawable/icon_zoom_out" />
-	    
-	    <ImageButton
-	    	android:id="@+id/buttonZoomIn"	
-	    	android:background="@drawable/map_button_style"
-	        style="?android:attr/buttonStyleSmall"
-	        android:layout_width="wrap_content"
-	        android:layout_height="wrap_content"
-	        android:layout_marginTop="16dp"
-	        android:layout_toRightOf="@+id/buttonZoomOut"
-	        android:src="@drawable/icon_zoom_in" />
-	    
->
+		<RelativeLayout
+		    android:id="@+id/mapButtons"
+		    android:layout_width="match_parent" 
+	    	android:layout_height="match_parent">
+		
+		    <ImageButton
+		    	android:id="@+id/buttonToLocation"
+		        style="?android:attr/buttonStyleSmall"
+		        android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+		        android:layout_alignParentRight="true"
+		        android:layout_alignParentTop="true"
+		        android:background="@drawable/map_button_style"
+		        android:src="@drawable/icon_locate" />
+
+	    	<ImageButton
+		    	android:id="@+id/buttonZoomIn"	
+		    	android:background="@drawable/map_button_style"
+		        style="?android:attr/buttonStyleSmall"
+		        android:layout_alignParentRight="true"
+		        android:layout_alignParentBottom="true"
+		        android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+		        android:src="@drawable/icon_zoom_in" />
+		    <ImageButton
+		    	android:id="@+id/buttonZoomOut"	
+		    	android:background="@drawable/map_button_style"
+		        style="?android:attr/buttonStyleSmall"
+		        android:layout_toLeftOf="@+id/buttonZoomIn"
+		        android:layout_alignParentBottom="true"
+		        android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+		        android:src="@drawable/icon_zoom_out" />
+		    
+		</RelativeLayout>
 		
 	</RelativeLayout>
 		
