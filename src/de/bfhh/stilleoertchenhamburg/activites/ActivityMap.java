@@ -181,11 +181,10 @@ public class ActivityMap extends ActivityMenuBase {
 		_editTexts.add(editEmail);
 		_editTexts.add(editComment);
 
-
 		//LocationUpdateReceiver
 		_locUpdReceiver = new LocationUpdateReceiver(new Handler());
 		_locUpdReceiver.setMainActivityHandler(this);
-		_instance._isLowUpdateInterval = false; 
+		_isLowUpdateInterval = false; 
 
 		//list of POI markers that are currently visible on the map
 		_markerMap = new HashMap<Integer, Marker>();
@@ -232,12 +231,6 @@ public class ActivityMap extends ActivityMenuBase {
 		}
 	} // end onCreate
 	
-
-	@Override
-	protected void onStart(){
-		super.onStart();
-		Log.d(TAG, "onStart");
-	}
 
 	/** Override onNewIntent() so that intents sent from other activities
 	 *  are processed when ActivityMap is already running, but in background.
@@ -298,17 +291,13 @@ public class ActivityMap extends ActivityMenuBase {
 			_mMap.setOnCameraChangeListener(new OnCameraChangeListener() {
 				@Override
 				public void onCameraChange(CameraPosition pos) {
-					// Move camera.	
 					if(_mMap != null){
-						//get LatLngBounds of current camera position
-						refreshtMapBounds();
+						refreshMapBounds();
 						updatePOIMarkers();
 					}
 				}			
 			});
 
-			//TODO: make transition of map between slidinUpPanel hide / show nicer
-			//hide the panel if user clicks somewhere on the map where there is no marker
 			_mMap.setOnMapClickListener(new OnMapClickListener() {
 				@Override
 				public void onMapClick(LatLng arg0) {
@@ -327,8 +316,8 @@ public class ActivityMap extends ActivityMenuBase {
 				public boolean onMarkerClick(Marker marker) { 
 					//center map on clicked marker
 					LatLng center = marker.getPosition();
-					_mMap.animateCamera(CameraUpdateFactory.newLatLng(center));
-					refreshtMapBounds();
+					moveToLocation(CameraUpdateFactory.newLatLng(center));
+					refreshMapBounds();
 					// set last selected marker back to unselected
 					if (_selectedMarker != null & _selectedPoi != null) {
 						_selectedMarker.setIcon(BitmapDescriptorFactory.fromResource(_selectedPoi.getIcon()));
@@ -341,9 +330,7 @@ public class ActivityMap extends ActivityMenuBase {
 						_slidingUpPanel.showPanel();
 						_selectedMarker = marker;
 					} else {
-						if(_slidingUpPanel.isShown()){//hide panel if it's showing
-							_slidingUpPanel.hidePanel();
-						}
+						_slidingUpPanel.hidePanel();
 					}
 					return true;
 				}
@@ -354,8 +341,7 @@ public class ActivityMap extends ActivityMenuBase {
 				public void onClick(View v) {
 					//Only move to user location if it isn't the standardLocation
 					if (_hasUserLocation){
-						CameraUpdate cu = getCameraUpdateForClosestPOIBounds(10);
-						moveToLocation(cu);
+						moveToLocation(getCameraUpdateForClosestPOIBounds(10));
 						updatePOIMarkers();
 					} else {//show GPS Settings dialog
 						buildAlertMessageGPSSettings();
@@ -365,13 +351,13 @@ public class ActivityMap extends ActivityMenuBase {
 			
 			_zoomInButton.setOnClickListener(new View.OnClickListener() {
 				public void onClick(View v) {
-					if (_mMap != null) {_mMap.animateCamera( CameraUpdateFactory.zoomIn()); }
+					moveToLocation(CameraUpdateFactory.zoomIn());
 				}
 			});  
 			
 			_zoomOutButton.setOnClickListener(new View.OnClickListener() {
 				public void onClick(View v) {
-					if (_mMap != null) {_mMap.animateCamera( CameraUpdateFactory.zoomOut()); }
+					moveToLocation(CameraUpdateFactory.zoomOut());
 				}
 			});
 
@@ -397,7 +383,7 @@ public class ActivityMap extends ActivityMenuBase {
 	                //set padding to map so that map controls are moved
 	                setPaddingBottom(110);
 					
-					refreshtMapBounds();
+					refreshMapBounds();
 					
 					//clickedMarker may be null
 					if(_selectedMarker == null && _selectedPoi != null && _markerMap != null){
@@ -408,7 +394,7 @@ public class ActivityMap extends ActivityMenuBase {
 						float d = getDistanceBewteen(getMapCenter(_mapBounds), _selectedMarker.getPosition());
 						//if panel collapsed for first time (== first shown) and d > 10 meters
 						if(!firstCollapse && d > 10.0f ){
-							_mMap.animateCamera(CameraUpdateFactory.newLatLng(_selectedMarker.getPosition()));
+							moveToLocation(CameraUpdateFactory.newLatLng(_selectedMarker.getPosition()));
 						}
 					}
 					firstCollapse = false;
@@ -433,7 +419,7 @@ public class ActivityMap extends ActivityMenuBase {
 							LatLng markerPos = _selectedMarker.getPosition();
 							//move position to center map to down a bit
 							LatLng mPlusOffset = new LatLng(markerPos.latitude+0.001f, markerPos.longitude);
-							_mMap.animateCamera(CameraUpdateFactory.newLatLng(mPlusOffset));
+							moveToLocation(CameraUpdateFactory.newLatLng(mPlusOffset));
 						}
 						firstAnchored = true;
 					}
@@ -451,7 +437,7 @@ public class ActivityMap extends ActivityMenuBase {
 			if ((_selectedPoi != null) && (_mMap != null)) {
 				// 
 				//center camera on marker
-				_mMap.animateCamera(CameraUpdateFactory.newLatLng(_selectedPoi.getLatLng()));
+				moveToLocation(CameraUpdateFactory.newLatLng(_selectedPoi.getLatLng()));
 				updateSliderContent(_selectedPoi);
 				Marker marker = null;
 				//marker not on map (not one of the closest ten markers?)
@@ -545,16 +531,14 @@ public class ActivityMap extends ActivityMenuBase {
 								_instance._isLowUpdateInterval = true;
 								Toast.makeText(context, "Position wird bestimmt...",
 										Toast.LENGTH_LONG).show();
-								CameraUpdate cu = _instance.getCameraUpdateForClosestPOIBounds(10);
-								_mMap.animateCamera(cu);
+								_instance.moveToLocation(_instance.getCameraUpdateForClosestPOIBounds(10));
 								_instance.updatePOIMarkers();
 								_instance.setPeeerOnMap();
 							}else if(_instance._userLocation.distanceTo(oldLocation) > 84.0 && _instance._isLowUpdateInterval){
 								Log.d("+++++++++ ", "higher update interval frequency");
 								_instance.callForLocationUpdates(60000, 3.0f, 5000, 1.0f );
 								_instance._isLowUpdateInterval = false;
-								CameraUpdate cu = _instance.getCameraUpdateForClosestPOIBounds(10);
-								_mMap.animateCamera(cu);
+								_instance.moveToLocation(_instance.getCameraUpdateForClosestPOIBounds(10));
 								_instance.updatePOIMarkers();
 								_instance.setPeeerOnMap();
 							}
@@ -576,37 +560,39 @@ public class ActivityMap extends ActivityMenuBase {
 		 * and here: http://stackoverflow.com/questions/13692579/movecamera-with-cameraupdatefactory-newlatlngbounds-crashes
 		 */
 		Log.d(TAG, "moveToLocation");
-		try {
-			_mMap.animateCamera(cu);
-		} catch (IllegalStateException e) {
-			// fragment layout with map not yet initialized
-			final View mapView = getSupportFragmentManager().findFragmentById(R.id.map).getView();
-
-			if (mapView.getViewTreeObserver().isAlive()) {
-				mapView.getViewTreeObserver().addOnGlobalLayoutListener(
-						new OnGlobalLayoutListener() {
-							@SuppressWarnings("deprecation")
-							@SuppressLint("NewApi")
-							// We check which build version we are using.
-							@Override
-							public void onGlobalLayout() {
-								if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) { //below API Level 16 ?
-									mapView.getViewTreeObserver()
-									.removeGlobalOnLayoutListener(this);
-								} else {
-									mapView.getViewTreeObserver()
-									.removeOnGlobalLayoutListener(this);
+		if (_mMap != null){
+			try {
+				_mMap.animateCamera(cu);
+			} catch (IllegalStateException e) {
+				// fragment layout with map not yet initialized
+				final View mapView = getSupportFragmentManager().findFragmentById(R.id.map).getView();
+	
+				if (mapView.getViewTreeObserver().isAlive()) {
+					mapView.getViewTreeObserver().addOnGlobalLayoutListener(
+							new OnGlobalLayoutListener() {
+								@SuppressWarnings("deprecation")
+								@SuppressLint("NewApi")
+								// We check which build version we are using.
+								@Override
+								public void onGlobalLayout() {
+									if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) { //below API Level 16 ?
+										mapView.getViewTreeObserver()
+										.removeGlobalOnLayoutListener(this);
+									} else {
+										mapView.getViewTreeObserver()
+										.removeOnGlobalLayoutListener(this);
+									}
+									_mMap.animateCamera(cu);
 								}
-								_mMap.animateCamera(cu);
-							}
-						});
+							});
+				}
 			}
+			refreshMapBounds();
 		}
-		refreshtMapBounds();
 	}//end moveToLocation
 	
 	
-	private void refreshtMapBounds(){
+	private void refreshMapBounds(){
 		try {
 			_mapBounds = _mMap.getProjection().getVisibleRegion().latLngBounds;
 		} catch (IllegalStateException e) {
@@ -944,16 +930,12 @@ public class ActivityMap extends ActivityMenuBase {
 	//overwrite back key behavior
 	@Override
 	public void onBackPressed() {		
-	   Log.d("CDA", "onBackPressed Called");
-	   Log.d("ispnaleHidden", ""+_slidingUpPanel.isPanelHidden());
 	   if(_slidingUpPanel.isPanelHidden()){
 		   ActivityMap.super.onBackPressed();
-	   }else{
-		   Log.d("slider ", "is shown");
+	   } else {
 		   _slidingUpPanel.hidePanel();
 		   _buttonsContainer.setVisibility(View.VISIBLE);
 	   }
 	}
-
 
 }
