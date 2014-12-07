@@ -50,11 +50,14 @@ public class ActivitySplashScreen extends ActivityBase {
 
 	protected boolean _networkConnected;
 
+	protected boolean _poiUpdateServiceRegistered;
+
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
+        _poiUpdateServiceRegistered = false;
     }
     
     @Override
@@ -75,6 +78,7 @@ public class ActivitySplashScreen extends ActivityBase {
         	// Set receiver to listen to actions from both services
         	if(!isReceiverRegistered){
         		IntentFilter filter = new IntentFilter(TagNames.BROADC_LOCATION_NEW);
+        		filter.addAction(TagNames.BROADC_LOCATION_UPDATED);
             	filter.addAction(TagNames.BROADC_POIS);
         		registerReceiver(receiver, filter);
         		isReceiverRegistered = true;
@@ -95,7 +99,7 @@ public class ActivitySplashScreen extends ActivityBase {
     
 	// BroadcastReceiver for Broadcasts from LocationUpdateService and POIUpdateService
     private BroadcastReceiver receiver = new BroadcastReceiver() {
-
+    	
         @Override
         public void onReceive(Context context, Intent intent) { 	
         	//Get Extras
@@ -117,8 +121,11 @@ public class ActivitySplashScreen extends ActivityBase {
 		            } 
 		            //only start this service if network is available	
 		            _connecState = NetworkUtil.getConnectivityStatus(context);
-		            if(_connecState == TagNames.TYPE_MOBILE || _connecState == TagNames.TYPE_WIFI){
-			        	startPOIUpdateService(lat, lng);
+		            if(_connecState == TagNames.TYPE_MOBILE || _connecState == TagNames.TYPE_WIFI ){
+		            	if(!_poiUpdateServiceRegistered){
+		            		startPOIUpdateService(lat, lng);
+				        	_poiUpdateServiceRegistered = true;
+		            	}	
 		            }
 	          }
            } else if(action.equals(TagNames.BROADC_POIS)){
@@ -203,13 +210,8 @@ public class ActivitySplashScreen extends ActivityBase {
     	Log.d(TAG, "onDestroy");
     	if(isReceiverRegistered){
     	  	unregisterReceiver(receiver);
-    	  	receiver = null;
     	  	isReceiverRegistered = false;
       	}
-    	/*if(isNetworkReceiverRegistered){
-    		unregisterReceiver(networkConnectionReceiver);
-    		isNetworkReceiverRegistered = false;
-    	}*/
     	if(locServiceBound){
     		unbindService(mConnection);
     		locServiceBound = false;
