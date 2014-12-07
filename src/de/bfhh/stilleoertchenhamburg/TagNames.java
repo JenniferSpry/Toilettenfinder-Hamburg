@@ -26,4 +26,9 @@ public class TagNames {
 	public static final String SETTINGS_WIFI = "com.bfhh.stilleoertchenhamburg.settingsWifi";
 	public static final String SETTINGS_MOBILE = "com.bfhh.stilleoertchenhamburg.settingsMobile";
 	public static final String SETTINGS_NETWORK_GENERAL = "com.bfhh.stilleoertchenhamburg.settingsNetworkGeneral";
+	
+	public static final int TYPE_WIFI = 1;
+    public static final int TYPE_MOBILE = 2;
+    public static final int TYPE_NOT_CONNECTED = 0;
+
 }

@@ -152,6 +152,7 @@ public class ActivityMap extends ActivityMenuBase {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		Thread.currentThread().setContextClassLoader(ActivityMap.class.getClassLoader());
 		Log.d(TAG, "onCreate");
 		setContentView(R.layout.activity_main);
 		

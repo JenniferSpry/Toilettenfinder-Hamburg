@@ -86,6 +86,7 @@ public class LocationUpdateService extends Service {
 		if(mlocationManager != null){
 			Log.i("stopLocationUpdates", "Removing location updates");
 			mlocationManager.removeUpdates(locUpdListener);
+			locUpdListener = null;
 		}
 	}
 	
@@ -269,6 +270,7 @@ public class LocationUpdateService extends Service {
 		              //broadcast to all activities that want location updates
 		              sendBroadcast(intent);     
 		              setCurrentUserLocation(location);
+		              oldLocation = location;
 		          }   		  
 			  }
 			  
