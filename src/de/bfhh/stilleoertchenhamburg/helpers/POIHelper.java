@@ -4,9 +4,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Map.Entry;
-
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
@@ -29,7 +26,6 @@ import de.bfhh.stilleoertchenhamburg.models.POI;
 public class POIHelper {
 	
 	//set distance to user for each individual POI in poiList.
-	//TODO:this has to be called when user location is changed
 	public static ArrayList<POI> setDistancePOIToUser(ArrayList<POI> poiList, double userLat, double userLng){
 		Location loc = new Location("");
 		loc.setLatitude(userLat);
@@ -72,10 +68,15 @@ public class POIHelper {
 	}
 	
 	//returns the MarkerOptions for a passed POI
-	public static MarkerOptions getMarkerOptionsForPOI(POI poi){
+	public static MarkerOptions getMarkerOptionsForPOI(POI poi, boolean active){
 		MarkerOptions marker = new MarkerOptions();
 		//poi.getMarkerIconRessource() returns the drawable icon depending on wheelchair accessibility
-		BitmapDescriptor icon = BitmapDescriptorFactory.fromResource(poi.getIcon());
+		BitmapDescriptor icon = null;
+		if (active){
+			icon = BitmapDescriptorFactory.fromResource(poi.getActiveIcon());
+		} else {
+			icon = BitmapDescriptorFactory.fromResource(poi.getIcon());
+		}
 		return marker.position(new LatLng(poi.getLat(), poi.getLng()))
 					 .title(poi.getName())
 					 .icon(icon);
