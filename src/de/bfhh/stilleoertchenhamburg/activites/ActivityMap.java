@@ -79,54 +79,60 @@ public class ActivityMap extends ActivityMenuBase {
 	private final int MAP_PADDING = 5;
 	private final int BUTTONS_PADDING = 10;
 
+	//Google map instance
 	private GoogleMap _mMap;
+	//Visible mapBounds
+	private LatLngBounds _mapBounds; //bounds of visible map, updated onCameraChange
+	private LatLngBounds.Builder _builder;
 	
+	//Buttons on map
+	private RelativeLayout _buttonsContainer; //Zoom and my location button
 	private ImageButton _myLocationButton; //Button to get back to current user location on map
 	private ImageButton _zoomInButton;
 	private ImageButton _zoomOutButton;
 	
+	//Slider plus content
+	private SlidingUpPanelLayout _slidingUpPanel;
 	TextView txtName;   
     TextView txtDistance;    
     TextView txtAddress;   
     TextView txtDescription;            
     TextView txtWebsite;
-    
+    private ArrayList<EditText> _editTexts; //holds the edittext fields in slider
     EditText editName;
     EditText editEmail;
     EditText editComment;
     
+    //Marker maps and user marker
 	private Marker _personInNeedOfToilette; //person's marker
-	private HashMap<Integer, Marker> _markerMap;
+	private HashMap<Integer, Marker> _markerMap;//
 	private HashMap<String, Integer> _markerPOIIdMap; // marker ids mapped to poi ids
-	
-	private LatLngBounds _mapBounds; //bounds of visible map, updated onCameraChange
-	private LatLngBounds.Builder _builder;
-	
+	//List of all POI in bfhh database
 	private ArrayList<POI> _allPOIList; //POI received from POIUpdateService
 	
+	//User location
 	private Location _userLocation;
 	private double _userLat;
 	private double _userLng;
 	private boolean _hasUserLocation;
-	public boolean _isLowUpdateInterval;
-	protected boolean _firstLocationPull;
 
+	//Location Receiver and service
 	private LocationUpdateService _locUpdateService;
 	private LocationUpdateReceiver _locUpdReceiver;
 	private boolean _locUpdReceiverRegistered;
-
-	private SlidingUpPanelLayout _slidingUpPanel;
-	private RelativeLayout _buttonsContainer;
+	public boolean _isLowUpdateInterval; //location updates less often
+	protected boolean _firstLocationPull; //first time location was received?
 
 	//Display dimensions
 	private int _displayHeight;
 	private float _logicalDensity;
 
+	//User selected POI (by Pin click or list item click)
 	private POI _selectedPoi;
 	protected Marker _selectedMarker;
 
-	private ArrayList<EditText> _editTexts;
-
+	//Display orientation
+	private int orientation;
 
 	/**
 	 * Initiate variables
@@ -165,6 +171,9 @@ public class ActivityMap extends ActivityMenuBase {
 		_myLocationButton = (ImageButton) findViewById(R.id.buttonToLocation); 
 		_zoomInButton = (ImageButton) findViewById(R.id.buttonZoomIn); 
 		_zoomOutButton = (ImageButton) findViewById(R.id.buttonZoomOut);
+		//if landscape mode, hide zoom buttons entirely
+		orientation = getResources().getConfiguration().orientation;
+		adjustZoomVisibility(orientation);
 		
 		_slidingUpPanel = (SlidingUpPanelLayout) findViewById(R.id.sliding_layout);
 		_slidingUpPanel.setAnchorPoint(0.45f);
@@ -188,7 +197,8 @@ public class ActivityMap extends ActivityMenuBase {
 		//list of POI markers that are currently visible on the map
 		_markerMap = new HashMap<Integer, Marker>();
 		_markerPOIIdMap = new HashMap<String, Integer>();
-
+		
+		//Get bundle contents
 		Bundle bundle = null;
 		CameraPosition cameraPosition = null;
 		//check the saved instance state:
@@ -216,6 +226,7 @@ public class ActivityMap extends ActivityMenuBase {
 			}
 			//get the poiList
 			_allPOIList = bundle.getParcelableArrayList(TagNames.EXTRA_POI_LIST);
+			//poi selected by user 
 			_selectedPoi = bundle.getParcelable(TagNames.EXTRA_POI); // may be null
 			cameraPosition = bundle.getParcelable(TagNames.EXTRA_CAMERA_POS); // may be null
 		}   
@@ -260,6 +271,7 @@ public class ActivityMap extends ActivityMenuBase {
 			_mMap.setOnMapClickListener(new OnMapClickListener() {
 				@Override
 				public void onMapClick(LatLng arg0) {
+					//hide slider and set formerly selected marker back to normal
 					_slidingUpPanel.hidePanel();
 					if (_selectedMarker != null){
 						_selectedMarker.setIcon(BitmapDescriptorFactory.fromResource(_selectedPoi.getIcon()));
@@ -273,8 +285,6 @@ public class ActivityMap extends ActivityMenuBase {
 			_mMap.setOnMarkerClickListener(new OnMarkerClickListener(){
 				@Override
 				public boolean onMarkerClick(Marker marker) { 
-					//center map on clicked marker
-					
 					// set last selected marker back to unselected
 					if (_selectedMarker != null & _selectedPoi != null) {
 						_selectedMarker.setIcon(BitmapDescriptorFactory.fromResource(_selectedPoi.getIcon()));
@@ -289,6 +299,7 @@ public class ActivityMap extends ActivityMenuBase {
 					} else {
 						_slidingUpPanel.hidePanel();
 					}
+					//center map on clicked marker
 					LatLng center = marker.getPosition();
 					moveToLocation(CameraUpdateFactory.newLatLng(center));
 					refreshMapBounds();
@@ -385,6 +396,7 @@ public class ActivityMap extends ActivityMenuBase {
 					firstCollapse = true;
 					firstAnchored = true;
 					adjustLayoutToPanel();
+					
 				}    	
 			});			
 		}
@@ -816,6 +828,8 @@ public class ActivityMap extends ActivityMenuBase {
 			_buttonsContainer.setVisibility(View.VISIBLE);
 			//NOTE: this is to convert dp to pixels
 			height = (int) Math.ceil(height * _logicalDensity);
+		}else if(_slidingUpPanel.isPanelHidden()){
+			_buttonsContainer.setVisibility(View.VISIBLE);
 		}
 		
 		if (_mMap != null) {
@@ -981,6 +995,16 @@ public class ActivityMap extends ActivityMenuBase {
 			_selectedMarker = null;
 			_selectedPoi = null;
 	   }
+	}
+	
+	private void adjustZoomVisibility(int orientation){
+		if(orientation == Configuration.ORIENTATION_LANDSCAPE){
+			_zoomInButton.setVisibility(View.GONE);
+			_zoomOutButton.setVisibility(View.GONE);
+		}else{
+			_zoomInButton.setVisibility(View.VISIBLE);
+			_zoomOutButton.setVisibility(View.VISIBLE);
+		}
 	}
 
 }

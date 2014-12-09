@@ -41,25 +41,37 @@
 		        android:layout_alignParentTop="true"
 		        android:background="@drawable/map_button_style"
 		        android:src="@drawable/icon_locate" />
-
-	    	<ImageButton
-		    	android:id="@+id/buttonZoomIn"	
-		    	android:background="@drawable/map_button_style"
-		        style="?android:attr/buttonStyleSmall"
-		        android:layout_alignParentRight="true"
-		        android:layout_alignParentBottom="true"
-		        android:layout_width="wrap_content"
-		        android:layout_height="wrap_content"
-		        android:src="@drawable/icon_zoom_in" />
-		    <ImageButton
-		    	android:id="@+id/buttonZoomOut"	
-		    	android:background="@drawable/map_button_style"
-		        style="?android:attr/buttonStyleSmall"
-		        android:layout_toLeftOf="@+id/buttonZoomIn"
-		        android:layout_alignParentBottom="true"
-		        android:layout_width="wrap_content"
-		        android:layout_height="wrap_content"
-		        android:src="@drawable/icon_zoom_out" />
+			
+		    <RelativeLayout
+			    android:id="@+id/zoomButtons"
+			    android:layout_width="wrap_content" 
+		    	android:layout_height="wrap_content"
+		    	android:layout_alignParentRight="true"
+			    android:layout_alignParentBottom="true"
+			    android:layout_marginBottom="15sp"
+			    android:orientation="vertical">
+		    
+		    	<ImageButton
+			    	android:id="@+id/buttonZoomIn"	
+			    	android:background="@drawable/map_button_style"
+			        style="?android:attr/buttonStyleSmall"
+			        android:layout_alignParentRight="true"
+			        android:layout_above="@+id/buttonZoomOut"
+			        android:layout_width="wrap_content"
+			        android:layout_height="wrap_content"
+			        android:layout_marginBottom="3sp"
+			        android:src="@drawable/icon_zoom_in" />
+			    <ImageButton
+			    	android:id="@+id/buttonZoomOut"	
+			    	android:background="@drawable/map_button_style"
+			        style="?android:attr/buttonStyleSmall"			        
+			        android:layout_alignParentRight="true"
+			        android:layout_alignParentBottom="true"
+			        android:layout_width="wrap_content"
+			        android:layout_height="wrap_content"
+			        android:src="@drawable/icon_zoom_out" />
+			    
+			</RelativeLayout>
 		    
 		</RelativeLayout>
 		
