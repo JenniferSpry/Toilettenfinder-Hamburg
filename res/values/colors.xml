@@ -8,13 +8,7 @@
     <color name="dark_grey">#777777</color>
     
     <color name="bfhh_green">#BCD233</color>
-    <color name="bfhh_blue">#000033</color>
-    
-    <color name="text">#ffffff</color>
-    <color name="lime_light">#e3fe89</color>
-    <color name="lime_superlight">#f1fec4</color>
-    <color name="lime_dark_button">#404b19</color>
-    <color name="lime_superdark_text">#151908</color>
-    <color name="lime_grey_medium">#889852</color>
+    <color name="bfhh_green_dark">#7d9100</color>
+    <color name="bfhh_green_gradient_light">#e1ff80</color>
     
 </resources>

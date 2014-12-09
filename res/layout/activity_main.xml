@@ -9,7 +9,7 @@
 	    android:gravity="bottom"
 	    sothree:panelHeight="110dp"
 	    app:collapsedHeight="110dp"
-	    app:shadowHeight="4dp"
+	    app:shadowHeight="10dp"
 	    app:fadeColor="#ffffff"
 	    app:overlay="true"
 	    app:flingVelocity="0.1f">
@@ -48,7 +48,6 @@
 		    	android:layout_height="wrap_content"
 		    	android:layout_alignParentRight="true"
 			    android:layout_alignParentBottom="true"
-			    android:layout_marginBottom="15sp"
 			    android:orientation="vertical">
 		    
 		    	<ImageButton
@@ -92,7 +91,7 @@
 	       android:layout_height="110dp"
 	       android:gravity="top"
 	       android:padding="10dp"
-	       android:background="@color/lime_light"
+	       android:background="@drawable/slider_top_style"
 	       android:orientation="vertical">  
         
 		    <!-- Name -->
@@ -103,8 +102,7 @@
 		        android:layout_alignParentLeft="true"
 		        android:layout_toLeftOf="@+id/distance_detail"
 		        android:textSize="@dimen/detail_text"
-		        android:textStyle="bold"
-		        android:textColor="@color/lime_superdark_text" />
+		        android:textStyle="bold" />
 		
 			<!-- Distance -->
 			<TextView
@@ -114,17 +112,15 @@
 		        android:layout_alignParentRight="true"
 		        android:layout_marginLeft="10sp"
 			    android:gravity="right"
-			    android:textSize="@dimen/detail_text"
-			    android:textColor="@color/lime_superdark_text"/>
+			    android:textSize="@dimen/detail_text"/>
 		
-		<!-- Address -->
+			<!-- Address -->
 			<TextView
 				android:id="@+id/address_detail"
 				android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
 				android:layout_marginTop="2dp"
 				android:layout_below="@id/name_detail"
-				android:textColor="@color/lime_superdark_text"
 				android:textSize="@dimen/detail_text" />		
 		
 		</RelativeLayout>
@@ -133,7 +129,7 @@
 			android:layout_width="fill_parent"
 			android:layout_height="wrap_content"
 			android:layout_below="@id/header_view"
-			android:background="@color/lime_superlight" >
+			android:background="@color/white" >
 			
 			<RelativeLayout
 		       android:id="@+id/scroll_view"
@@ -149,7 +145,6 @@
 				    android:id="@+id/description_detail"
 					android:layout_width="wrap_content"
 					android:layout_height="wrap_content"
-					android:textColor="@color/lime_superdark_text"
 					android:textStyle="italic"
 				    android:textSize="@dimen/detail_text" />
 				
@@ -165,23 +160,22 @@
 				    android:textSize="@dimen/detail_text" />
 				
 				<View
-				    android:id="@+id/separator_2"
+				    android:id="@+id/separator_1"
 				    android:layout_width="fill_parent"
 				    android:layout_height="1dp"
 				    android:layout_below="@id/url_detail"
 				    android:layout_marginBottom="10dp"
 				    android:layout_marginTop="10dp"
-				    android:background="@color/lime_superdark_text"/>
+				    android:background="@color/black"/>
 				
 				<!-- Route -->
 				<TextView
 				    android:id="@+id/find_route"
 					android:layout_width="wrap_content"
 					android:layout_height="wrap_content"
-					android:layout_below="@id/separator_2"
+					android:layout_below="@id/separator_1"
 					android:paddingBottom="10sp"
 					android:text="Route finden:"
-					android:textColor="@color/lime_superdark_text"
 					android:textStyle="bold"
 				    android:textSize="@dimen/detail_text" />
 				
@@ -197,40 +191,33 @@
 						android:layout_width="0dp"
 					    android:layout_height="60dp"
 					    android:layout_weight="1"
-					    android:text="Karte"
-					    android:textSize="@dimen/detail_text"
-					    android:background="@color/lime_dark_button"
-			        	android:textColor="@color/lime_superlight" />
+					    android:text="Karte" />
 					<Button
 					    android:id="@+id/route_text"
 						android:layout_width="0dp"
 					    android:layout_height="60dp"
 					    android:layout_weight="1"
 					    android:layout_marginLeft="15sp"
-					    android:text="Text"
-					    android:textSize="@dimen/detail_text" 
-					    android:background="@color/lime_dark_button"
-			        	android:textColor="@color/lime_superlight" />
+					    android:text="Text"  />
 			
 				</LinearLayout>	
 				
 				<View
-				    android:id="@+id/separator_3"
+				    android:id="@+id/separator_2"
 				    android:layout_width="fill_parent"
 				    android:layout_height="1dp"
 				    android:layout_below="@id/route_btns"
-				    android:background="@color/lime_superdark_text"/>
+				    android:background="@color/black"/>
 				
 				<!-- Comment on POI-->
 			    <TextView
 			        android:id="@+id/toilet_comment"
 			        android:layout_width="wrap_content"
 			        android:layout_height="wrap_content"
-			        android:layout_below="@id/separator_3"
+			        android:layout_below="@id/separator_2"
 			        android:paddingBottom="5sp"
 			        android:paddingTop="15sp"
 			        android:text="@string/toilet_comment"
-			        android:textColor="@color/lime_superdark_text"
 			        android:textSize="@dimen/detail_text"
 			        android:textStyle="bold" />
 			    
@@ -242,7 +229,6 @@
 			        android:layout_below="@id/toilet_comment"
 			        android:paddingBottom="5sp"
 			        android:text="@string/toilet_mail_field_description"
-			        android:textColor="@color/lime_superdark_text"
 			        android:textStyle="italic"
 			        android:textSize="@dimen/detail_text_small" />
 			    
@@ -254,7 +240,7 @@
 			        android:layout_below="@id/email_field_comment"
 			        android:ems="10"
 			        android:hint="E-Mail*"
-			        android:textColorHint="@color/lime_grey_medium"
+			        android:textColorHint="@color/grey"
 			        android:inputType="textEmailAddress" />
 			    
 			    <!-- Name Field -->
@@ -265,7 +251,7 @@
 			        android:layout_below="@id/email_field"
 			        android:ems="10"
 			        android:hint="Name*"
-			        android:textColorHint="@color/lime_grey_medium"
+			        android:textColorHint="@color/grey"
 			        android:inputType="textEmailAddress" />
    
 			    
@@ -278,25 +264,20 @@
 			        android:layout_weight="0.91"
 			        android:ems="5"
 			        android:hint="Kommentar"
-			        android:textColorHint="@color/lime_grey_medium"
+			        android:textColorHint="@color/grey"
 			        android:inputType="textMultiLine" >
-			    </EditText>
-						    
-			    
+			    </EditText>		    
 			      
 			    <!-- Send Comment Button -->
 			    <Button
 			        android:id="@+id/button_send_comment"
 			        android:layout_width="fill_parent"
-			        android:layout_height="wrap_content"
-			        android:minHeight="60dp"
+			        android:layout_height="60dp"
 			        android:layout_below="@id/comment_field"
 			        android:layout_weight="1"
 			        android:layout_marginTop="15sp"
 			        android:gravity="center"
-			        android:text="@string/toilet_button_send"
-			        android:background="@color/lime_dark_button"
-			        android:textColor="@color/lime_superlight"  />
+			        android:text="@string/toilet_button_send"/>
 			
 		    </RelativeLayout>	
 		</ScrollView>

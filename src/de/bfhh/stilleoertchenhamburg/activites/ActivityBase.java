@@ -3,7 +3,6 @@ package de.bfhh.stilleoertchenhamburg.activites;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 
-import de.bfhh.stilleoertchenhamburg.LocationUpdateService;
 import de.bfhh.stilleoertchenhamburg.NetworkUtil;
 import de.bfhh.stilleoertchenhamburg.TagNames;
 
@@ -15,7 +14,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.net.NetworkInfo.State;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;

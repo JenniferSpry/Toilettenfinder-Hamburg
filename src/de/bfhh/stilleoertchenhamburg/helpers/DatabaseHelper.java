@@ -34,9 +34,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 	//refresh Data if older than two hours
 	// TODO: set to two days
 	private final static Long MAX_TIME_DELTA = 2 * 60 * 60 * 1000L;
-	
-	private int poisInDatabase = 0;
-	
+		
 	private final static String PREF_FILE_NAME = "DataAgeSettings";
 	private final static String PREF_KEY_DATA_AGE = "age_of_data";
 	private final static String PREF_KEY_POI_AMOUNT = "poi_amount";
@@ -90,7 +88,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 	
 	public boolean isDataStillFresh(Context context){	
 		SharedPreferences pref = context.getApplicationContext().getSharedPreferences(PREF_FILE_NAME, 0); // 0 = private mode
-		poisInDatabase = pref.getInt(PREF_KEY_POI_AMOUNT, 0);
+		int poisInDatabase = pref.getInt(PREF_KEY_POI_AMOUNT, 0);
 		Log.d("refreshAllPOI", "POI in DB: "+poisInDatabase);
 		if (poisInDatabase < 1){
 			return false;
@@ -113,9 +111,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 	public void refreshAllPOI(List<POI> pois, Context context) {
         SQLiteDatabase db = this.getWritableDatabase();
         clearData(db);
- 
-        poisInDatabase = pois.size();
-        
+         
         for (POI poi : pois){
         	ContentValues values = new ContentValues();
             values.put(KEY_ID, poi.getId());
@@ -134,13 +130,12 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         // Time of last Update and POI amount in DB tp sharedPreferences
 		SharedPreferences pref = context.getApplicationContext().getSharedPreferences(PREF_FILE_NAME, 0); // 0 = private mode
 		Editor edit = pref.edit();
-		edit.putInt(PREF_KEY_POI_AMOUNT, poisInDatabase);
-		Log.d("refreshAllPOI", "POI in DB: "+poisInDatabase);
+		edit.putInt(PREF_KEY_POI_AMOUNT, pois.size());
+		Log.d("refreshAllPOI", "POI in DB: "+pois.size());
 		edit.putLong(PREF_KEY_DATA_AGE, new Date().getTime());
 		edit.apply();
      }
 	
-	// TODO: This should be used with lat, long and radius
 	public ArrayList<POI> getAllPOI(){
 		ArrayList<POI> poiList = new ArrayList<POI>();
 		
