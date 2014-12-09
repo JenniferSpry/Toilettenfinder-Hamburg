@@ -463,10 +463,13 @@ public class ActivityMap extends ActivityMenuBase {
 			Log.d("Map onResume", "Service bound");	
 			
 			adjustLayoutToPanel(); // needed here because of strange slider behavior			
-		
+			
+			
 			//check whether Activity was started by onclick in List, if so _clickedPoi is set (see onNewIntent())
             if(_selectedPoi != null){                
                 if (_mMap != null){
+                	updateSliderContent(_selectedPoi);
+    				selectMarker(_selectedPoi);
                     //set distance to user, otherwise slider will show 0 m
                     if(_userLat != 0.0d && _userLng != 0.0d){
                     	_selectedPoi = POIHelper.setDistanceSinglePOIToUser(_selectedPoi, _userLat, _userLng);
@@ -475,21 +478,24 @@ public class ActivityMap extends ActivityMenuBase {
                     _mMap.animateCamera(CameraUpdateFactory.newLatLng(_selectedPoi.getLatLng()));
                     updateSliderContent(_selectedPoi);
                     Marker marker = null;
-                    //marker not on map (not one of the closest ten markers?)
+                    //marker not on map 
                     if(!_markerMap.containsKey(_selectedPoi.getId())){
                         Log.d("3454564653w4r onResume _clickedPOI", "adding marker to map and showing panel");
                         //add marker to mMap and to lists
                         marker = _mMap.addMarker(POIHelper.getMarkerOptionsForPOI(_selectedPoi, true));    
                         _markerMap.put(_selectedPoi.getId(), marker);
                         _markerPOIIdMap.put(marker.getId(), _selectedPoi.getId());
+                        _slidingUpPanel.showPanel();
                     }else{ //marker already set
                         Log.d("{{{{{{7{ onResume _clickedPOI", "marker already on map");
                         marker = _markerMap.get(_selectedPoi.getId());
                         _selectedMarker = marker;
                     }
-                    _slidingUpPanel.showPanel();
+                    
                 }
-            }   
+            }else{//selectedPoi = null
+            	_slidingUpPanel.hidePanel();
+            }
 		}
 	}//end onResume
 	
@@ -967,7 +973,13 @@ public class ActivityMap extends ActivityMenuBase {
 	   if(_slidingUpPanel.isPanelHidden()){
 		   ActivityMap.super.onBackPressed();
 	   } else {
+		   //hide slider and put selected pin back to normal
 		   _slidingUpPanel.hidePanel();
+		   	if (_selectedMarker != null){
+				_selectedMarker.setIcon(BitmapDescriptorFactory.fromResource(_selectedPoi.getIcon()));
+			}
+			_selectedMarker = null;
+			_selectedPoi = null;
 	   }
 	}
 
