@@ -39,6 +39,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 	
 	private final static String PREF_FILE_NAME = "DataAgeSettings";
 	private final static String PREF_KEY_DATA_AGE = "age_of_data";
+	private final static String PREF_KEY_POI_AMOUNT = "poi_amount";
 	  
 	private final static String TABLE_POIS = "toilets";
 	private final static String KEY_ID = "id";
@@ -87,11 +88,13 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 		onCreate(db);
 	}
 	
-	public boolean isDataStillFresh(Context context){
+	public boolean isDataStillFresh(Context context){	
+		SharedPreferences pref = context.getApplicationContext().getSharedPreferences(PREF_FILE_NAME, 0); // 0 = private mode
+		poisInDatabase = pref.getInt(PREF_KEY_POI_AMOUNT, 0);
+		Log.d("refreshAllPOI", "POI in DB: "+poisInDatabase);
 		if (poisInDatabase < 1){
 			return false;
 		}
-		SharedPreferences pref = context.getApplicationContext().getSharedPreferences(PREF_FILE_NAME, 0); // 0 = private mode
 		Long lastRefreshTime = pref.getLong(PREF_KEY_DATA_AGE, 0L);
 		Long timeDelta = new Date().getTime() - lastRefreshTime;
 		Log.i("DatabaseHelper", "Last data refresh " + (timeDelta/(1000*60)) + " minutes ago");
@@ -128,9 +131,11 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         
         db.close();
         
-        // Update Time of last Update
+        // Time of last Update and POI amount in DB tp sharedPreferences
 		SharedPreferences pref = context.getApplicationContext().getSharedPreferences(PREF_FILE_NAME, 0); // 0 = private mode
 		Editor edit = pref.edit();
+		edit.putInt(PREF_KEY_POI_AMOUNT, poisInDatabase);
+		Log.d("refreshAllPOI", "POI in DB: "+poisInDatabase);
 		edit.putLong(PREF_KEY_DATA_AGE, new Date().getTime());
 		edit.apply();
      }
