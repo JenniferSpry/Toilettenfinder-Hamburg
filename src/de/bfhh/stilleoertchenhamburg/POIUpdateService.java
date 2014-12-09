@@ -109,8 +109,8 @@ public class POIUpdateService extends IntentService {
 						POI poi = new POI(
 								c.getInt(ID),
 								c.getString(NAME),
-								c.getString(ADDRESS),
-								c.getString(DESCR),
+								c.getString(ADDRESS).trim(),
+								c.getString(DESCR).trim(),
 								c.getString(WEBSITE),
 								c.getDouble(LAT),
 								c.getDouble(LNG));
