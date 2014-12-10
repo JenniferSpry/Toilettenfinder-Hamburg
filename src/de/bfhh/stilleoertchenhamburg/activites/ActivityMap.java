@@ -34,7 +34,6 @@ import android.util.Log;
 import android.view.Display;
 import android.view.View;
 import android.view.ViewTreeObserver.OnGlobalLayoutListener;
-import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -98,10 +97,6 @@ public class ActivityMap extends ActivityMenuBase {
     TextView txtAddress;   
     TextView txtDescription;            
     TextView txtWebsite;
-    private ArrayList<EditText> _editTexts; //holds the edittext fields in slider
-    EditText editName;
-    EditText editEmail;
-    EditText editComment;
     
     //Marker maps and user marker
 	private Marker _personInNeedOfToilette; //person's marker
@@ -180,14 +175,6 @@ public class ActivityMap extends ActivityMenuBase {
 		_slidingUpPanel.setOverlayed(true);
 		_slidingUpPanel.setPanelHeight((int) Math.ceil(PANEL_HEIGHT * _logicalDensity));//dp to px
 		_slidingUpPanel.hidePanel();
-		
-		_editTexts = new ArrayList<EditText>();
-		editName = (EditText) findViewById(R.id.name_field);
-		editEmail = (EditText) findViewById(R.id.email_field);
-		editComment = (EditText) findViewById(R.id.comment_field);
-		_editTexts.add(editName);
-		_editTexts.add(editEmail);
-		_editTexts.add(editComment);
 
 		//LocationUpdateReceiver
 		_locUpdReceiver = new LocationUpdateReceiver(new Handler());
