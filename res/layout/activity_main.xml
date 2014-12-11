@@ -48,6 +48,7 @@
 		    	android:layout_height="wrap_content"
 		    	android:layout_alignParentRight="true"
 			    android:layout_alignParentBottom="true"
+			    android:layout_marginBottom="10sp"
 			    android:orientation="vertical">
 		    
 		    	<ImageButton
@@ -83,7 +84,7 @@
        android:layout_height="match_parent"
        android:gravity="top"
        android:orientation="vertical"
-       android:background="@color/white">  
+       android:background="@color/bfhh_green_very_light">  
        
 	     <RelativeLayout
 	       android:id="@+id/header_view"
@@ -107,7 +108,7 @@
 			<!-- Distance -->
 			<TextView
 			    android:id="@+id/distance_detail"
-				android:layout_width="70dp"
+				android:layout_width="80dp"
 		        android:layout_height="wrap_content"
 		        android:layout_alignParentRight="true"
 		        android:layout_marginLeft="10sp"
@@ -129,7 +130,7 @@
 			android:layout_width="fill_parent"
 			android:layout_height="wrap_content"
 			android:layout_below="@id/header_view"
-			android:background="@color/white" >
+			android:background="@color/bfhh_green_very_light" >
 			
 		<RelativeLayout
 		       android:id="@+id/scroll_view"
