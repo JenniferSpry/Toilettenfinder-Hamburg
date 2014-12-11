@@ -1,6 +1,9 @@
 package de.bfhh.stilleoertchenhamburg;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -11,6 +14,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 
+import com.android.volley.AuthFailureError;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.VolleyLog;
@@ -95,7 +99,7 @@ public class POIUpdateService extends IntentService {
 					final String LAT = "latitude";
 				
 				try {
-					//Log.d("JSON", json.toString());
+					Log.d("JSON", json.toString());
 					
 					ArrayList<POI> poiList = new ArrayList<POI>();
 					
@@ -105,8 +109,8 @@ public class POIUpdateService extends IntentService {
 						POI poi = new POI(
 								c.getInt(ID),
 								c.getString(NAME),
-								c.getString(ADDRESS),
-								c.getString(DESCR),
+								c.getString(ADDRESS).trim(),
+								c.getString(DESCR).trim(),
 								c.getString(WEBSITE),
 								c.getDouble(LAT),
 								c.getDouble(LNG));
@@ -129,15 +133,15 @@ public class POIUpdateService extends IntentService {
 			public void onErrorResponse(VolleyError error) {
 				VolleyLog.d("Error: " + error.getMessage());
 				}
-			}) {
-//			// TODO: lets use this later to make sure our "API" only responds to this app
-//			@Override
-//            public Map<String, String> getHeaders() throws AuthFailureError {
-//                HashMap<String, String> headers = new HashMap<String, String>();
-//                headers.put("Content-Type", "application/json");
-//                headers.put("apiKey", "xxxxxxxxxxxxxxx");
-//                return headers;
-//            }
+			}
+		){     
+			@Override
+			public Map<String, String> getHeaders() throws AuthFailureError { 
+				Map<String, String> headers = new HashMap<String, String>();
+				headers.put("Content-Type", "application/json");
+				headers.put("authKey", AppController.getInstance().getAuthKey());
+				return headers;
+			};
 		};
 	
 		Log.d("REQUEST", req.toString());

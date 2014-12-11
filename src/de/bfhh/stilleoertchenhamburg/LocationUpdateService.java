@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.location.LocationProvider;
 import android.os.AsyncTask;
 import android.os.Binder;
 import android.os.Bundle;
@@ -18,9 +19,7 @@ import android.widget.Toast;
 public class LocationUpdateService extends Service {
 	
 	private static final String TAG = LocationUpdateService.class.getSimpleName();
-	
-	private int result = Activity.RESULT_CANCELED;
-	
+		
 	private static final int TWO_MINUTES = 1000 * 60 * 2;
 		
 	private LocationManager mlocationManager;
@@ -34,7 +33,7 @@ public class LocationUpdateService extends Service {
 		super();
 	}
 	
-	protected Location getLastKnownLocation() {
+	public Location getLastKnownLocation() {
 		//get list of enabled providers
 	    List<String> providers = mlocationManager.getProviders(true);
 	    Location bestLocation = null;
@@ -54,23 +53,40 @@ public class LocationUpdateService extends Service {
 	    return bestLocation;
 	}
 	
+	public boolean isProviderEnabled(String provider){
+		if(mlocationManager != null && mlocationManager.isProviderEnabled(provider)){
+			return true;
+		}else{
+			return false;
+		}
+	}
 	
-	public void updateLocation(){
+	/**
+	 * 
+	 * @param gpsInterval how often to ask for gps update in milliseconds
+	 * @param gpsDistanceChange minimum distance between location gps updates, in meters
+	 * @param networkInterval gpsInterval how often to ask for network update in milliseconds
+	 * @param networkDistanceChange minimum distance between location network updates, in meters
+	 */
+	public void updateLocation(int gpsInterval, float gpsDistanceChange, int networkInterval, float networkDistanceChange){
+		Log.d(TAG, "start polling Location");
 		// Starting point for this Service
 		mlocationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
 		locUpdListener = new LocationUpdateListener();
-		//register for location Updates every 5 seconds, minimum distance change: 3 meters
-		requestGPSUpdates(5000, 3.0f);
-		requestNetworkUpdates(5000, 1.0f);
+		//register for location Updates
+		requestGPSUpdates(gpsInterval, gpsDistanceChange);
+		requestNetworkUpdates(networkInterval, networkDistanceChange);
 		//call getLastKnownLocation() from within an AsyncTask and
 		//publish results once location is received
 		new LocationUpdateTask().execute();							
 	}
 	
 	public void stopLocationUpdates(){
+		Log.d(TAG, "stop polling Location");
 		if(mlocationManager != null){
-			Log.d("stopLocationUpdates", "Removing location updates");
+			Log.i("stopLocationUpdates", "Removing location updates");
 			mlocationManager.removeUpdates(locUpdListener);
+			locUpdListener = null;
 		}
 	}
 	
@@ -110,6 +126,7 @@ public class LocationUpdateService extends Service {
 	//return local binder, through which activity can get service instance
 	@Override
 	public IBinder onBind(Intent intent) {
+		Log.d("LocationUpdateService onBind()", "Service is bound");
 		return mBinder;
 	}
 	
@@ -125,9 +142,7 @@ public class LocationUpdateService extends Service {
 	    super.onDestroy();
 	    Log.e(TAG, "in onDestroy in LocationService class");
 	    //unregister from location updates 
-	    /*if(locUpdListener != null){
-	    	mlocationManager.removeUpdates(locUpdListener);
-	    }*/
+	    stopLocationUpdates();
 	    stopSelf();
 	}
 	
@@ -157,10 +172,7 @@ public class LocationUpdateService extends Service {
 				if(isBetterLocation(currentLocation, userLocation)){
 					//set current Location in class
 		        	setCurrentUserLocation(currentLocation);
-		        	
-					result = Activity.RESULT_OK;
-					
-					publishUserLocation(result, currentLocation);
+					publishUserLocation(Activity.RESULT_OK, currentLocation);
 				}
 				
 			} else { //if the location is null, set location to standard and publish as RESULT_CANCELLED					
@@ -168,18 +180,16 @@ public class LocationUpdateService extends Service {
 				if(standardLocation != null){
 					//set current location to standard location
 		        	setCurrentUserLocation(standardLocation);
-					
-					result = Activity.RESULT_CANCELED;
-					publishUserLocation(result, standardLocation);
+					publishUserLocation(Activity.RESULT_CANCELED, standardLocation);
 				}else{
 					throw new IllegalArgumentException("Standard Location is null");
 				}
 				
 			}
         	//Toast that location was received
-        	Toast.makeText(getApplicationContext(),
-	                  "Location successfully received.  LAT: " + Double.valueOf(userLocation.getLatitude()) + ", LNG: " + Double.valueOf(userLocation.getLongitude()),
-	                  Toast.LENGTH_LONG).show();
+        	//Toast.makeText(getApplicationContext(),
+	          //        "Location successfully received.  LAT: " + Double.valueOf(userLocation.getLatitude()) + ", LNG: " + Double.valueOf(userLocation.getLongitude()),
+	            //      Toast.LENGTH_LONG).show();
         	
         }
 
@@ -192,7 +202,7 @@ public class LocationUpdateService extends Service {
 	
 	
 	//Returns whether location is a better location than currentBestLocation
-	protected boolean isBetterLocation(Location location, Location currentBestLocation) {
+	public boolean isBetterLocation(Location location, Location currentBestLocation) {
         if (currentBestLocation == null) {
             // A new location is always better than no location
             return true;
@@ -256,9 +266,11 @@ public class LocationUpdateService extends Service {
 					  intent.putExtra(TagNames.EXTRA_LAT, location.getLatitude());
 					  intent.putExtra(TagNames.EXTRA_LONG, location.getLongitude());    
 		              intent.putExtra(TagNames.EXTRA_PROVIDER, location.getProvider());
+		              intent.putExtra(TagNames.EXTRA_LOCATION_RESULT, Activity.RESULT_OK);
 		              //broadcast to all activities that want location updates
 		              sendBroadcast(intent);     
 		              setCurrentUserLocation(location);
+		              oldLocation = location;
 		          }   		  
 			  }
 			  
@@ -267,20 +279,20 @@ public class LocationUpdateService extends Service {
 		  @Override
 		  public void onStatusChanged(String provider, int status, Bundle extras) {
 			  //int status: 0 -> out of service; 1 -> temporarily unavailable; 2 -> available
-			  Toast.makeText(getApplicationContext(), provider + "'s status changed to "+status +"!",
-				Toast.LENGTH_SHORT).show();
+			  //Toast.makeText(getApplicationContext(), provider + "'s status changed to "+status +"!",
+				//Toast.LENGTH_SHORT).show();
 		  }
 	
 		  @Override
 		  public void onProviderEnabled(String provider) {
-			  Toast.makeText(getApplicationContext(), "Provider " + provider + " enabled!",
-		        Toast.LENGTH_SHORT).show();	
+			  //Toast.makeText(getApplicationContext(), "Provider " + provider + " enabled!",
+		        //Toast.LENGTH_SHORT).show();	
 		  }
 	
 		  @Override
 		  public void onProviderDisabled(String provider) {
-			  Toast.makeText(getApplicationContext(), "Provider " + provider + " disabled!",
-		        Toast.LENGTH_SHORT).show();
+			  //Toast.makeText(getApplicationContext(), "Provider " + provider + " disabled!",
+		        //Toast.LENGTH_SHORT).show();
 		  }
 		  
 		  //TODO: Check here, whether providers are being disabled while the app

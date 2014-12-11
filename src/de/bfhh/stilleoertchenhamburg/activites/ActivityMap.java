@@ -2,12 +2,15 @@ package de.bfhh.stilleoertchenhamburg.activites;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
-
+import java.util.Map;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnCameraChangeListener;
+import com.google.android.gms.maps.GoogleMap.OnMapClickListener;
+import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
@@ -15,21 +18,28 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.sothree.slidinguppanel.SlidingUpPanelLayout;
+import com.sothree.slidinguppanel.SlidingUpPanelLayout.PanelSlideListener;
 
 import de.bfhh.stilleoertchenhamburg.AppController;
 import de.bfhh.stilleoertchenhamburg.LocationUpdateService;
-import de.bfhh.stilleoertchenhamburg.POIController;
 import de.bfhh.stilleoertchenhamburg.R;
 import de.bfhh.stilleoertchenhamburg.TagNames;
+import de.bfhh.stilleoertchenhamburg.helpers.POIHelper;
 import de.bfhh.stilleoertchenhamburg.models.POI;
 
+import android.text.method.LinkMovementMethod;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.Display;
 import android.view.View;
 import android.view.ViewTreeObserver.OnGlobalLayoutListener;
+import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -38,703 +48,963 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.content.res.Configuration;
+import android.graphics.Point;
 import android.location.Location;
+import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
-import android.provider.Settings;
 
 
-/*
+/**
  * This activity is started by the ActivitySpashScreen after the IntentService 
  * has finished its task of retrieving a list of POI from the bf-hh server via JSON.
  * This list is also sent to this activity via the starting Intent, as well as
  * the user's current position (retrieved by LocationUpdateService).
  */
 
+/* TODO
+ * 1. AUf Leaks testen
+ * 2. ActivityResult von GPS check zurückgeben
+ */
+
 public class ActivityMap extends ActivityMenuBase {
+
+	private final String TAG = ActivityMap.class.getSimpleName();
 	
-	private static final String TAG = ActivitySplashScreen.class.getSimpleName();
+	//Heights and paddings in dp
+	private final int PANEL_HEIGHT = 110;
+	private final int MAP_PADDING = 5;
+	private final int BUTTONS_PADDING = 10;
 
-    private static GoogleMap mMap;
-    private static Location userLocation;
-    
-    private static final String BUNDLE_POILIST = "com.bfhh.stilleoertchenhamburg.BUNDLE_POILIST";
-    private static final String BUNDLE_LATITUDE = "com.bfhh.stilleoertchenhamburg.BUNDLE_LATITUDE";
-    private static final String BUNDLE_LONGITUDE = "com.bfhh.stilleoertchenhamburg.BUNDLE_LONGITUDE";
-    
-    private static POIController poiController; //class that handles Broadcast, methods return List<POI>
-    
-    private ImageButton myLocationButton; //Button to get back to current user location on map
-    
-    final private LatLng HAMBURG = new LatLng(53.5509517,9.9936818); //standard position in HH
-    
-    private static Marker personInNeedOfToilette; //person's marker
-	private ArrayList<POI> toiletList; //POI received from POIUpdateService
-	private static ArrayList<MarkerOptions> markerList;
-	private static HashMap<Integer, Marker> visiblePOI;
-	private LatLngBounds mapBounds; //bounds of visible map, updated onCameraChange
-	//private List<LatLng> cornersLatLng; // contains two LatLng decribing northeastern and southwestern points on visible map
+	//Google map instance
+	private GoogleMap _mMap;
+	//Visible mapBounds
+	private LatLngBounds _mapBounds; //bounds of visible map, updated onCameraChange
+	private LatLngBounds.Builder _builder;
 	
-	private ArrayList<String> keyNames;
+	//Buttons on map
+	private RelativeLayout _buttonsContainer; //Zoom and my location button
+	private ImageButton _myLocationButton; //Button to get back to current user location on map
+	private ImageButton _zoomInButton;
+	private ImageButton _zoomOutButton;
 	
-	private static double userLat;
-	private static double userLng;
+	//Slider plus content
+	private SlidingUpPanelLayout _slidingUpPanel;
+	TextView txtName;   
+    TextView txtDistance;    
+    TextView txtAddress;   
+    TextView txtDescription;            
+    TextView txtWebsite;
+    private ArrayList<EditText> _editTexts; //holds the edittext fields in slider
+    EditText editName;
+    EditText editEmail;
+    EditText editComment;
+    
+    //Marker maps and user marker
+	private Marker _personInNeedOfToilette; //person's marker
+	private HashMap<Integer, Marker> _markerMap;//
+	private HashMap<String, Integer> _markerPOIIdMap; // marker ids mapped to poi ids
+	//List of all POI in bfhh database
+	private ArrayList<POI> _allPOIList; //POI received from POIUpdateService
 	
-	private LatLngBounds.Builder builder;
-	private POIReceiver poiReceiver;
-	private LocationUpdateReceiver locUpdReceiver;
-	private boolean poiReceiverRegistered;
-	private boolean locUpdReceiverRegistered;
-	
-	private LocationUpdateService service;
-	
-	//camera position is saved onPause() so we can restore old view
-	private CameraPosition cp;
-	protected boolean changeGPSSettings;
-	private static Location standardLocation;
-	private static ActivityMap instance;
-	
-    //not really used right now, but will be needed later
-    public static class POIReceiver extends BroadcastReceiver {
+	//User location
+	private Location _userLocation;
+	private double _userLat;
+	private double _userLng;
+	private boolean _hasUserLocation;
 
-        private final Handler handler; // Handler used to execute code on the UI thread
-		private ActivityMap main;
+	//Location Receiver and service
+	private LocationUpdateService _locUpdateService;
+	private LocationUpdateReceiver _locUpdReceiver;
+	private boolean _locUpdReceiverRegistered;
+	public boolean _isLowUpdateInterval; //location updates less often
+	protected boolean _firstLocationPull; //first time location was received?
 
-        public POIReceiver(Handler handler) {
-            this.handler = handler;
-        }
-        
-        void setMainActivityHandler(ActivityMap main){
-            this.main = main;
-        }
+	//Display dimensions
+	private int _displayHeight;
+	private float _logicalDensity;
 
-        @Override
-        public void onReceive(final Context context, Intent intent) {
-            /*String action = intent.getAction();
-            if(action.equals(TagNames.BROADC_POIS)){//action sent by POIUpdateService
-            	
-            	//TODO: How to check whether this typecast worked?
-          	  	//get POI List
-	            ArrayList<HashMap<String, String>> poiList = (ArrayList<HashMap<String,String>>) intent.getSerializableExtra("poiList");
-          	  	if (poiList != null){
-          	  		//create poiController Object
-          		  	final POIController pc = new POIController(poiList);
-          		  	main.setPOIController(pc);
-          		  
-          		  	// Post the UI updating code to our Handler
-          		  	handler.post(new Runnable() {
-          		  		@Override
-          		  		public void run() {
-          		  			//TODO see if userLat and userLng are set
-          		  			updateClosestXMarkers(pc, userLat, userLng, 10);
-          		  		}
-          		  	});
-          	  	}
-            }      */
-        }
-    }
+	//User selected POI (by Pin click or list item click)
+	private POI _selectedPoi;
+	protected Marker _selectedMarker;
 
-    
-    //not really used right now, but will be needed later
-    public static class LocationUpdateReceiver extends BroadcastReceiver {
+	//Display orientation
+	private int orientation;
 
-        private final Handler handler; // Handler used to execute code on the UI thread
-		private ActivityMap main;
-
-        public LocationUpdateReceiver(Handler handler) {
-            this.handler = handler;
-        }
-        
-        void setMainActivityHandler(ActivityMap main){
-            this.main = main;
-        }
-
-        @Override
-        public void onReceive(final Context context, Intent intent) {
-        	Bundle bundle = intent.getExtras();
-            String action = intent.getAction();
-            //Location has been updated (by provider in LocService)
-            if(action.equals(TagNames.BROADC_LOCATION_UPDATED)){
-            	if(bundle != null){
-            		double lat = bundle.getDouble(TagNames.EXTRA_LAT);
-            		double lng = bundle.getDouble(TagNames.EXTRA_LONG);
-            		String provider = bundle.getString(TagNames.EXTRA_PROVIDER);
-            		Log.d("ActivityMap LocationUpdateReceiver", "Location received from "+ provider + ": " + lat  + ", " + lng);
-            		//Toast to show updates
-            		Toast.makeText(context, "Location Update from provider: " + provider + ", Location: LAT " + lat + ", LNG " + lng,
-            				Toast.LENGTH_LONG).show();
-            		//update the user location
-            		Location nLocation = new Location("");
-            		nLocation.setLatitude(lat);
-            		nLocation.setLongitude(lng);
-            		//to call non static methods we need instance of ActivityMap
-            		instance = getInstance();
-            		standardLocation = AppController.getInstance().getStandardLocation();
-            		
-            		if(lat == standardLocation.getLatitude() && lng == standardLocation.getLongitude()){
-						instance.buildAlertMessageGPSSettings();	
-                 	}//TODO: Testing
-            		// if the old userLocation is same as standardLocation and distance to newly received location is greater 10m -> move camera
-            		if(userLocation.getLatitude() == standardLocation.getLatitude() && userLocation.getLongitude() == standardLocation.getLongitude()
-            				&& userLocation.distanceTo(nLocation) > 10.0){
-                 		//instance.moveToLocation(nLocation, 10);
-                 		CameraUpdate cu = instance.getClosestPOIBoundsOnMap(10);
-                 		//CameraPosition cameraPosition = new CameraPosition.Builder().target(
-                               // new LatLng(nLocation.getLatitude(), nLocation.getLongitude())).zoom(12).build();
-                 		mMap.animateCamera(cu);
-
-                 	}
-            		setUserLocation(lat, lng );
-            		instance.deleteOldMarkersFromList();
-            		updateUserAndPOIOnMap(lat, lng);
-
-            		if(poiController == null){
-            			Log.d("ActivityMap LocUpdRec" , "poiController is null");
-            		}           		
-            	}
-            }        
-        }
-    }
-    
-    
-    @Override
-    protected void onResume() {
-        super.onResume();
-        
-        if (checkPlayServices()){
-        	
-	        setUpMapIfNeeded();
-	        
-	        if(!poiReceiverRegistered){
-	    		registerReceiver(poiReceiver, new IntentFilter(TagNames.BROADC_POIS));
-	    		poiReceiverRegistered = true;
-	    	} 
-	        if(!locUpdReceiverRegistered){
-	    		registerReceiver(locUpdReceiver, new IntentFilter(TagNames.BROADC_LOCATION_UPDATED));
-	    		locUpdReceiverRegistered = true;
-	    	}
-	        //bind LocationUpdateService
-	        Intent intent= new Intent(this, LocationUpdateService.class);
-	        bindService(intent, mConnection,  Context.BIND_AUTO_CREATE);
-	        
-	        //set/update map markers
-	        updateClosestXMarkers(poiController, userLat, userLng, 10);
-	        //move camera to user location      
-	        moveToLocation(userLocation, 10);
-	        
-//	        mMap.setOnCameraChangeListener(new OnCameraChangeListener() {
-//	            @Override
-//	            public void onCameraChange(CameraPosition pos) {
-//	                // Move camera.
-//	            	CameraUpdate cu = getClosestPOIBoundsOnMap(10);
-//	            	if(mMap != null){
-//	            		mMap.moveCamera(cu);
-//	                    // Remove listener to prevent position reset on camera move.
-//	                	mMap.setOnCameraChangeListener(null);
-//	                	//get LatLngBounds of current camera position
-//	                	mapBounds = mMap.getProjection().getVisibleRegion().latLngBounds;
-//	                    //setLatLngCornersFromBounds(mapBounds);
-//	            	}
-//	            }			
-//	        });
-	        
-	        mMap.setOnCameraChangeListener(new OnCameraChangeListener() {
-	             @Override
-	             public void onCameraChange(CameraPosition pos) {
-	                 // Move camera.	
-	             	if(mMap != null){
-	                 	//get LatLngBounds of current camera position
-	                 	mapBounds = mMap.getProjection().getVisibleRegion().latLngBounds;
-	                 	setLatLngCornersFromBounds(mapBounds);
-	                 	if (poiController != null){
-	                 		addPOIToMap(poiController.getAllPOI());
-	                 	} else {
-	                 		if(toiletList != null){
-	                 			poiController = new POIController(toiletList);
-	                 		}    		
-	                 	}
-	                 	
-	             	}
-	             }			
-	         });
-			
-	      //Button that will animate camera back to user position
-	        myLocationButton = (ImageButton) findViewById(R.id.mylocation);  
-	        
-			//Location Button Listener
-			myLocationButton.setOnClickListener(new View.OnClickListener() {
-	            public void onClick(View v) {
-	            	//Only move to user location if it isn't the standardLocation
-	            	if( userLocation.getLatitude() != standardLocation.getLatitude()  &&  userLocation.getLongitude() != standardLocation.getLongitude() ){
-	            		moveToLocation(userLocation, 10); //pass user location and amount of POI to display close to user
-	            	}else{//if userLocation == standardLocation (-> no userLoc found), show GPS Settings dialog
-	            		//
-	            		buildAlertMessageGPSSettings();
-	            	}
-	            }
-	        });
-        }
-    }
-    
-    
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        Log.d(TAG, "onCreate");
-        setContentView(R.layout.activity_main);
-        
-        //Register Receiver for POI Updates
-        poiReceiver = new POIReceiver(new Handler());
-        poiReceiver.setMainActivityHandler(this);
-        
-        //LocUpdateReceiver
-        locUpdReceiver = new LocationUpdateReceiver(new Handler());
-        locUpdReceiver.setMainActivityHandler(this);
-        
-        //list of POI that are currently visible on the map
-        visiblePOI = new HashMap<Integer, Marker>();
-        
-        //check the saved instance state:
-        /*
-         * if the activity is closed by pressing back button it is destroyed, but
-         * the application might still be run again by the user.
-         * in that case we have to save the location and poiList in savedInstanceState bundle
-         * and check whether this bundle holds any information here.
-         */
-        if(savedInstanceState != null){ //activity was destroyed and recreated
-        	// Restore value of members from saved state
-            userLat = savedInstanceState.getDouble(BUNDLE_LATITUDE);
-            userLng = savedInstanceState.getDouble(BUNDLE_LONGITUDE);
-            standardLocation = AppController.getInstance().getStandardLocation();
-            setUserLocation(userLat, userLng);
-         	if(userLat == standardLocation.getLatitude() && userLng == standardLocation.getLongitude()){
-         		buildAlertMessageGPSSettings();
-         	}else{
-         		//TODO: check whether location is standardlocation, if yes dont set userlocation
-             	
-         	}
-            toiletList = savedInstanceState.getParcelableArrayList(BUNDLE_POILIST);
-
-        } else { //activity was started from scratch
-        	
-        	 Intent i = getIntent();
-             Bundle bundle = i.getExtras();
-             if(bundle != null){
-             	if(bundle.getDouble(TagNames.EXTRA_LAT) != 0.0 && bundle.getDouble(TagNames.EXTRA_LONG) != 0.0){
-             		//set user Position
-             		userLat = bundle.getDouble(TagNames.EXTRA_LAT);
-             		userLng = bundle.getDouble(TagNames.EXTRA_LONG);
-             		standardLocation = AppController.getInstance().getStandardLocation();
-             		setUserLocation(userLat, userLng);
-             		//if the location is the standard location, show settings dialog
-                 	if(userLat == standardLocation.getLatitude() && userLng == standardLocation.getLongitude()){
-                 		buildAlertMessageGPSSettings();
-                 	}else{
-                 		//TODO: check whether location is standardlocation, if yes dont set userlocation
-                     	
-                 	}
-             	}
-             	
-                int result = bundle.getInt(TagNames.EXTRA_LOCATION_RESULT);
-                if(result == Activity.RESULT_CANCELED){
-                	Log.d("MainActivity:", "Activity.RESULT_CANCELED: standard lat and lng");
-                }
-                //get the toiletList
-                toiletList = i.getParcelableArrayListExtra(TagNames.EXTRA_POI_LIST);
-             }   
-        }
-        //set up POIController with list of toilets received from POIUpdateService
-        if(toiletList != null){
-        	setPOIController(new POIController(toiletList));
-        }else{
-        	Log.d("MainActivity.oncreate():", "toiletList is null");
-        }
+	/**
+	 * Initiate variables
+	 * fetch bundle contents
+	 * register receivers
+	 * 
+	 * Check google play store availability before anything else
+	 * on first opening go to user location and draw POI markers
+	 */
+	@SuppressLint("NewApi")
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		Thread.currentThread().setContextClassLoader(ActivityMap.class.getClassLoader());
+		Log.d(TAG, "onCreate");
+		Toast.makeText(this, "onCreate", Toast.LENGTH_LONG).show();
 		
-		//TODO: put the settings action check somewhere else (LocationUpdateService)
-		if (userLocation == null) {
-			//mylistener.onLocationChanged(userLocation);
-			// leads to the settings because there is no last known location
-			Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-			startActivity(intent);
+		setContentView(R.layout.activity_main);
+		
+		//Display size in pixel
+		Display display = getWindowManager().getDefaultDisplay();
+		Point size = new Point();
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) {
+			_displayHeight = display.getHeight();
+		} else {
+			display.getSize(size);
+			_displayHeight = size.y;
 		}
-    } // end onCreate
-    
-    
-	DialogInterface.OnClickListener onOkListener = new DialogInterface.OnClickListener() {
-        public void onClick(final DialogInterface dialog, final int id) {
-            startActivity(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
-            changeGPSSettings = true;
-            
-        }
-    };
-    
-    DialogInterface.OnClickListener onCancelListener = new DialogInterface.OnClickListener() {
-        public void onClick(final DialogInterface dialog, final int id) {
-            //startActivity(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
-            changeGPSSettings = true;
-           
-        }
-    };
-    
-	//show alert dialog with option to change gps settings
-	private void buildAlertMessageGPSSettings() {
-	    final AlertDialog.Builder builder = new AlertDialog.Builder(ActivityMap.this);
-	    builder.setMessage("Your GPS seems to be disabled, do you want to enable it?")
-	           .setCancelable(false)
-	           .setPositiveButton("Yes", onOkListener)
-	           .setNegativeButton("No", onCancelListener);
-	    final AlertDialog alert = builder.create();
-	    alert.show();
+		//get display density
+		DisplayMetrics metrics = new DisplayMetrics();
+		display.getMetrics(metrics);
+		_logicalDensity = metrics.density;
+
+		//get view Elements
+		_buttonsContainer = (RelativeLayout) findViewById(R.id.mapButtons);
+		_myLocationButton = (ImageButton) findViewById(R.id.buttonToLocation); 
+		_zoomInButton = (ImageButton) findViewById(R.id.buttonZoomIn); 
+		_zoomOutButton = (ImageButton) findViewById(R.id.buttonZoomOut);
+		//if landscape mode, hide zoom buttons entirely
+		orientation = getResources().getConfiguration().orientation;
+		adjustZoomVisibility(orientation);
+		
+		_slidingUpPanel = (SlidingUpPanelLayout) findViewById(R.id.sliding_layout);
+		_slidingUpPanel.setAnchorPoint(0.45f);
+		_slidingUpPanel.setOverlayed(true);
+		_slidingUpPanel.setPanelHeight((int) Math.ceil(PANEL_HEIGHT * _logicalDensity));//dp to px
+		_slidingUpPanel.hidePanel();
+		
+		_editTexts = new ArrayList<EditText>();
+		editName = (EditText) findViewById(R.id.name_field);
+		editEmail = (EditText) findViewById(R.id.email_field);
+		editComment = (EditText) findViewById(R.id.comment_field);
+		_editTexts.add(editName);
+		_editTexts.add(editEmail);
+		_editTexts.add(editComment);
+
+		//LocationUpdateReceiver
+		_locUpdReceiver = new LocationUpdateReceiver(new Handler());
+		_locUpdReceiver.setMainActivityHandler(this);
+		_isLowUpdateInterval = false;
+
+		//list of POI markers that are currently visible on the map
+		_markerMap = new HashMap<Integer, Marker>();
+		_markerPOIIdMap = new HashMap<String, Integer>();
+		
+		//Get bundle contents
+		Bundle bundle = null;
+		CameraPosition cameraPosition = null;
+		//check the saved instance state:
+		if(savedInstanceState != null){ //activity was destroyed and recreated
+			bundle = savedInstanceState;
+			Log.d(TAG, "onCreate from savedInstanceState");
+		} else { 						//activity was started from scratch
+			Log.d(TAG, "onCreate from SplashScreen");
+			Intent i = getIntent();
+			bundle = i.getExtras();
+		}
+
+		if(bundle != null){
+			//set user Position (might be standard location)
+			_userLat = bundle.getDouble(TagNames.EXTRA_LAT);
+			_userLng = bundle.getDouble(TagNames.EXTRA_LONG);
+			//userLocation == standardLocation -> 0 -> false; else -> -1 -> true
+			_hasUserLocation = bundle.getInt(TagNames.EXTRA_LOCATION_RESULT) == -1;
+
+			setUserLocation(_userLat, _userLng);
+			//if the location is the standard location, show settings dialog
+			if(!_hasUserLocation){
+				buildAlertMessageGPSSettings();
+				Log.d("MainActivity:", "Activity.RESULT_CANCELED: standard lat and lng");
+			}
+			//get the poiList
+			_allPOIList = bundle.getParcelableArrayList(TagNames.EXTRA_POI_LIST);
+			//poi selected by user 
+			_selectedPoi = bundle.getParcelable(TagNames.EXTRA_POI); // may be null
+			cameraPosition = bundle.getParcelable(TagNames.EXTRA_CAMERA_POS); // may be null
+		}   
+
+		if(_allPOIList != null){
+			_allPOIList = POIHelper.setDistancePOIToUser(_allPOIList, _userLat, _userLng);
+		} else {
+			Log.d("MainActivity.oncreate():", "_allPOIList is null");
+		}
+		
+		// set map related things
+		if (checkPlayServices()){
+
+			setUpMapIfNeeded();
+			
+			if (cameraPosition != null) {
+				moveToLocation(CameraUpdateFactory.newCameraPosition(cameraPosition));
+				_mMap.getUiSettings().setZoomControlsEnabled(false);
+			} else {
+				moveToLocation(getCameraUpdateForClosestPOIBounds(10));
+			}
+			
+			updatePOIMarkers();
+			if (_selectedPoi != null){
+				updateSliderContent(_selectedPoi);
+				selectMarker(_selectedPoi);
+			}
+			
+			setPeeerOnMap();
+
+			_mMap.setOnCameraChangeListener(new OnCameraChangeListener() {
+				@Override
+				public void onCameraChange(CameraPosition pos) {
+					if(_mMap != null){
+						refreshMapBounds();
+						updatePOIMarkers();
+						Log.d(TAG + " camera changed to pos", pos.toString());
+					}
+				}			
+			});
+
+			_mMap.setOnMapClickListener(new OnMapClickListener() {
+				@Override
+				public void onMapClick(LatLng arg0) {
+					//hide slider and set formerly selected marker back to normal
+					_slidingUpPanel.hidePanel();
+					if (_selectedMarker != null){
+						_selectedMarker.setIcon(BitmapDescriptorFactory.fromResource(_selectedPoi.getIcon()));
+					}
+					_selectedMarker = null;
+					_selectedPoi = null;
+				}
+			});
+			
+			//the slidingUpPanel is shown if the user clicks on a marker
+			_mMap.setOnMarkerClickListener(new OnMarkerClickListener(){
+				@Override
+				public boolean onMarkerClick(Marker marker) { 
+					// set last selected marker back to unselected
+					if (_selectedMarker != null & _selectedPoi != null) {
+						_selectedMarker.setIcon(BitmapDescriptorFactory.fromResource(_selectedPoi.getIcon()));
+					}
+
+					if(_markerPOIIdMap.get(marker.getId()) != null){//is this markers id in the list (if not it is user marker)
+						_selectedPoi = POIHelper.getPoiByIdReference(_markerPOIIdMap, _allPOIList, marker.getId());
+						marker.setIcon(BitmapDescriptorFactory.fromResource(_selectedPoi.getActiveIcon()));
+						updateSliderContent(_selectedPoi);
+						_slidingUpPanel.showPanel();
+						_selectedMarker = marker;
+					} else {
+						_slidingUpPanel.hidePanel();
+					}
+					//center map on clicked marker
+					LatLng center = marker.getPosition();
+					moveToLocation(CameraUpdateFactory.newLatLng(center));
+					refreshMapBounds();
+					return true;
+				}
+			});
+
+			//Location Button Listener
+			_myLocationButton.setOnClickListener(new View.OnClickListener() {
+				public void onClick(View v) {
+					//Only move to user location if it isn't the standardLocation
+					if (_hasUserLocation){
+						moveToLocation(getCameraUpdateForClosestPOIBounds(10));
+						updatePOIMarkers();
+					} else {//show GPS Settings dialog
+						buildAlertMessageGPSSettings();
+					}
+				}
+			});
+			
+			_zoomInButton.setOnClickListener(new View.OnClickListener() {
+				public void onClick(View v) {
+					moveToLocation(CameraUpdateFactory.zoomIn());
+				}
+			});  
+			
+			_zoomOutButton.setOnClickListener(new View.OnClickListener() {
+				public void onClick(View v) {
+					moveToLocation(CameraUpdateFactory.zoomOut());
+				}
+			});
+
+			_slidingUpPanel.setPanelSlideListener(new PanelSlideListener(){
+				private boolean firstCollapse = true;
+				private boolean firstAnchored = true;
+
+				@Override
+				public void onPanelSlide(View panel, float slideOffset) {
+					/*if the panel is slid within close vicinity of the anchorPoint 
+					 * (at 0.75f), expand the panel to that anchorPoint (for some reason
+					 * this doesn't work by only setting slidingUpPanel.setAnchorPoint(0.75f);)
+					 */
+					// TODO: noch mal testen, bei JS geht's auch ohne diesen code
+					if( Math.abs(slideOffset - 0.45f) < 0.02f ) {
+						_slidingUpPanel.expandPanel(0.45f);
+					}
+				}
+
+				@Override
+				public void onPanelCollapsed(View panel) {
+					refreshMapBounds();
+					adjustLayoutToPanel();
+					//clickedMarker may be null
+					if(_selectedMarker == null && _selectedPoi != null && _markerMap != null){
+						_selectedMarker = _markerMap.get(_selectedPoi.getId());
+					}
+					if(_selectedMarker != null){
+						//get distance between map center (gmaps) and clicked marker position
+						float d = getDistanceBewteen(getMapCenter(_mapBounds), _selectedMarker.getPosition());
+						//if panel collapsed for first time (== first shown) and d > 10 meters
+						//if(!firstCollapse && d > 10.0f ){
+							moveToLocation(CameraUpdateFactory.newLatLng(_selectedMarker.getPosition()));
+						//}
+					}
+					firstCollapse = false;
+					firstAnchored = false;
+					
+				}
+
+				@Override
+				public void onPanelExpanded(View panel) {}
+
+				@Override
+				public void onPanelAnchored(View panel) {
+					adjustLayoutToPanel();
+					//move the map up so that clicked marker is visible
+					if(!firstAnchored ){	
+						if(_selectedMarker == null && _selectedPoi != null && _markerMap != null){
+							_selectedMarker = _markerMap.get(_selectedPoi.getId());
+						}
+						if(_selectedMarker != null){
+							LatLng markerPos = _selectedMarker.getPosition();
+							//move position to center map to down a bit
+							LatLng mPlusOffset = new LatLng(markerPos.latitude+0.001f, markerPos.longitude);
+							moveToLocation(CameraUpdateFactory.newLatLng(mPlusOffset));
+						}
+						firstAnchored = true;
+					}
+					
+				}
+
+				@Override
+				public void onPanelHidden(View panel) {
+					firstCollapse = true;
+					firstAnchored = true;
+					adjustLayoutToPanel();
+					
+				}    	
+			});			
+		}
+	} // end onCreate
+	
+
+	/** Override onNewIntent() so that intents sent from other activities
+	 *  are processed when ActivityMap is already running, but in background.
+	 */
+	@Override
+	protected void onNewIntent(Intent intent) {
+	    super.onNewIntent(intent);
+	    setIntent(intent);
+	    
+	    //intent from FragmentToiletList on list item click
+		String action = intent.getAction();
+		Bundle bundle = intent.getExtras();
+		Log.d("onNewIntent Intent received? ", "intent: "+ intent);
+		Log.d("action ",  ""+ action);
+		
+		if(action != null && action.equals(TagNames.ACTION_SHOW_SLIDER)){
+			Log.d("###**** intent from FragmentToiletList", "receeeeived");
+			//center map on marker, show slider
+			_selectedPoi = bundle.getParcelable(TagNames.EXTRA_POI);
+			_selectedMarker = _markerMap.get(_selectedPoi.getId());
+				
+			if ((_selectedPoi != null) && (_mMap != null)) {
+				moveToLocation(CameraUpdateFactory.newLatLng(_selectedPoi.getLatLng()));
+				updateSliderContent(_selectedPoi);
+				selectMarker(_selectedPoi);
+				_slidingUpPanel.showPanel();
+			}
+			moveToLocation(CameraUpdateFactory.newLatLng(_selectedMarker.getPosition()));
+		} else {
+			if ((_selectedPoi != null) && (_mMap != null)) {
+				selectMarker(_selectedPoi);
+			}
+		}
 	}
-    
-	private static ActivityMap getInstance(){
-		if (instance == null){
-			instance = new ActivityMap();
+	
+	/**
+	 * use this method to create or highlight the marker of a poi
+	 */
+	private void selectMarker(POI poi){
+		Marker marker = null;
+		//marker not on map (not one of the closest ten markers?)
+		if(!_markerMap.containsKey(poi.getId())){
+			//add marker to mMap and to lists
+			marker = _mMap.addMarker(POIHelper.getMarkerOptionsForPOI(poi, true));	
+			_markerMap.put(poi.getId(), marker);
+			_markerPOIIdMap.put(marker.getId(), poi.getId());
+		} else { //marker already set
+			marker = _markerMap.get(poi.getId());
+			marker.setIcon(BitmapDescriptorFactory.fromResource(poi.getActiveIcon()));
 		}
-		return instance;
+		_selectedMarker = marker;
+	}
+	
+	/**
+	 * Check google play store availability before resuming
+	 */
+	@Override
+	protected void onResume() {
+		super.onResume();
+		Toast.makeText(this, "onResume", Toast.LENGTH_LONG).show();
+		Log.d(TAG, "onResume");
+
+		if (checkPlayServices()){
+			// register/bind recievers
+			if(!_locUpdReceiverRegistered){
+				registerReceiver(_locUpdReceiver, new IntentFilter(TagNames.BROADC_LOCATION_UPDATED));
+				_locUpdReceiverRegistered = true;
+			}
+			Intent intent= new Intent(this, LocationUpdateService.class);
+			bindService(intent, _mConnection,  Context.BIND_AUTO_CREATE);
+			Log.d("Map onResume", "Service bound");	
+			
+			adjustLayoutToPanel(); // needed here because of strange slider behavior			
+			
+			
+			//check whether Activity was started by onclick in List, if so _clickedPoi is set (see onNewIntent())
+            if(_selectedPoi != null){                
+                if (_mMap != null){
+                	updateSliderContent(_selectedPoi);
+    				selectMarker(_selectedPoi);
+                    //set distance to user, otherwise slider will show 0 m
+                    if(_userLat != 0.0d && _userLng != 0.0d){
+                    	_selectedPoi = POIHelper.setDistanceSinglePOIToUser(_selectedPoi, _userLat, _userLng);
+                    }
+                    //center camera on marker
+                    _mMap.animateCamera(CameraUpdateFactory.newLatLng(_selectedPoi.getLatLng()));
+                    updateSliderContent(_selectedPoi);
+                    Marker marker = null;
+                    //marker not on map 
+                    if(!_markerMap.containsKey(_selectedPoi.getId())){
+                        Log.d("3454564653w4r onResume _clickedPOI", "adding marker to map and showing panel");
+                        //add marker to mMap and to lists
+                        marker = _mMap.addMarker(POIHelper.getMarkerOptionsForPOI(_selectedPoi, true));    
+                        _markerMap.put(_selectedPoi.getId(), marker);
+                        _markerPOIIdMap.put(marker.getId(), _selectedPoi.getId());
+                        _slidingUpPanel.showPanel();
+                    }else{ //marker already set
+                        Log.d("{{{{{{7{ onResume _clickedPOI", "marker already on map");
+                        marker = _markerMap.get(_selectedPoi.getId());
+                        _selectedMarker = marker;
+                    }
+                    
+                }
+            }else{//selectedPoi = null
+            	_slidingUpPanel.hidePanel();
+            }
+		}
+	}//end onResume
+	
+
+	/**
+	 * receive user location updates
+	 * on receive: update person icon
+	 * at a certain distance move map
+	 */
+	public static class LocationUpdateReceiver extends BroadcastReceiver {
+
+		private final Handler handler; // Handler used to execute code on the UI thread
+		private ActivityMap main;
+
+		public LocationUpdateReceiver(Handler handler) {
+			this.handler = handler;
+		}
+
+		void setMainActivityHandler(ActivityMap main){
+			this.main = main;
+		}
+
+		@Override
+		public void onReceive(final Context context, Intent intent) {
+			Log.d("ActivityMap", "onReceive location");
+			Bundle bundle = intent.getExtras();
+			String action = intent.getAction();
+			//Location has been updated (by provider in LocService)
+			if(action.equals(TagNames.BROADC_LOCATION_UPDATED)){
+				if(bundle != null){
+					//Retrieve latitude, longitude, provider and result
+					double lat = bundle.getDouble(TagNames.EXTRA_LAT);
+					double lng = bundle.getDouble(TagNames.EXTRA_LONG);
+					String provider = bundle.getString(TagNames.EXTRA_PROVIDER);
+					int result = bundle.getInt(TagNames.EXTRA_LOCATION_RESULT);
+					
+					Log.d("ActivityMap LocationUpdateReceiver", "Location received from "+ provider + ": " + lat  + ", " + lng);
+					//Toast to show updates
+					//Toast.makeText(context, "Location Update from provider: " + provider + ", Location: LAT " + lat + ", LNG " + lng,
+						//	Toast.LENGTH_LONG).show();
+					
+					//Result_ok -> true, Result_cancelled -> false
+					main._hasUserLocation =  result == -1;
+
+					//get previous user Location (might be standardLocation)
+					Location oldLocation = new Location("");
+					oldLocation.setLatitude(main._userLat);
+					oldLocation.setLongitude(main._userLng);
+
+					Log.d("_hasUserLocation =", ""+ main._hasUserLocation);
+					Log.d("userlocation 1", ""+ main._userLocation.getLatitude());
+					
+					//update the user location
+					main.setUserLocation(lat, lng);
+					main._allPOIList = POIHelper.setDistancePOIToUser(main._allPOIList, lat, lng);
+					
+					Log.d("userlocation 2", ""+main._userLocation.getLatitude());
+					//TODO: Testing
+					//old userLocation == standardLocation and distance to newly received location is greater 10m -> move camera
+					if(main._hasUserLocation){					
+						if(main._userLocation.distanceTo(oldLocation) < 10.0 ){
+							if(!main._isLowUpdateInterval){//high update interval
+								Log.d("-------- ", "lower update interval frequency");
+								main.callForLocationUpdates(120000, 8.0f, 60000, 5.0f );
+								main._isLowUpdateInterval = true;
+							}
+						}else{//distance > 10 meters (because user moved or because old loc is standard loc)
+							Log.d("======= distance to old loc", ""+main._userLocation.distanceTo(oldLocation));
+							
+							Location s = AppController.getInstance().getStandardLocation();
+							//oldLocation == standardLocation -> we have jumped quite far
+							if(oldLocation.getLatitude() == s.getLatitude() && oldLocation.getLongitude() == s.getLongitude()){
+								Log.d("-------- ", "lower update interval frequency");
+								main.callForLocationUpdates(120000, 8.0f, 60000, 5.0f );
+								main._isLowUpdateInterval = true;
+								Toast.makeText(context, "Position wird bestimmt...",
+										Toast.LENGTH_LONG).show();
+								main.moveToLocation(main.getCameraUpdateForClosestPOIBounds(10));
+								main.updatePOIMarkers();
+								main.setPeeerOnMap();
+							}else if(main._userLocation.distanceTo(oldLocation) > 84.0 && main._isLowUpdateInterval){
+								Log.d("+++++++++ ", "higher update interval frequency");
+								main.callForLocationUpdates(60000, 3.0f, 5000, 1.0f );
+								main._isLowUpdateInterval = false;
+								main.moveToLocation(main.getCameraUpdateForClosestPOIBounds(10));
+								main.updatePOIMarkers();
+								main.setPeeerOnMap();
+							}
+						}
+					}    
+				}
+			}        
+		}
+	}//end LocationUpdateReceiver
+
+
+	private void moveToLocation(final CameraUpdate cu){
+		//this block has to be here because the map layout might not
+		//have initialized yet, therefore we can't get bounding box with padding when our map
+		//has width = 0. In that case we wait until the Fragment holding our
+		//map has been initialized, and when it's time call animateCamera() again.
+		/*
+		 * More info here: http://stackoverflow.com/questions/14828217/android-map-v2-zoom-to-show-all-the-markers
+		 * and here: http://stackoverflow.com/questions/13692579/movecamera-with-cameraupdatefactory-newlatlngbounds-crashes
+		 */
+		Log.d(TAG, "moveToLocation");
+		if (_mMap != null){
+			try {
+				_mMap.animateCamera(cu);
+			} catch (IllegalStateException e) {
+				// fragment layout with map not yet initialized
+				final View mapView = getSupportFragmentManager().findFragmentById(R.id.map).getView();
+	
+				if (mapView.getViewTreeObserver().isAlive()) {
+					mapView.getViewTreeObserver().addOnGlobalLayoutListener(
+							new OnGlobalLayoutListener() {
+								@SuppressWarnings("deprecation")
+								@SuppressLint("NewApi")
+								// We check which build version we are using.
+								@Override
+								public void onGlobalLayout() {
+									if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) { //below API Level 16 ?
+										mapView.getViewTreeObserver()
+										.removeGlobalOnLayoutListener(this);
+									} else {
+										mapView.getViewTreeObserver()
+										.removeOnGlobalLayoutListener(this);
+									}
+									_mMap.animateCamera(cu);
+								}
+							});
+				}
+			}
+		}
+		refreshMapBounds();
+	}//end moveToLocation
+	
+	
+	private void refreshMapBounds(){
+		try {
+			_mapBounds = _mMap.getProjection().getVisibleRegion().latLngBounds;
+		} catch (IllegalStateException e) {
+			// fragment layout with map not yet initialized
+			final View mapView = getSupportFragmentManager().findFragmentById(R.id.map).getView();
+
+			if (mapView.getViewTreeObserver().isAlive()) {
+				mapView.getViewTreeObserver().addOnGlobalLayoutListener(
+						new OnGlobalLayoutListener() {
+							@SuppressWarnings("deprecation")
+							@SuppressLint("NewApi")
+							// We check which build version we are using.
+							@Override
+							public void onGlobalLayout() {
+								if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) { //below API Level 16 ?
+									mapView.getViewTreeObserver()
+									.removeGlobalOnLayoutListener(this);
+								} else {
+									mapView.getViewTreeObserver()
+									.removeOnGlobalLayoutListener(this);
+								}
+								_mapBounds = _mMap.getProjection().getVisibleRegion().latLngBounds;
+							}
+						});
+			}
+		}
+	}//end getMapBounds
+
+
+	/**
+	 * Returns the CameraUpdate around the user and the X nearest POI
+	 */
+	private CameraUpdate getCameraUpdateForClosestPOIBounds(int poiAmount){
+		Log.d(TAG, "getCameraUpdateForClosestPOIBounds");
+		_builder = new LatLngBounds.Builder();
+
+		List<POI> closestX = new ArrayList<POI>(); //list with closest ten POI to user position
+		closestX = POIHelper.getClosestPOI(_allPOIList, poiAmount);
+		for(POI poi : closestX){
+			_builder.include(poi.getLatLng());
+		}
+		//also add user location
+		if (_hasUserLocation){
+			_builder.include(new LatLng(_userLat, _userLng));
+		}
+		LatLngBounds bounds = _builder.build();
+
+		return CameraUpdateFactory.newLatLngBounds(bounds, 30);
+	}
+
+
+	/**
+	 * Update currently visible markers of POIS
+	 */
+	private void updatePOIMarkers(){
+		Log.d(TAG, "updatePOIMarkers");
+
+		if(_mMap != null){
+			//Loop through all the items that are available to be placed on the map
+			for(POI poi : _allPOIList){
+				//If the item is within the the bounds of the screen
+				if(_mapBounds.contains(new LatLng(poi.getLat(), poi.getLng()))){
+					//If the item isn't already being displayed
+					if(!_markerMap.containsKey(poi.getId())){
+						//Add the Marker to the Map and keep track of it with the HashMap
+						//getMarkerOptionsForPOI just returns a MarkerOptions object
+						Marker marker = _mMap.addMarker(POIHelper.getMarkerOptionsForPOI(poi, false));
+						
+						_markerMap.put(poi.getId(), marker);
+						_markerPOIIdMap.put(marker.getId(), poi.getId());
+					} 
+				} else if(_markerMap.containsKey(poi.getId()) && _selectedPoi != null) { // delete marker outside of bounds
+					if (_selectedPoi.getId() != poi.getId()){ // do not remove selected marker 
+						//1. Remove the Marker from the GoogleMap
+						_markerMap.get(poi.getId()).remove();
+						//2. Remove the reference to the Marker from the HashMap
+						_markerMap.remove(poi.getId());
+						// remove marker id to poi id mapping
+						for(Iterator<Map.Entry<String, Integer>> it = _markerPOIIdMap.entrySet().iterator(); it.hasNext(); ) {
+							Map.Entry<String, Integer> entry = it.next();
+							if (poi.getId() == entry.getValue()) {
+						        it.remove();
+						    }
+						}
+					}
+				}
+			}
+		}
 	}
 	
 	
-    //is called before activity is destroyed
-    @Override
-    public void onSaveInstanceState(Bundle savedInstanceState) {
-        // Save the user's current game state
-        savedInstanceState.putSerializable(BUNDLE_POILIST, toiletList);
-        savedInstanceState.putDouble(BUNDLE_LATITUDE, userLat);
-        savedInstanceState.putDouble(BUNDLE_LONGITUDE, userLng);
-        
-        // Always call the superclass so it can save the view hierarchy state
-        super.onSaveInstanceState(savedInstanceState);
-    }
-    
-    //set user marker and closest POI markers on map
-    public static void updateUserAndPOIOnMap(double lat, double lng) {
-		// update Markers first
-    	updateClosestXMarkers(poiController, lat, lng, 10);
-		//set user position TODO: method out of that
-    	getInstance().setPeeerOnMap();
-    	//personInNeedOfToilette.setPosition(new LatLng(lat, lng));
+	private float getDistanceBewteen(LatLng a, LatLng b){
+		float[] res = new float[1];
+		Location.distanceBetween(a.latitude, a.longitude, b.latitude, b.longitude, res);
+		return res[0];
+	}
+	
+	/**
+	 * Sets up the map if it isn't yet
+	 */
+	private void setUpMapIfNeeded() {
+		Log.d(TAG, "setUpMapIfNeeded");
+		if (_mMap == null) {
+			_mMap = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map)).getMap();
+			_mMap.getUiSettings().setZoomControlsEnabled(false);
+		}
+	}
+	
+	/** ----- SLIDING PANEL ----**/		
+	
+	//Update info displayed in sliding panel
+	protected void updateSliderContent(POI poi) {
+		if (poi != null){
+			txtName = (TextView) findViewById(R.id.name_detail);
+	        txtName.setText(poi.getName());
+	        
+	        int d = (int) Math.round(poi.getDistanceToUser());
+	        String distance = String.valueOf(d) + " m";  
+	        txtDistance = (TextView) findViewById(R.id.distance_detail);
+	        txtDistance.setText(distance);
+	        
+	        txtAddress = (TextView) findViewById(R.id.address_detail);
+	        txtAddress.setText(poi.getAddress());
+	        
+	        txtDescription = (TextView) findViewById(R.id.description_detail);
+	        txtDescription.setText(poi.getDescription());
+	                
+	        txtWebsite = (TextView) findViewById(R.id.url_detail);
+	        txtWebsite.setText(poi.getWebsite());
+	        if (!poi.getWebsite().equals("")){
+	        	txtWebsite.setVisibility(View.VISIBLE);
+	        	txtWebsite.setMovementMethod(LinkMovementMethod.getInstance());
+	        } else {
+	        	txtWebsite.setVisibility(View.GONE);
+	        }
+		}
 	}
 
-	private void moveToLocation(Location loc, final int poiAmount){
-    	LatLng pos = new LatLng(loc.getLatitude(), loc.getLongitude());
-    	//personInNeedOfToilette.setPosition(pos);
-    	//somehow set zoom dynamically, so that all toilets are seen
-    	CameraUpdate cu = getClosestPOIBoundsOnMap(poiAmount);
-    	deleteOldMarkersFromList();
-        //this block has to be here because the map layout might not
-    	//have initialized yet, therefore we can't get bounding box with padding when our map
-    	//has width = 0. In that case we wait until the Fragment holding our
-    	//map has been initialized, and when it's time call animateCamera() again.
-    	/*
-    	 * More info here: http://stackoverflow.com/questions/14828217/android-map-v2-zoom-to-show-all-the-markers
-    	 * and here: http://stackoverflow.com/questions/13692579/movecamera-with-cameraupdatefactory-newlatlngbounds-crashes
-    	 */
-    	try{
-    		mMap.animateCamera(cu);
-    	} catch (IllegalStateException e) {
-    	    // fragment layout with map not yet initialized
-    	    final View mapView = getSupportFragmentManager()
-    	       .findFragmentById(R.id.map).getView();
-    	    if (mapView.getViewTreeObserver().isAlive()) {
-    	        mapView.getViewTreeObserver().addOnGlobalLayoutListener(
-    	        new OnGlobalLayoutListener() {
-    	            @SuppressWarnings("deprecation")
-    	            @SuppressLint("NewApi")
-    	            // We check which build version we are using.
-    	            @Override
-    	            public void onGlobalLayout() {
-    	                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) { //below API Level 16 ?
-    	                    mapView.getViewTreeObserver()
-    	                        .removeGlobalOnLayoutListener(this);
-    	                } else {
-    	                    mapView.getViewTreeObserver()
-    	                        .removeOnGlobalLayoutListener(this);
-    	                }
-    	                CameraUpdate c = getClosestPOIBoundsOnMap(poiAmount);
-    	                mMap.animateCamera(c);
-    	            }
-    	        });
-    	    }
-    	}
-    	
-        
-    }
-    
-	//returns the LatLngBounds around the user and the ten nearest POI
-    private CameraUpdate getClosestPOIBoundsOnMap(int poiAmount){
-    	builder = new LatLngBounds.Builder();
-    	//update markerList with ten nearest POI to user position
-    	if(poiController != null){
-    		if(mMap != null){
-    			mMap.clear();
-    			deleteOldMarkersFromList();//delete markers in markerList and visiblePOI
-    			updateUserAndPOIOnMap(userLat, userLng); //put ten closest in markerList and add to map
-    		}
-    	}
-    	for (MarkerOptions m : markerList) {
-            builder.include(m.getPosition());
-        }
-        //also add peeer, in case there is only toilets on one side, 
-        //he / she doesn't get left out of the map view :)
-        //builder.include(personInNeedOfToilette.getPosition());
-        builder.include(new LatLng(userLat, userLng));
-        LatLngBounds bounds = builder.build();
 
-        return CameraUpdateFactory.newLatLngBounds(bounds, 30);
-    }
-    
-    //called every time onCameraChange -> NEEDED?
-    private void setLatLngCornersFromBounds(LatLngBounds bounds) {
-//    	cornersLatLng = new ArrayList<LatLng>();
-//		// add northeastern corner
-//    	cornersLatLng.add(bounds.northeast);
-//    	//add southwestern corner
-//    	cornersLatLng.add(bounds.southwest);	
-	}
-    
-    //returns Location representing center of displayed map or NULL
-    private LatLng getMapCenter(){
-    	LatLng mapCenter = null;
+	private LatLng getMapCenter(LatLngBounds mapBounds){
+		LatLng mapCenter = null;
 		if(mapBounds != null){
 			mapCenter = mapBounds.getCenter();
 		}else{
 			Log.d("ActivityMap getMapCenter()", "mapBounds is null");
 		}
 		return mapCenter; //may be null
-    }
-    
-    //List of POI that are contained within the LatLngBounds of the map or NULL
-    private List<POI> getContainedPOI(){
-		List<POI> containedPOI = null;
-		List<POI> allPOI = null;
-		//get a list of all POI
-		if(poiController != null){
-			allPOI = poiController.getAllPOI();
-			if(allPOI != null && mapBounds != null){
-				containedPOI = new ArrayList<POI>();
-				//check all of the POI as to whether they're in the LatLngBounds
-				for(int i = 0; i < allPOI.size(); i++){
-					//if the POI's LatLng lies within the bounds, add it to containedPOI
-					if(mapBounds.contains(allPOI.get(i).getLatLng())){
-						containedPOI.add(allPOI.get(i));
-					}
-				}
+	}
+	
+	/**
+	 * Set user icon on map, if there is no user icon yet, otherwise change its position
+	 */
+	private void setPeeerOnMap() {
+		Log.d(TAG, "setPeeerOnMap");
+		// check whether user position is standard position, if not set icon
+
+		if (_hasUserLocation && _mMap != null) {
+			//NOTE: this is the only way of doing it, because marker.setposition(LatLng) doesn't work!
+			if (_personInNeedOfToilette != null) {
+				_personInNeedOfToilette.remove();
+			}
+			_personInNeedOfToilette = _mMap.addMarker(new MarkerOptions()
+				.position(new LatLng(_userLat, _userLng))
+				.icon(BitmapDescriptorFactory.fromResource(R.drawable.peeer)));
+		}
+	}
+	
+	/**
+	 * change padding on map and the button containing layout
+	 * depending on the state of the slidingUpPanel
+	 */
+	private void adjustLayoutToPanel(){
+		int height = 0;
+		if (_slidingUpPanel.isPanelAnchored()){
+			height = (int) (_displayHeight/2);//height in pixels
+			_buttonsContainer.setVisibility(View.INVISIBLE);
+		} else if (!_slidingUpPanel.isPanelHidden()){
+			height = PANEL_HEIGHT;
+			_buttonsContainer.setVisibility(View.VISIBLE);
+			//NOTE: this is to convert dp to pixels
+			height = (int) Math.ceil(height * _logicalDensity);
+		}else if(_slidingUpPanel.isPanelHidden()){
+			_buttonsContainer.setVisibility(View.VISIBLE);
+		}
+		
+		if (_mMap != null) {
+			_mMap.setPadding(MAP_PADDING, MAP_PADDING, MAP_PADDING, height+MAP_PADDING);
+		}
+		RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams)_buttonsContainer.getLayoutParams();
+	    params.setMargins(BUTTONS_PADDING, BUTTONS_PADDING, BUTTONS_PADDING, height+BUTTONS_PADDING); 
+	    _buttonsContainer.setLayoutParams(params);
+	}
+
+	private void setUserLocation(double lat, double lng){
+		_userLat = lat;
+		_userLng = lng;
+		//set user Location
+		_userLocation = new Location("");//empty provider string
+		_userLocation.setLatitude(lat);
+		_userLocation.setLongitude(lng);
+	}
+
+	/**
+	 * is called before activity is destroyed to save state (non-Javadoc)
+	 * @see android.support.v4.app.FragmentActivity#onSaveInstanceState(android.os.Bundle)
+	 */
+	@Override
+	public void onSaveInstanceState(Bundle savedInstanceState) {
+		// Save current map state
+		savedInstanceState.putParcelableArrayList(TagNames.EXTRA_POI_LIST, _allPOIList);
+		savedInstanceState.putDouble(TagNames.EXTRA_LAT, _userLat);
+		savedInstanceState.putDouble(TagNames.EXTRA_LONG, _userLng);
+		savedInstanceState.putInt(TagNames.EXTRA_LOCATION_RESULT, _hasUserLocation ? -1 : 1);
+		savedInstanceState.putParcelable(TagNames.EXTRA_POI, _selectedPoi);
+		savedInstanceState.putParcelable(TagNames.EXTRA_CAMERA_POS, _mMap.getCameraPosition());
+
+		// Always call the superclass so it can save the view hierarchy state
+		super.onSaveInstanceState(savedInstanceState);
+	}
+
+	@Override
+	protected void onPause(){
+		super.onPause();
+		Log.d(TAG, "onPause");
+		//NOTE: if service is not set to null here onLocationChanged() is called twice in a row
+		_locUpdateService = null;
+
+		unbindService(_mConnection);//unbind service
+		Log.d("Map onPause", "service unbound");
+		
+		if(_locUpdReceiverRegistered){
+			unregisterReceiver(_locUpdReceiver);
+			_locUpdReceiverRegistered = false;
+		}
+	}
+
+	@Override
+	protected void onStop(){
+		super.onStop();
+		Log.d(TAG, "onStop");
+		if(_locUpdReceiverRegistered){
+			unregisterReceiver(_locUpdReceiver);
+			_locUpdReceiverRegistered = false;
+		}
+		if (_selectedMarker != null & _selectedPoi != null) {
+			_selectedMarker.setIcon(BitmapDescriptorFactory.fromResource(_selectedPoi.getIcon()));
+		}
+	}
+
+	@Override
+	protected void onDestroy(){
+		super.onDestroy();
+		Log.d(TAG, "onDestroy");
+		if(_locUpdReceiverRegistered){
+			unregisterReceiver(_locUpdReceiver);
+			_locUpdReceiverRegistered = false;
+		}
+		//TODO is this needed? after I deleted _instance some strange behavior vanished, maybe this too?
+		// set this to false so that when map is brought back to front a new location fix is received
+		_hasUserLocation = false;
+		// hide sliding panel
+		_slidingUpPanel.hidePanel();
+	}
+
+	private void callForLocationUpdates(int gpsInterval, float gpsDistanceChange, int networkInterval, float networkDistanceChange){
+		if(_locUpdateService != null){
+			_locUpdateService.stopLocationUpdates();
+			_locUpdateService.updateLocation(gpsInterval, gpsDistanceChange, networkInterval, networkDistanceChange );
+		}
+	}
+	
+	/**
+	 * Manage connection to LocationUpdateService
+	 */
+	private ServiceConnection _mConnection = new ServiceConnection() {
+
+		public void onServiceConnected(ComponentName className, IBinder binder) {
+			//boolean to see whether the location is pulled for the first time after service reconnect or not
+			_firstLocationPull = true;
+			LocationUpdateService.ServiceBinder b = (LocationUpdateService.ServiceBinder) binder;
+			_locUpdateService = b.getLocService();
+			//Toast.makeText(ActivityMap.this, "LocService Connected", Toast.LENGTH_SHORT).show();
+			Location loc = _locUpdateService.getCurrentUserLocation();
+			Log.d("##### userLocation", ""+_userLat + ", "+ _userLng);
+			//beim ersten mal öfter location updates fordern
+			if(_locUpdateService.isProviderEnabled(LocationManager.GPS_PROVIDER) || _locUpdateService.isProviderEnabled(LocationManager.NETWORK_PROVIDER)){
+				loc = _locUpdateService.getLastKnownLocation();
+			}
+			if(_userLocation.getLatitude() == AppController.getInstance().getStandardLocation().getLatitude() && _userLocation.getLongitude() == AppController.getInstance().getStandardLocation().getLongitude() ) {
+				callForLocationUpdates(60000, 3.0f, 5000, 1.0f );
+				Log.d("******onServiceConnected", "updateLocation call, HIGH update interval");
+				_isLowUpdateInterval = false;
+			}else{
+				Log.d("******onServiceConnected", "updateLocation call, LOW update interval");
+				//request new location updates less frequently
+				callForLocationUpdates(120000, 8.0f, 60000, 5.0f );
+				_isLowUpdateInterval = true;
 			}
 		}
-		return containedPOI;// may be null
-    }
-    
-    private void displayContainedPOI(List<POI> contained){
-    	if(mMap != null){
-    		if(poiController != null){
-    			for(int i = 0; i < contained.size(); i++){
-            		POI poi = contained.get(i);
-            		MarkerOptions marker = poiController.getMarkerOptionsForPOI(poi);
-                    // adding marker
-                    visiblePOI.put(poi.getId(), mMap.addMarker(marker));
-                    markerList.add(marker); 
-            	}
-    		}
-    	}
-    }
-    
-    //delete old markers on the map
-    private void deleteOldMarkersFromList(){
-    	markerList.clear(); //clear old markers first
-    	visiblePOI.clear();
-    	//mMap.clear();//clear ALL markers, polylines etc from map	
-    }   
-    
-    private void addPOIToMap(List<POI> pois){
-        if(mMap != null){
-            //mapBounds is the current user-viewable region of the map
-            //Loop through all the items that are available to be placed on the map
-            for(POI poi : pois){
-                //If the item is within the the bounds of the screen
-                if(mapBounds.contains(new LatLng(poi.getLat(), poi.getLng()))){
-                    //If the item isn't already being displayed
-                    if(!visiblePOI.containsKey(poi.getId())){
-                        //Add the Marker to the Map and keep track of it with the HashMap
-                        //getMarkerOptionsForPOI just returns a MarkerOptions object
-                        visiblePOI.put(poi.getId(), mMap.addMarker(poiController.getMarkerOptionsForPOI(poi)));
-                    }
-                }
-                //If the marker is off screen
-                else{
-                    //If the course was previously on screen
-                    if(visiblePOI.containsKey(poi.getId()))
-                    {
-                        //1. Remove the Marker from the GoogleMap
-                        visiblePOI.get(poi.getId()).remove();
-                     
-                        //2. Remove the reference to the Marker from the HashMap
-                        visiblePOI.remove(poi.getId());
-                    }
-                }
-            }
-        }
-    }
-    
-    @Override
-    protected void onStart(){
-    	super.onStart();
-    }
-    
-    
-    @Override
-    protected void onPause(){
-    	super.onPause();
-    	service.stopLocationUpdates();
-    	unbindService(mConnection);//unbind service
-    	if(poiReceiverRegistered){
-    		unregisterReceiver(poiReceiver);
-    		poiReceiverRegistered = false;
-    	}
-    	if(locUpdReceiverRegistered){
-    		unregisterReceiver(locUpdReceiver);
-    		locUpdReceiverRegistered = false;
-    	}
-    	//fix the map at restart of application, so that user and markers can be seen again
-    	//TODO: nullpointer after disabling network in running app and then trying to pause it (back  button)
-    	if (mMap != null){
-    		cp = mMap.getCameraPosition();
-            mMap = null;
-    	}	
-    }
-    
-    @Override
-	protected void onStop(){
-    	super.onStop();
-    	if(poiReceiverRegistered){
-    		unregisterReceiver(poiReceiver);
-    		poiReceiverRegistered = false;
-    	}
-    	if(locUpdReceiverRegistered){
-    		unregisterReceiver(locUpdReceiver);
-    		locUpdReceiverRegistered = false;
-    	}
-    }
-    
-    @Override
-	protected void onDestroy(){
-    	super.onDestroy();
-    	Log.d(TAG, "onDestroy");
-    	if(poiReceiverRegistered){
-    		unregisterReceiver(poiReceiver);
-    		poiReceiverRegistered = false;
-    	}
-    	if(locUpdReceiverRegistered){
-    		unregisterReceiver(locUpdReceiver);
-    		locUpdReceiverRegistered = false;
-    	}
-    }
-    
-    private static void setUserLocation(double lat, double lng){
-    	userLat = lat;
-    	userLng = lng;
-    	//set user Location
-        userLocation = new Location("");//empty provider string
-        userLocation.setLatitude(lat);
-        userLocation.setLongitude(lng);
-    }
-    
-    private void setPOIController(POIController pc){
-    	poiController = pc;
-    }
-    
-    // Update closest X markers on the map
-    private static void updateClosestXMarkers(POIController poiController, double currLat, double currLng, int x){
-    	List<POI> closestX = new ArrayList<POI>(); //list with closest ten POI to user position
-    	markerList = new ArrayList<MarkerOptions>(); //markers for those POI
-    	//check whether the broadcast was received
-    	if(poiController != null ){
-	        if(poiController.poiReceived() ){
-	        	//propagate the user position to all POI and set their distance to user in meters
-	        	poiController.setDistancePOIToUser(currLat, currLng);
-	        	//get closest ten POI
-	        	closestX = poiController.getClosestPOI(x); // get ten closest toilets
-	        	if(mMap != null){
-	        		//add markers to the map  for the ten closest POI
-		        	for(int i = 0; i < closestX.size(); i++){
-		        		POI poi = closestX.get(i);
-		        		//get MarkerOptions for this POI from poiController
-		        		MarkerOptions marker = poiController.getMarkerOptionsForPOI(poi);
-		                // adding marker
-		                visiblePOI.put(poi.getId(), mMap.addMarker(marker));
-		                markerList.add(marker); 
-		        	}
-	        	}
-	        } else {
-	        	//TODO: Toast
-	        	Log.d("ActivityMain.onStart()", "POIController has not received Broadcast");
-	        }
-    	}
-    }
 
-    /**
-     * Sets up the map if it is possible to do so (i.e., the Google Play services APK is correctly
-     * installed) and the map has not already been instantiated.. This will ensure that we only ever
-     * call {@link #setUpMap()} once when {@link #mMap} is not null.
-     * <p>
-     * If it isn't installed {@link SupportMapFragment} (and
-     * {@link com.google.android.gms.maps.MapView MapView}) will show a prompt for the user to
-     * install/update the Google Play services APK on their device.
-     * <p>
-     * A user can return to this FragmentActivity after following the prompt and correctly
-     * installing/updating/enabling the Google Play services. Since the FragmentActivity may not
-     * have been completely destroyed during this process (it is likely that it would only be
-     * stopped or paused), {@link #onCreate(Bundle)} may not be called again so we should call this
-     * method in {@link #onResume()} to guarantee that it will be called.
-     */
-    private void setUpMapIfNeeded() {
-        // Do a null check to confirm that we have not already instantiated the map.
-        if (mMap == null) {
-            // Try to obtain the map from the SupportMapFragment.
-            mMap = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map)).getMap();
-           
-            // Check if we were successful in obtaining the map.
-            if (mMap != null) {
-            	setPeeerOnMap();
-            }
-        }
-    }
+		public void onServiceDisconnected(ComponentName className) {
+			_locUpdateService.stopLocationUpdates();
+			_locUpdateService = null;
+			//Toast.makeText(ActivityMap.this, "LocService Disconnected", Toast.LENGTH_SHORT).show();
+		}
+	};
 
-    /**
-     * This is where we can add markers or lines, add listeners or move the camera. In this case, we
-     * just add a marker near Africa.
-     * <p>
-     * This should only be called once and when we are sure that {@link #mMap} is not null.
-     */
-    private void setPeeerOnMap() {
-    	// check whether user position is standard position, if not set icon
-        if(userLat != standardLocation.getLatitude() && userLng != standardLocation.getLongitude()){
-        	if(personInNeedOfToilette != null){
-        		personInNeedOfToilette.remove();
-        	}
-        	personInNeedOfToilette = mMap.addMarker(new MarkerOptions()
-	    	.position(new LatLng(userLat, userLng))
-	    	.icon(BitmapDescriptorFactory.fromResource(R.drawable.peeer)));
-        }
-    }
-    
-    private ServiceConnection mConnection = new ServiceConnection() {
 
-        public void onServiceConnected(ComponentName className, IBinder binder) {
-          LocationUpdateService.ServiceBinder b = (LocationUpdateService.ServiceBinder) binder;
-          service = b.getLocService();
-          Toast.makeText(ActivityMap.this, "LocService Connected", Toast.LENGTH_SHORT).show();
-          Location loc = service.getCurrentUserLocation();
-          if(loc == standardLocation || loc == null){
-        	  service.updateLocation();//is this called multiple times??
-          }
-        }
+	/* ------- Dialog Methods -------- */
 
-        public void onServiceDisconnected(ComponentName className) {
-          service = null;
-          Toast.makeText(ActivityMap.this, "LocService Disconnected", Toast.LENGTH_SHORT).show();
-        }
-      };
+	DialogInterface.OnClickListener onOkListener = new DialogInterface.OnClickListener() {
+		public void onClick(final DialogInterface dialog, final int id) {
+			startActivity(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
+		}
+	};
+
+	DialogInterface.OnClickListener onCancelListener = new DialogInterface.OnClickListener() {
+		public void onClick(final DialogInterface dialog, final int id) {
+
+		}
+	};
+
+	/** show alert dialog with option to change gps settings */
+	private void buildAlertMessageGPSSettings() {
+		final AlertDialog.Builder builder = new AlertDialog.Builder(ActivityMap.this);
+		builder.setMessage("Dein GPS ist ausgestellt, möchtest du es jetzt anstellen?")
+		.setCancelable(false)
+		.setPositiveButton("Ja", onOkListener)
+		.setNegativeButton("Nein", onCancelListener);
+		final AlertDialog alert = builder.create();
+		alert.show();
+		//TODO: check if user has turned location services on (onActivityResult)
+	}
+	
+	//overwrite back key behavior
+	@Override
+	public void onBackPressed() {		
+	   if(_slidingUpPanel.isPanelHidden()){
+		   ActivityMap.super.onBackPressed();
+	   } else {
+		   //hide slider and put selected pin back to normal
+		   _slidingUpPanel.hidePanel();
+		   	if (_selectedMarker != null){
+				_selectedMarker.setIcon(BitmapDescriptorFactory.fromResource(_selectedPoi.getIcon()));
+			}
+			_selectedMarker = null;
+			_selectedPoi = null;
+	   }
+	}
+	
+	private void adjustZoomVisibility(int orientation){
+		if(orientation == Configuration.ORIENTATION_LANDSCAPE){
+			_zoomInButton.setVisibility(View.GONE);
+			_zoomOutButton.setVisibility(View.GONE);
+		}else{
+			_zoomInButton.setVisibility(View.VISIBLE);
+			_zoomOutButton.setVisibility(View.VISIBLE);
+		}
+	}
+
 }

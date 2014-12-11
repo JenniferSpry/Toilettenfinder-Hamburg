@@ -66,6 +66,10 @@ public class AppController extends Application {
     	return properties.getProperty("URLToilets");
     }
     
+    public String getAuthKey(){
+    	return properties.getProperty("AuthKey");
+    }
+    
     public Location getStandardLocation(){
     	Location hamburg = new Location("");
     	if (properties.getProperty("Hamburg").contains(",")) {

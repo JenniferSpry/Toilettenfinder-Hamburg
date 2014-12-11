@@ -34,9 +34,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 	//refresh Data if older than two hours
 	// TODO: set to two days
 	private final static Long MAX_TIME_DELTA = 2 * 60 * 60 * 1000L;
-	
+		
 	private final static String PREF_FILE_NAME = "DataAgeSettings";
 	private final static String PREF_KEY_DATA_AGE = "age_of_data";
+	private final static String PREF_KEY_POI_AMOUNT = "poi_amount";
 	  
 	private final static String TABLE_POIS = "toilets";
 	private final static String KEY_ID = "id";
@@ -85,8 +86,13 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 		onCreate(db);
 	}
 	
-	public boolean isDataStillFresh(Context context){
+	public boolean isDataStillFresh(Context context){	
 		SharedPreferences pref = context.getApplicationContext().getSharedPreferences(PREF_FILE_NAME, 0); // 0 = private mode
+		int poisInDatabase = pref.getInt(PREF_KEY_POI_AMOUNT, 0);
+		Log.d("refreshAllPOI", "POI in DB: "+poisInDatabase);
+		if (poisInDatabase < 1){
+			return false;
+		}
 		Long lastRefreshTime = pref.getLong(PREF_KEY_DATA_AGE, 0L);
 		Long timeDelta = new Date().getTime() - lastRefreshTime;
 		Log.i("DatabaseHelper", "Last data refresh " + (timeDelta/(1000*60)) + " minutes ago");
@@ -105,7 +111,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 	public void refreshAllPOI(List<POI> pois, Context context) {
         SQLiteDatabase db = this.getWritableDatabase();
         clearData(db);
- 
+         
         for (POI poi : pois){
         	ContentValues values = new ContentValues();
             values.put(KEY_ID, poi.getId());
@@ -121,14 +127,15 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         
         db.close();
         
-        // Update Time of last Update
+        // Time of last Update and POI amount in DB tp sharedPreferences
 		SharedPreferences pref = context.getApplicationContext().getSharedPreferences(PREF_FILE_NAME, 0); // 0 = private mode
 		Editor edit = pref.edit();
+		edit.putInt(PREF_KEY_POI_AMOUNT, pois.size());
+		Log.d("refreshAllPOI", "POI in DB: "+pois.size());
 		edit.putLong(PREF_KEY_DATA_AGE, new Date().getTime());
 		edit.apply();
      }
 	
-	// TODO: This should be used with lat, long and radius
 	public ArrayList<POI> getAllPOI(){
 		ArrayList<POI> poiList = new ArrayList<POI>();
 		

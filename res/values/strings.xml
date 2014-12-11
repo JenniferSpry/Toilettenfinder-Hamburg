@@ -32,5 +32,7 @@
     <string name="toilet_label_mail">E-Mail:</string>
     <string name="toilet_mail_field_description">*freiwillige Angabe</string>
     <string name="toilet_button_send">Absenden</string>
-
+	
+    <!--  Button texts -->
+    <string name="button_load_more">Weitere laden:</string>
 </resources>

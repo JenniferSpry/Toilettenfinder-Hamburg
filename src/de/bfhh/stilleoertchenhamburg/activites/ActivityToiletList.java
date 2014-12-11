@@ -3,11 +3,11 @@ package de.bfhh.stilleoertchenhamburg.activites;
 import java.util.ArrayList;
 
 import de.bfhh.stilleoertchenhamburg.LocationUpdateService;
-import de.bfhh.stilleoertchenhamburg.POIController;
 import de.bfhh.stilleoertchenhamburg.POIUpdateService;
 import de.bfhh.stilleoertchenhamburg.R;
 import de.bfhh.stilleoertchenhamburg.TagNames;
 import de.bfhh.stilleoertchenhamburg.fragments.FragmentToiletList;
+import de.bfhh.stilleoertchenhamburg.helpers.POIHelper;
 import de.bfhh.stilleoertchenhamburg.models.POI;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
@@ -56,6 +56,7 @@ public class ActivityToiletList extends ActivityMenuBase {
 	        
 	        Intent intent= new Intent(this, LocationUpdateService.class);
 	        bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+	        Log.d("ToiletList onCreate", "Service bound");
         }
     }
     
@@ -81,6 +82,7 @@ public class ActivityToiletList extends ActivityMenuBase {
 	            } 
 	            unregisterReceiver(locationReceiver);
             	unbindService(mConnection);
+            	Log.d("ToiletList onReceive", "service unbound");
 	            startPOIUpdateService(lat, lng);
 	          }
           
@@ -108,9 +110,8 @@ public class ActivityToiletList extends ActivityMenuBase {
 
     
 	private void fillFragmentList(double userLat, double userLng, ArrayList<POI> poiList, int result){
-		POIController poiController = new POIController(poiList);
-		poiController.setDistancePOIToUser(userLat, userLng);
-		ArrayList<POI> pois = poiController.getClosestPOI(20);
+		poiList = POIHelper.setDistancePOIToUser(poiList, userLat, userLng);
+		ArrayList<POI> pois = POIHelper.getClosestPOI(poiList, 20);
 		
 		Bundle args = new Bundle();  
 		args.putParcelableArrayList(TagNames.EXTRA_POI_LIST, pois);
@@ -142,12 +143,16 @@ public class ActivityToiletList extends ActivityMenuBase {
           Toast.makeText(ActivityToiletList.this, "LocService Connected", Toast.LENGTH_SHORT)
               .show();
           Location loc = service.getCurrentUserLocation();
-          if(loc == null){
-        	  service.updateLocation();//calls AsyncTask and publishes results
+          Location oldLoc = new Location("");
+          oldLoc.setLatitude(lat);
+          oldLoc.setLongitude(lng);
+          if(loc == null || service.isBetterLocation(loc, oldLoc) ){
+        	  service.updateLocation(60000, 3.0f, 5000, 1.0f);//calls AsyncTask and publishes results
           }
         }
 
         public void onServiceDisconnected(ComponentName className) {
+        	service.stopLocationUpdates();
         	service = null;
           	Toast.makeText(ActivityToiletList.this, "LocService Disconnected", Toast.LENGTH_SHORT)
           		.show();

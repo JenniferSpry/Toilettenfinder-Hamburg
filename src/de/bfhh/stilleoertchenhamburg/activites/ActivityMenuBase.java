@@ -26,8 +26,8 @@ public class ActivityMenuBase extends ActivityBase {
 	    switch (item.getItemId()) {
 	    	//if user clicks on the app icon (home button), current activity is closed
 		    case android.R.id.home: 
-	            //this.finish(); //causes the app to close if you choose I.L.I then home button / icon
-		    	NavUtils.navigateUpFromSameTask(this);//takes you back to map (map act. is created again with savedInstanceState)
+	            this.finish(); //causes the app to close if you choose I.L.I then home button / icon
+		    	//NavUtils.navigateUpFromSameTask(this);//takes you back to map (map act. is created again with savedInstanceState)
 	            return true;
 		    case R.id.menu_map:
 		    	Intent map = new Intent(this, ActivityMap.class);

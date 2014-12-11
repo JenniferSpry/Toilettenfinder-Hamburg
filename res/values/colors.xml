@@ -4,10 +4,11 @@
 	<color name="white">#ffffff</color>
     <color name="black">#000000</color>
     <color name="grey">#dddddd</color>
+    <color name="light_grey">#eeeeee</color>
+    <color name="dark_grey">#777777</color>
     
     <color name="bfhh_green">#BCD233</color>
-    <color name="bfhh_blue">#000033</color>
-    
-    <color name="text">#ffffff</color>
+    <color name="bfhh_green_dark">#7d9100</color>
+    <color name="bfhh_green_gradient_light">#e1ff80</color>
     
 </resources>

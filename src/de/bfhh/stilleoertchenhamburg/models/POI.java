@@ -21,6 +21,10 @@ public class POI implements Parcelable{
 	private final Location location; //location (lat lng)
 	private final LatLng latLng;
 	
+	private int icon;
+	private int activeIcon;
+	private boolean isWheelchairAccessible;
+	
 	private float distanceToUser; //distance to user's current position in meters
 	
 
@@ -37,31 +41,25 @@ public class POI implements Parcelable{
 		location.setLatitude(this.lat);
         location.setLongitude(this.lng);
         latLng = new LatLng(lat, lng);
+        
+        setFieldsDependingOnDescription();
 	}
 	
-	public POI(Parcel in){
-		this.id = in.readInt();
-		this.name = in.readString();
-		this.address = in.readString();
-		this.description = in.readString();
-		this.website = in.readString();
-		this.lat = in.readDouble();
-		this.lng = in.readDouble();
-		
-		this.location = new Location("");
-		location.setLatitude(this.lat);
-        location.setLongitude(this.lng);
-        latLng = new LatLng(lat, lng);
+	private void setFieldsDependingOnDescription(){
+		if (description.indexOf("Rollstuhlgerechte") != -1 || description.indexOf("rollstuhlgerechte") != -1){
+			this.icon = R.drawable.yellow_pin_w;
+			this.activeIcon = R.drawable.yellow_pin_w_active;
+			this.isWheelchairAccessible = true;
+		} else {
+			this.icon = R.drawable.yellow_pin;
+			this.activeIcon = R.drawable.yellow_pin_active;
+			isWheelchairAccessible = false;
+		}
+
 	}
-	
 	
 	public boolean isWheelchairAccessible(){
-		//see if description matches the regular expression (...R/rollstuhlgerecht..)
-		if(description.indexOf("Rollstuhlgerechte") != -1 || description.indexOf("rollstuhlgerechte") != -1){
-			return true;
-		}else{
-			return false;
-		}
+		return this.isWheelchairAccessible;
 	}
 	
 	public Location getLocation(){		
@@ -88,6 +86,24 @@ public class POI implements Parcelable{
 		// TODO Auto-generated method stub
 		return 0;
 	}
+	
+	public POI(Parcel in){
+		this.id = in.readInt();
+		this.name = in.readString();
+		this.address = in.readString();
+		this.description = in.readString();
+		this.website = in.readString();
+		this.lat = in.readDouble();
+		this.lng = in.readDouble();
+		this.distanceToUser = in.readFloat();
+		
+		this.location = new Location("");
+		location.setLatitude(this.lat);
+        location.setLongitude(this.lng);
+        latLng = new LatLng(lat, lng);
+        
+        setFieldsDependingOnDescription();
+	}
 
 	@Override
 	public void writeToParcel(Parcel dest, int flags) {
@@ -98,6 +114,7 @@ public class POI implements Parcelable{
 	    dest.writeString(website);
 	    dest.writeDouble(lat);
 	    dest.writeDouble(lng);
+	    dest.writeFloat(distanceToUser);
 	}
 	
 	public static final Parcelable.Creator<POI> CREATOR = new Parcelable.Creator<POI>() {
@@ -143,11 +160,11 @@ public class POI implements Parcelable{
 		return website;
 	}
 	
-	public int getMarkerIconRessource(){
-		if(isWheelchairAccessible()){// wheelchair accessible POI
-			return R.drawable.yellow_pin_w;
-		}else{
-			return R.drawable.yellow_pin;
-		}	
+	public int getIcon(){
+		return icon;
+	}
+	
+	public int getActiveIcon(){
+		return activeIcon;
 	}
 }

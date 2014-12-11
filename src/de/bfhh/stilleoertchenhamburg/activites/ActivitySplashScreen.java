@@ -3,6 +3,7 @@ package de.bfhh.stilleoertchenhamburg.activites;
 import java.util.ArrayList;
 
 import de.bfhh.stilleoertchenhamburg.LocationUpdateService;
+import de.bfhh.stilleoertchenhamburg.NetworkUtil;
 import de.bfhh.stilleoertchenhamburg.POIUpdateService;
 import de.bfhh.stilleoertchenhamburg.R;
 import de.bfhh.stilleoertchenhamburg.TagNames;
@@ -36,55 +37,76 @@ import android.widget.Toast;
 public class ActivitySplashScreen extends ActivityBase {
 	
 	private static final String TAG = ActivitySplashScreen.class.getSimpleName();
+
+    private boolean isReceiverRegistered = false;;//is the receiver registered?
     
-    private boolean isReceiverRegistered;//is the receiver registered?
-    
-    private boolean locServiceBound;
+    private boolean locServiceBound = false;
         
     private LocationUpdateService service;
     
     private double lat = 0.0;
 	private double lng = 0.0;
-	private int locationResult = Activity.RESULT_CANCELED;
-    
+	private int locationResult = Activity.RESULT_CANCELED;	
 
+	protected boolean _networkConnected;
+
+	protected boolean _poiUpdateServiceRegistered;
+
+    
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
+        _poiUpdateServiceRegistered = false;
     }
     
+    @Override
+    protected void onNetworkConnected(){
+    	super.onNetworkConnected();
+    	if(!locServiceBound){
+    		//bind to service rather than starting it
+            Intent intent = new Intent(this, LocationUpdateService.class);
+            bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+            locServiceBound = true;
+   		}
+	}
+
     @Override
     protected void onResume(){
     	super.onResume();
     	if (checkPlayServices()) {
-    		// Set receiver to listen to actions from both services
+        	// Set receiver to listen to actions from both services
         	if(!isReceiverRegistered){
         		IntentFilter filter = new IntentFilter(TagNames.BROADC_LOCATION_NEW);
+        		filter.addAction(TagNames.BROADC_LOCATION_UPDATED);
             	filter.addAction(TagNames.BROADC_POIS);
         		registerReceiver(receiver, filter);
         		isReceiverRegistered = true;
         	}
-        	if(!locServiceBound){
-        		 //bind to service rather than starting it
-                Intent intent = new Intent(this, LocationUpdateService.class);
-                bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
-                locServiceBound = true;
+        	
+        	//check network connection
+        	int status = NetworkUtil.getConnectivityStatus(this);
+        	//No connection at the moment, but connecting
+        	if(status == TagNames.TYPE_NOT_CONNECTED && _oldConnecState != _connecState){
+        		//show toast that we are connecting to network
+        		Toast.makeText(this, "Connecting to network, please wait...", Toast.LENGTH_LONG).show();
+        	}else if(status == TagNames.TYPE_MOBILE || status == TagNames.TYPE_WIFI){
+        		onNetworkConnected();
         	}
     	}
     }
     
-	
-    // BroadcastReceiver for Broadcasts from LocationUpdateService and POIUpdateService
+    
+	// BroadcastReceiver for Broadcasts from LocationUpdateService and POIUpdateService
     private BroadcastReceiver receiver = new BroadcastReceiver() {
-
+    	
         @Override
         public void onReceive(Context context, Intent intent) { 	
         	//Get Extras
         	Bundle bundle = intent.getExtras();
         	String action = intent.getAction();
         	
-        	if(action.equals(TagNames.BROADC_LOCATION_NEW)){ //LocationUpdateService is finished
+        	if(action.equals(TagNames.BROADC_LOCATION_NEW) || action.equals(TagNames.BROADC_LOCATION_UPDATED)){ //LocationUpdateService is finished
         		Log.d(TAG, "Recieved Broadcast location new");
         		if (bundle != null) {
 		        	//Get resultCode, latitude and longitude sent from LocationUpdateService
@@ -94,10 +116,17 @@ public class ActivitySplashScreen extends ActivityBase {
 		            //lat, lng and resultcode received successfully
 		            if (locationResult == RESULT_CANCELED) {
 		            	//if RESULT_CANCELLED or lat and long are standard location then no location was received from locationManager in LocationUpdateService
-		            	  Toast.makeText(ActivitySplashScreen.this, "Last user location not received. Standard Location is set",
-		            		  Toast.LENGTH_LONG).show();    
+		            	/*  Toast.makeText(ActivitySplashScreen.this, "Last user location not received. Standard Location is set",
+		            		  Toast.LENGTH_LONG).show();   */ 
 		            } 
-		            startPOIUpdateService(lat, lng);
+		            //only start this service if network is available	
+		            _connecState = NetworkUtil.getConnectivityStatus(context);
+		            if(_connecState == TagNames.TYPE_MOBILE || _connecState == TagNames.TYPE_WIFI ){
+		            	if(!_poiUpdateServiceRegistered){
+		            		startPOIUpdateService(lat, lng);
+				        	_poiUpdateServiceRegistered = true;
+		            	}	
+		            }
 	          }
            } else if(action.equals(TagNames.BROADC_POIS)){
         	   //terminate this activity
@@ -110,17 +139,19 @@ public class ActivitySplashScreen extends ActivityBase {
 		            	finish();// terminate this activity
 		            }	            
         	   }        	   
-           }
+           } 
         }
     };
 
 	private void startMapActivity(double userLat, double userLng, ArrayList<POI> poiList, int result){
+
 		Intent i = new Intent(this, ActivityMap.class);
         i.putParcelableArrayListExtra(TagNames.EXTRA_POI_LIST, poiList);
         i.putExtra(TagNames.EXTRA_LAT, userLat);
         i.putExtra(TagNames.EXTRA_LONG, userLng);
   	  	i.putExtra(TagNames.EXTRA_LOCATION_RESULT, result);
   	  	i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+  	  	i.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
   	  	startActivity(i); //start Main Activity
 	}
     
@@ -139,16 +170,17 @@ public class ActivitySplashScreen extends ActivityBase {
         public void onServiceConnected(ComponentName className, IBinder binder) {
           LocationUpdateService.ServiceBinder b = (LocationUpdateService.ServiceBinder) binder;
           service = b.getLocService();
-          Toast.makeText(ActivitySplashScreen.this, "LocService Connected", Toast.LENGTH_SHORT).show();
+          //Toast.makeText(ActivitySplashScreen.this, "LocService Connected", Toast.LENGTH_SHORT).show();
           Location loc = service.getCurrentUserLocation();
           if(loc == null){
-        	  service.updateLocation();//calls AsyncTask and publishes results
+        	  service.updateLocation(60000, 3.0f, 5000, 1.0f);//calls AsyncTask and publishes results
           }
         }
 
         public void onServiceDisconnected(ComponentName className) {
+        	service.stopLocationUpdates();
         	service = null;
-          	Toast.makeText(ActivitySplashScreen.this, "LocService Disconnected", Toast.LENGTH_SHORT).show();
+          	//Toast.makeText(ActivitySplashScreen.this, "LocService Disconnected", Toast.LENGTH_SHORT).show();
         }
     };
  
@@ -166,10 +198,6 @@ public class ActivitySplashScreen extends ActivityBase {
     @Override
     protected void onPause() {
     	super.onPause();
-    	if(isReceiverRegistered){
-    	  	unregisterReceiver(receiver);
-    	  	isReceiverRegistered = false;
-      	}
     	if(locServiceBound){
     		unbindService(mConnection);
     		locServiceBound = false;

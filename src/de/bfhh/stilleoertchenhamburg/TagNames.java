@@ -9,6 +9,7 @@ public class TagNames {
 	
 	// Intent Actions
 	public static final String ACTION_GET_POIS = "com.bfhh.stilleoertchenhamburg.getPois";
+	public static final String ACTION_SHOW_SLIDER = "com.bfhh.stilleoertchenhamburg.showSlider";
 	
 	// Intent Extras
 	public static final String EXTRA_LAT = "com.bfhh.stilleoertchenhamburg.latitude";
@@ -19,4 +20,16 @@ public class TagNames {
 	public static final String EXTRA_POI_LIST = "com.bfhh.stilleoertchenhamburg.poiList";
 	public static final String EXTRA_LOCATION_RESULT = "com.bfhh.stilleoertchenhamburg.LocationResult";
 	public static final String EXTRA_POI = "com.bfhh.stilleoertchenhamburg.POI";
+	
+	public static final String EXTRA_CAMERA_POS = "com.bfhh.stilleoertchenhamburg.CameraPosition";
+
+	//Internet Connection Check
+	public static final String SETTINGS_WIFI = "com.bfhh.stilleoertchenhamburg.settingsWifi";
+	public static final String SETTINGS_MOBILE = "com.bfhh.stilleoertchenhamburg.settingsMobile";
+	public static final String SETTINGS_NETWORK_GENERAL = "com.bfhh.stilleoertchenhamburg.settingsNetworkGeneral";
+	
+	public static final int TYPE_WIFI = 1;
+    public static final int TYPE_MOBILE = 2;
+    public static final int TYPE_NOT_CONNECTED = 0;
+
 }

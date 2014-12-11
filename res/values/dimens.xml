@@ -1,5 +1,7 @@
 <resources>
 
+    <dimen name="button_text_size">18dp</dimen>
+    
     <!-- Default screen margins, per the Android Design guidelines. -->
     <dimen name="activity_horizontal_margin">16dp</dimen>
     <dimen name="activity_vertical_margin">16dp</dimen>
@@ -13,5 +15,7 @@
     <dimen name="toilet_item_corner_radius">10dp</dimen>
     
     <dimen name="toilet_text">15sp</dimen>
+    <dimen name="detail_text">18dp</dimen>
+    <dimen name="detail_text_small">13dp</dimen>
 
 </resources>
