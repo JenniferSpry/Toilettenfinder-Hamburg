@@ -5,6 +5,7 @@ import com.google.android.gms.common.GooglePlayServicesUtil;
 
 import de.bfhh.stilleoertchenhamburg.NetworkUtil;
 import de.bfhh.stilleoertchenhamburg.TagNames;
+import de.bfhh.stilleoertchenhamburg.helpers.DatabaseHelper;
 
 import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
@@ -46,6 +47,7 @@ public class ActivityBase extends ActionBarActivity {
 		_oldConnecState = TagNames.TYPE_NOT_CONNECTED;
 		_connecState = NetworkUtil.getConnectivityStatus(this);
 		if(_connecState == TagNames.TYPE_NOT_CONNECTED){
+			//AND: POI data older than 2 days
 			showAlertMessageNetworkSettings();
 		}
 		_oldConnecState = _connecState;
@@ -125,7 +127,7 @@ public class ActivityBase extends ActionBarActivity {
 		@Override
 	    public void onReceive(final Context context, final Intent intent) { 
 			_connecState = NetworkUtil.getConnectivityStatus(context);
-	        //if connected, call a method that needs to be overridden by every activity (specific behaviour)
+	        //when connected, call a method that needs to be overridden by every activity (specific behaviour)
 	        if(_connecState == TagNames.TYPE_MOBILE || _connecState == TagNames.TYPE_WIFI){
 	        	if(_connecState != _oldConnecState){
 	        		Toast.makeText(context, "Verbindung mit dem Netzwerk hergestellt. Daten werden abgerufen, bitte warten...", Toast.LENGTH_LONG).show();	     
@@ -195,12 +197,6 @@ public class ActivityBase extends ActionBarActivity {
 	DialogInterface.OnClickListener onMobileNetworkOkListener = new DialogInterface.OnClickListener() {
 		public void onClick(final DialogInterface dialog, final int id) {
 			startActivityForResult(new Intent(android.provider.Settings.ACTION_DATA_ROAMING_SETTINGS), -1);
-		}
-	};
-	
-	DialogInterface.OnClickListener onGeneralNetworkOkListener = new DialogInterface.OnClickListener() {
-		public void onClick(final DialogInterface dialog, final int id) {
-			startActivityForResult(new Intent(android.provider.Settings.ACTION_WIRELESS_SETTINGS), -1);
 		}
 	};
 

@@ -143,7 +143,7 @@ public class ActivityMap extends ActivityMenuBase {
 		super.onCreate(savedInstanceState);
 		Thread.currentThread().setContextClassLoader(ActivityMap.class.getClassLoader());
 		Log.d(TAG, "onCreate");
-		Toast.makeText(this, "onCreate", Toast.LENGTH_LONG).show();
+		//Toast.makeText(this, "onCreate", Toast.LENGTH_LONG).show();
 		
 		setContentView(R.layout.activity_main);
 		
@@ -448,7 +448,7 @@ public class ActivityMap extends ActivityMenuBase {
 	@Override
 	protected void onResume() {
 		super.onResume();
-		Toast.makeText(this, "onResume", Toast.LENGTH_LONG).show();
+		//Toast.makeText(this, "onResume", Toast.LENGTH_LONG).show();
 		Log.d(TAG, "onResume");
 
 		if (checkPlayServices()){

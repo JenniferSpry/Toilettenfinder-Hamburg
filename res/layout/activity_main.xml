@@ -91,7 +91,9 @@
 	       android:layout_width="match_parent"
 	       android:layout_height="110dp"
 	       android:gravity="top"
-	       android:padding="10dp"
+	       android:paddingTop="10dp"
+	       android:paddingRight="10dp"
+	       android:paddingLeft="10dp"
 	       android:background="@drawable/slider_top_style"
 	       android:orientation="vertical">  
         
