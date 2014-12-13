@@ -3,10 +3,10 @@ package de.bfhh.stilleoertchenhamburg.activites;
 import java.util.ArrayList;
 
 import de.bfhh.stilleoertchenhamburg.LocationUpdateService;
-import de.bfhh.stilleoertchenhamburg.NetworkUtil;
 import de.bfhh.stilleoertchenhamburg.POIUpdateService;
 import de.bfhh.stilleoertchenhamburg.R;
 import de.bfhh.stilleoertchenhamburg.TagNames;
+import de.bfhh.stilleoertchenhamburg.helpers.NetworkUtil;
 import de.bfhh.stilleoertchenhamburg.models.POI;
 
 import android.app.Activity;

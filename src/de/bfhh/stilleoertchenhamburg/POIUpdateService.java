@@ -10,7 +10,6 @@ import org.json.JSONObject;
 
 import android.app.IntentService;
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.util.Log;
 
 import com.android.volley.AuthFailureError;
@@ -38,7 +37,9 @@ public class POIUpdateService extends IntentService {
 	@Override
 	protected void onHandleIntent(Intent intent) {
 		if (DatabaseHelper.getInstance(getApplicationContext()).isDataStillFresh(getApplicationContext())) {
-			new getPOIFromDatabase().execute();
+			ArrayList<POI> poiList = DatabaseHelper.getInstance(getApplicationContext()).getAllPOI();
+			Log.i("POIUpdateService", "got Data from Database");
+			broadcastPoiList(poiList);
 		} else {
 			refreshDatabaseAndBroadcast();
 		}
@@ -52,17 +53,6 @@ public class POIUpdateService extends IntentService {
   	  	i2.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
   	  	
   	  	sendBroadcast(i2);
-	}
-	
-	
-	class getPOIFromDatabase extends AsyncTask<String, String, String>{
-		@Override
-		protected String doInBackground(String... params) {
-			ArrayList<POI> poiList = DatabaseHelper.getInstance(getApplicationContext()).getAllPOI();
-			Log.i("POIUpdateService", "got Data from Database");
-			broadcastPoiList(poiList);
-			return null;
-		}
 	}
 	
 	
