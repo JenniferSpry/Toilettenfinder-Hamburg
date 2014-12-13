@@ -43,21 +43,25 @@ public class ActivityToiletList extends ActivityMenuBase {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_toilet_list);
+        Log.d(TAG, "onCreate");
         
         ActionBar actionBar = getSupportActionBar();
 	    actionBar.setDisplayHomeAsUpEnabled(true);
 		
         if (checkPlayServices()) {
         	if(savedInstanceState != null){
-        		// use saved state data to fill the list
+        		// use saved 
     			Bundle bundle = savedInstanceState;
     			_lat = bundle.getDouble(TagNames.EXTRA_LAT);
     			_lng = bundle.getDouble(TagNames.EXTRA_LONG);
     			_poiList = bundle.getParcelableArrayList(TagNames.EXTRA_POI_LIST);
     			fillFragmentList();
-    		} else {
+    		} 
+        	if (_lat == null || _lng == null || _poiList == null){
 		        // Set receivers
-		        registerReceiver(locationReceiver, new IntentFilter(TagNames.BROADC_LOCATION_NEW));
+        		IntentFilter filter = new IntentFilter(TagNames.BROADC_LOCATION_NEW);
+        		filter.addAction(TagNames.BROADC_LOCATION_UPDATED);
+        		registerReceiver(locationReceiver, filter);
 		        registerReceiver(poiReceiver, new IntentFilter(TagNames.BROADC_POIS));
 		        
 		        Intent intent= new Intent(this, LocationUpdateService.class);
@@ -106,7 +110,7 @@ public class ActivityToiletList extends ActivityMenuBase {
 	            _poiList = intent.getParcelableArrayListExtra(TagNames.EXTRA_POI_LIST);
             	fillFragmentList();
             	unregisterReceiver(poiReceiver);
-    	   }        	   
+    	   }
         }
     };
 
@@ -137,6 +141,7 @@ public class ActivityToiletList extends ActivityMenuBase {
     private ServiceConnection mConnection = new ServiceConnection() {
 
     	public void onServiceConnected(ComponentName className, IBinder binder) {
+    		Log.d(TAG, "onServiceConnected");
     		LocationUpdateService.ServiceBinder b = (LocationUpdateService.ServiceBinder) binder;
     		_service = b.getLocService();
     		Toast.makeText(ActivityToiletList.this, "LocService Connected", Toast.LENGTH_SHORT).show();
@@ -148,15 +153,16 @@ public class ActivityToiletList extends ActivityMenuBase {
     			oldLoc.setLongitude(_lng);
     		}
     		if(loc == null || oldLoc == null || _service.isBetterLocation(loc, oldLoc) ){
+    			Log.d(TAG, "onServiceDisconnected updateLocation");
     			_service.updateLocation(60000, 3.0f, 5000, 1.0f);//calls AsyncTask and publishes results
     		}
     	}
 
     	public void onServiceDisconnected(ComponentName className) {
+    		Log.d(TAG, "onServiceDisconnected");
     		_service.stopLocationUpdates();
     		_service = null;
-    		Toast.makeText(ActivityToiletList.this, "LocService Disconnected", Toast.LENGTH_SHORT)
-    		.show();
+    		Toast.makeText(ActivityToiletList.this, "LocService Disconnected", Toast.LENGTH_SHORT).show();
     	}
     };
     
@@ -179,10 +185,12 @@ public class ActivityToiletList extends ActivityMenuBase {
     
 	@Override
 	public void onSaveInstanceState(Bundle savedInstanceState) {
-		savedInstanceState.putParcelableArrayList(TagNames.EXTRA_POI_LIST, _poiList);
-		savedInstanceState.putDouble(TagNames.EXTRA_LAT, _lat);
-		savedInstanceState.putDouble(TagNames.EXTRA_LONG, _lng);
-		super.onSaveInstanceState(savedInstanceState);
+		if (_lat != null && _lng != null && _poiList != null){
+			savedInstanceState.putParcelableArrayList(TagNames.EXTRA_POI_LIST, _poiList);
+			savedInstanceState.putDouble(TagNames.EXTRA_LAT, _lat);
+			savedInstanceState.putDouble(TagNames.EXTRA_LONG, _lng);
+			super.onSaveInstanceState(savedInstanceState);
+		}
 	}
 
 }

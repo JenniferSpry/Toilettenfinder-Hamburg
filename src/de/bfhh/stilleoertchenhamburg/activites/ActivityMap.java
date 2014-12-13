@@ -971,7 +971,7 @@ public class ActivityMap extends ActivityMenuBase {
 	//overwrite back key behavior
 	@Override
 	public void onBackPressed() {		
-	   if(_slidingUpPanel.isPanelHidden()){
+	   if(_slidingUpPanel.isPanelHidden() || _selectedPoi == null){
 		   ActivityMap.super.onBackPressed();
 	   } else {
 		   //hide slider and put selected pin back to normal
