@@ -15,17 +15,14 @@ import de.bfhh.stilleoertchenhamburg.models.POI;
 
 /*
  * @author: Steffi
- * This class receives Broadcasts from POIUpdateService or Activities, which
- * pass to it an ArrayList<POI> poiList.
- * It then has all the information it needs for calculating the distance from 
- * a given user Location to all the POI.
- * It will have a method to pass the ten closest POI to the user's location
- * back to the calling activity.
+ * Helper class for all POI and POI-list needs
  */
 
 public class POIHelper {
 	
-	//set distance to user for each individual POI in poiList.
+	/**
+	 * set distance to user for each individual POI in poiList.
+	 */
 	public static ArrayList<POI> setDistancePOIToUser(ArrayList<POI> poiList, double userLat, double userLng){
 		Location loc = new Location("");
 		loc.setLatitude(userLat);
@@ -41,14 +38,17 @@ public class POIHelper {
 		Location loc = new Location("");
 		loc.setLatitude(userLat);
 		loc.setLongitude(userLng);
-		//set distance to current user position for every POI in the List
 		poi.setDistanceToUser(loc);	
 		return poi;
 	}
 	
-	//returns the closest ten POI to the user's current location
-	public static ArrayList<POI> getClosestPOI(ArrayList<POI> poiList, int amount){	
+	/**
+	 * returns the closest ten POI to the user's current location
+	 */
+	public static ArrayList<POI> getClosestPOI(ArrayList<POI> poiList, int amount){
 		ArrayList<POI> closestPOI = new ArrayList<POI>();
+		
+		if (poiList == null) return closestPOI;
 		
 		if (!poiList.isEmpty()){
 			Collections.sort(poiList, new Comparator<POI>() {
@@ -67,10 +67,11 @@ public class POIHelper {
 		return closestPOI; //could be empty if amount == 0
 	}
 	
-	//returns the MarkerOptions for a passed POI
+	/**
+	 * returns the MarkerOptions for a passed POI
+	 */
 	public static MarkerOptions getMarkerOptionsForPOI(POI poi, boolean active){
 		MarkerOptions marker = new MarkerOptions();
-		//poi.getMarkerIconRessource() returns the drawable icon depending on wheelchair accessibility
 		BitmapDescriptor icon = null;
 		if (active){
 			icon = BitmapDescriptorFactory.fromResource(poi.getActiveIcon());
@@ -82,10 +83,16 @@ public class POIHelper {
 					 .icon(icon);
 	}
 
+	/**
+	 * find a POI by it's associated markers id
+	 */
 	public static POI getPoiByIdReference(HashMap<String, Integer> markerPOIIdMap, ArrayList<POI> allPOIList, String markerId) {
-		return getPoiById(allPOIList,markerPOIIdMap.get(markerId) );
+		return getPoiById(allPOIList, markerPOIIdMap.get(markerId));
 	}
 	
+	/**
+	 * select a POI by it's id out of an arrayList
+	 */
 	public static POI getPoiById(ArrayList<POI> allPOIList, Integer id) {
 		for(POI poi: allPOIList){
 			if (poi.getId() == id){

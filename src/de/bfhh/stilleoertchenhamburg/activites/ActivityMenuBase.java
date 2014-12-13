@@ -2,7 +2,6 @@ package de.bfhh.stilleoertchenhamburg.activites;
 
 import de.bfhh.stilleoertchenhamburg.R;
 import android.content.Intent;
-import android.support.v4.app.NavUtils;
 import android.view.Menu;
 import android.view.MenuItem;
 

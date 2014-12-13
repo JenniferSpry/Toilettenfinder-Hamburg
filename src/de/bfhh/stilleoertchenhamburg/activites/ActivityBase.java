@@ -5,7 +5,6 @@ import com.google.android.gms.common.GooglePlayServicesUtil;
 
 import de.bfhh.stilleoertchenhamburg.NetworkUtil;
 import de.bfhh.stilleoertchenhamburg.TagNames;
-import de.bfhh.stilleoertchenhamburg.helpers.DatabaseHelper;
 
 import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
