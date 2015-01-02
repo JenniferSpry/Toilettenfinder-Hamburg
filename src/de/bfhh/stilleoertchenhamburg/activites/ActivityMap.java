@@ -11,6 +11,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnCameraChangeListener;
 import com.google.android.gms.maps.GoogleMap.OnMapClickListener;
 import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
+import com.google.android.gms.maps.Projection;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
@@ -286,10 +287,11 @@ public class ActivityMap extends ActivityMenuBase {
 					} else {
 						_slidingUpPanel.hidePanel();
 					}
+					
 					//center map on clicked marker
-					LatLng center = marker.getPosition();
-					moveToLocation(CameraUpdateFactory.newLatLng(center));
-					refreshMapBounds();
+					refreshMapBounds();	
+					LatLng markerLatLng = marker.getPosition();	
+					moveToLocation(CameraUpdateFactory.newLatLng(markerLatLng));
 					return true;
 				}
 			});
@@ -370,7 +372,7 @@ public class ActivityMap extends ActivityMenuBase {
 						if(_selectedMarker != null){
 							LatLng markerPos = _selectedMarker.getPosition();
 							//move position to center map to down a bit
-							LatLng mPlusOffset = new LatLng(markerPos.latitude+0.001f, markerPos.longitude);
+							LatLng mPlusOffset = new LatLng(markerPos.latitude, markerPos.longitude);
 							moveToLocation(CameraUpdateFactory.newLatLng(mPlusOffset));
 						}
 						firstAnchored = true;
