@@ -396,6 +396,22 @@ public class ActivityMap extends ActivityMenuBase {
 			        	.build();
 					_mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, 80));
 					
+					//set distance from user to destination
+					int d = gd.getTotalDistanceValue(doc);
+					String distance = String.valueOf(d) + " m";  
+			        txtDistance = (TextView) findViewById(R.id.distance_detail);
+			        txtDistance.setText("Distanz:" + distance);
+			        
+			        //TODO: FROM and TO stext
+			        txtName = (TextView) findViewById(R.id.name_detail);
+			        txtName.setText("Von:   Aktuelle Position" + " \nNach: " +  gd.getEndAddress(doc));
+					
+			        txtAddress = (TextView) findViewById(R.id.address_detail);
+			        txtAddress.setText("");
+			        
+			        txtDescription = (TextView) findViewById(R.id.description_detail);
+			        txtDescription.setText("");
+			        
 					//animateDirection() changed to return the polyline, so we can delete it again
 					_direction = gd.animateDirection(_mMap, gd.getDirection(doc), GoogleDirection.SPEED_VERY_FAST
 	        				, false, true, true, false, null, false, true, new PolylineOptions().width(8).color(Color.rgb(34, 51, 9)).zIndex(99999.0f));
@@ -842,7 +858,6 @@ public class ActivityMap extends ActivityMenuBase {
 						//_markerMap.remove(poi.getId());
 					}
 				}
-				
 			}
 		}
 	}
@@ -852,12 +867,8 @@ public class ActivityMap extends ActivityMenuBase {
 			//Loop through all poi
 			for(POI poi : _allPOIList){
 				if(_markerMap.containsKey(poi.getId())){
-					//poi is not destination (or user)
-					//if(_selectedPoi != null && poi.getId() != _selectedPoi.getId()){
-						_markerMap.get(poi.getId()).setVisible(true);
-					//}
+					_markerMap.get(poi.getId()).setVisible(true);
 				}
-				
 			}
 		}
 	}
@@ -908,6 +919,10 @@ public class ActivityMap extends ActivityMenuBase {
 	        	txtWebsite.setVisibility(View.GONE);
 	        }
 		}
+	}
+	
+	protected void updateSliderContentRoute(GoogleDirection gd){
+		
 	}
 
 
