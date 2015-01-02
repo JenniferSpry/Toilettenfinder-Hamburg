@@ -43,11 +43,14 @@ public class ActivitySplashScreen extends ActivityBase {
     private boolean _locServiceBound = false;    
 	protected boolean _networkConnected;
 
+	protected boolean _mapActivityStarted; //shows whether MapActivity was started already or not
+
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
+        _mapActivityStarted = false;
     }
     
     @Override
@@ -106,12 +109,13 @@ public class ActivitySplashScreen extends ActivityBase {
         			_lat = bundle.getDouble(TagNames.EXTRA_LAT);
         			_lng = bundle.getDouble(TagNames.EXTRA_LONG);
         			_locationResult = bundle.getInt(TagNames.EXTRA_LOCATION_RESULT);
+            		startMapActivity(); //start Map
         		} else if(action.equals(TagNames.BROADC_POIS)){
         			// get PoiList
         			Log.d(TAG, "Recieved Broadcast poi list");
         			_poiList = intent.getParcelableArrayListExtra(TagNames.EXTRA_POI_LIST);
         		}
-        		startMapActivity();
+        		
         	}
         }
     };
@@ -159,6 +163,11 @@ public class ActivitySplashScreen extends ActivityBase {
     @Override
     protected void onPause() {
     	super.onPause();
+    	Log.d(TAG, "onPause");
+    	if(_isReceiverRegistered){
+    	  	unregisterReceiver(receiver);
+    	  	_isReceiverRegistered = false;
+      	}
     	if(_locServiceBound){
     		unbindService(mConnection);
     		_locServiceBound = false;
