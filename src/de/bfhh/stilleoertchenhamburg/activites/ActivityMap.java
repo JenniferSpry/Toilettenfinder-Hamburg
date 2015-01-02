@@ -1,10 +1,16 @@
 package de.bfhh.stilleoertchenhamburg.activites;
 
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+
+import org.apache.http.HttpRequest;
+import org.apache.http.HttpRequestFactory;
+import org.w3c.dom.Document;
+
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -18,6 +24,8 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout.PanelSlideListener;
 
@@ -25,7 +33,9 @@ import de.bfhh.stilleoertchenhamburg.AppController;
 import de.bfhh.stilleoertchenhamburg.LocationUpdateService;
 import de.bfhh.stilleoertchenhamburg.R;
 import de.bfhh.stilleoertchenhamburg.TagNames;
+import de.bfhh.stilleoertchenhamburg.helpers.GoogleDirection.OnDirectionResponseListener;
 import de.bfhh.stilleoertchenhamburg.helpers.POIHelper;
+import de.bfhh.stilleoertchenhamburg.helpers.GoogleDirection;
 import de.bfhh.stilleoertchenhamburg.models.POI;
 
 import android.text.method.LinkMovementMethod;
@@ -34,6 +44,7 @@ import android.util.Log;
 import android.view.Display;
 import android.view.View;
 import android.view.ViewTreeObserver.OnGlobalLayoutListener;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.RelativeLayout;
@@ -49,9 +60,12 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.res.Configuration;
+import android.graphics.Color;
 import android.graphics.Point;
 import android.location.Location;
 import android.location.LocationManager;
+import android.opengl.Visibility;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -90,6 +104,11 @@ public class ActivityMap extends ActivityMenuBase {
 	private ImageButton _myLocationButton; //Button to get back to current user location on map
 	private ImageButton _zoomInButton;
 	private ImageButton _zoomOutButton;
+	
+	private Button _routeText; //show route as text button
+	private Button _routeMap; //show route on map as polyline
+	private GoogleDirection gd;//Direction class from https://github.com/akexorcist/Android-GoogleDirectionAndPlaceLibrary/blob/master/library/src/main/java/app/akexorcist/gdaplibrary/GoogleDirection.java
+	private Polyline _direction; //Polyline on map representing direction
 	
 	//Slider plus content
 	private SlidingUpPanelLayout _slidingUpPanel;
@@ -171,6 +190,10 @@ public class ActivityMap extends ActivityMenuBase {
 		_myLocationButton = (ImageButton) findViewById(R.id.buttonToLocation); 
 		_zoomInButton = (ImageButton) findViewById(R.id.buttonZoomIn); 
 		_zoomOutButton = (ImageButton) findViewById(R.id.buttonZoomOut);
+		
+		_routeText = (Button) findViewById(R.id.route_text);
+		_routeMap = (Button) findViewById(R.id.route_map);
+		
 		//if landscape mode, hide zoom buttons entirely
 		orientation = getResources().getConfiguration().orientation;
 		adjustZoomVisibility(orientation);
@@ -278,6 +301,15 @@ public class ActivityMap extends ActivityMenuBase {
 					}
 					_selectedMarker = null;
 					_selectedPoi = null;
+					//remove polyline if it's set
+					if(_direction != null){
+						_direction.remove();
+					}
+					if(_zoomInButton.getVisibility() == View.INVISIBLE && _zoomOutButton.getVisibility() == View.INVISIBLE){
+						_zoomInButton.setVisibility(View.VISIBLE);
+						_zoomOutButton.setVisibility(View.VISIBLE);
+						showMarkersExceptUserAndDestination();
+					}
 				}
 			});
 			
@@ -285,10 +317,23 @@ public class ActivityMap extends ActivityMenuBase {
 			_mMap.setOnMarkerClickListener(new OnMarkerClickListener(){
 				@Override
 				public boolean onMarkerClick(Marker marker) { 
+					//if the buttonsContainer was hidden, show it again
+					if(_zoomInButton.getVisibility() == View.INVISIBLE && _zoomOutButton.getVisibility() == View.INVISIBLE
+							&& _selectedMarker != marker){
+						_zoomInButton.setVisibility(View.VISIBLE);
+						_zoomOutButton.setVisibility(View.VISIBLE);
+						showMarkersExceptUserAndDestination();
+					}
+					//remove polyline if it's set
+					if(_direction != null){
+						_direction.remove();
+					}
+					
 					// set last selected marker back to unselected
 					if (_selectedMarker != null & _selectedPoi != null) {
 						_selectedMarker.setIcon(BitmapDescriptorFactory.fromResource(_selectedPoi.getIcon()));
 					}
+					
 
 					if(_markerPOIIdMap.get(marker.getId()) != null){//is this markers id in the list (if not it is user marker)
 						_selectedPoi = POIHelper.getPoiByIdReference(_markerPOIIdMap, _allPOIList, marker.getId());
@@ -317,6 +362,8 @@ public class ActivityMap extends ActivityMenuBase {
 					} else {//show GPS Settings dialog
 						buildAlertMessageGPSSettings();
 					}
+					showMarkersExceptUserAndDestination();
+					
 				}
 			});
 			
@@ -331,6 +378,56 @@ public class ActivityMap extends ActivityMenuBase {
 					moveToLocation(CameraUpdateFactory.zoomOut());
 				}
 			});
+			
+			
+			//TODO: create new activity for route text (or put in slider?)
+			//find route from userpos -> clicked marker and display
+			
+			gd = new GoogleDirection(this);
+	        gd.setOnDirectionResponseListener(new OnDirectionResponseListener() {
+	        	@Override
+	        	public void onResponse(String status, Document doc, GoogleDirection gd) {	
+					Toast.makeText(getApplicationContext(), status, Toast.LENGTH_SHORT).show();
+					
+					//TODO: hide all other markers except user and destination
+					LatLngBounds bounds = new LatLngBounds.Builder()
+			        	.include(new LatLng(_userLat,_userLng))
+			        	.include(_selectedMarker.getPosition())
+			        	.build();
+					_mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, 80));
+					
+					//animateDirection() changed to return the polyline, so we can delete it again
+					_direction = gd.animateDirection(_mMap, gd.getDirection(doc), GoogleDirection.SPEED_VERY_FAST
+	        				, false, true, true, false, null, false, true, new PolylineOptions().width(8).color(Color.rgb(34, 51, 9)).zIndex(99999.0f));
+					
+					_zoomInButton.setVisibility(View.INVISIBLE);
+					_zoomOutButton.setVisibility(View.INVISIBLE);
+					hideMarkersExceptUserAndDestination();
+			
+	        	}
+
+			});
+	        	
+			_routeText.setOnClickListener(new View.OnClickListener() {
+				public void onClick(View v) {
+					Toast.makeText(getApplicationContext(), "Text Route Click", Toast.LENGTH_LONG).show();
+				}
+			});
+			
+			_routeMap.setOnClickListener(new View.OnClickListener() {
+				public void onClick(View v) {
+
+					//Toast.makeText(getApplicationContext(), "Map Route Click", Toast.LENGTH_LONG).show();
+					_slidingUpPanel.collapsePanel();
+					//Get user and clicked marker position
+					LatLng userLatLng = new LatLng(_userLat, _userLng);
+					LatLng clickedLatLng = _selectedMarker.getPosition();
+					//request direction
+					gd.request(userLatLng, clickedLatLng, GoogleDirection.MODE_DRIVING);
+				}
+			});
+			
+			 
 
 			_slidingUpPanel.setPanelSlideListener(new PanelSlideListener(){
 				private boolean firstCollapse = true;
@@ -359,10 +456,8 @@ public class ActivityMap extends ActivityMenuBase {
 					if(_selectedMarker != null){
 						//get distance between map center (gmaps) and clicked marker position
 						float d = getDistanceBewteen(getMapCenter(_mapBounds), _selectedMarker.getPosition());
-						//if panel collapsed for first time (== first shown) and d > 10 meters
-						//if(!firstCollapse && d > 10.0f ){
-							moveToLocation(CameraUpdateFactory.newLatLng(_selectedMarker.getPosition()));
-						//}
+						//if panel collapsed for first time (== first shown) and d > 10 meter
+						moveToLocation(CameraUpdateFactory.newLatLng(_selectedMarker.getPosition()));
 					}
 					firstCollapse = false;
 					firstAnchored = false;
@@ -396,7 +491,6 @@ public class ActivityMap extends ActivityMenuBase {
 					firstCollapse = true;
 					firstAnchored = true;
 					adjustLayoutToPanel();
-					
 				}    	
 			});			
 		}
@@ -737,6 +831,37 @@ public class ActivityMap extends ActivityMenuBase {
 		}
 	}
 	
+	private void hideMarkersExceptUserAndDestination(){
+		if(_mMap != null){
+			//Loop through all poi
+			for(POI poi : _allPOIList){
+				if(_markerMap.containsKey(poi.getId())){
+					//poi is not destination (or user)
+					if(poi.getId() != _selectedPoi.getId()){
+						_markerMap.get(poi.getId()).setVisible(false);
+						//_markerMap.remove(poi.getId());
+					}
+				}
+				
+			}
+		}
+	}
+	
+	private void showMarkersExceptUserAndDestination(){
+		if(_mMap != null){
+			//Loop through all poi
+			for(POI poi : _allPOIList){
+				if(_markerMap.containsKey(poi.getId())){
+					//poi is not destination (or user)
+					//if(_selectedPoi != null && poi.getId() != _selectedPoi.getId()){
+						_markerMap.get(poi.getId()).setVisible(true);
+					//}
+				}
+				
+			}
+		}
+	}
+	
 	
 	private float getDistanceBewteen(LatLng a, LatLng b){
 		float[] res = new float[1];
@@ -1006,5 +1131,6 @@ public class ActivityMap extends ActivityMenuBase {
 			_zoomOutButton.setVisibility(View.VISIBLE);
 		}
 	}
+
 
 }
