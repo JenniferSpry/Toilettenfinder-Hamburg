@@ -118,7 +118,7 @@ public class ActivityMap extends ActivityMenuBase {
 	
 	private Button _routeText; //show route as text button
 	private Button _routeMap; //show route on map as polyline
-	private GoogleDirection gd;//Direction class from https://github.com/akexorcist/Android-GoogleDirectionAndPlaceLibrary/blob/master/library/src/main/java/app/akexorcist/gdaplibrary/GoogleDirection.java
+	private GoogleDirection _gd;//Direction class from https://github.com/akexorcist/Android-GoogleDirectionAndPlaceLibrary/blob/master/library/src/main/java/app/akexorcist/gdaplibrary/GoogleDirection.java
 	private Polyline _direction; //Polyline on map representing direction
 	
 	//Slider plus content
@@ -391,9 +391,9 @@ public class ActivityMap extends ActivityMenuBase {
 			});
 			
 			
-			gd = new GoogleDirection(this);
+			_gd = new GoogleDirection(this);
 			//Called when we get a response with the direction from google
-	        gd.setOnDirectionResponseListener(new OnDirectionResponseListener() {
+	        _gd.setOnDirectionResponseListener(new OnDirectionResponseListener() {
 	        	@Override
 	        	public void onResponse(String status, Document doc, GoogleDirection gd) {	
 					Toast.makeText(getApplicationContext(), status, Toast.LENGTH_SHORT).show();
@@ -407,10 +407,12 @@ public class ActivityMap extends ActivityMenuBase {
 					//update slider top to show start and destination plus distance in meters
 					updateSliderContentRoute(gd, doc);
 					
-					//only add directions polyline to map if it isn't already there
-					if(_direction == null){
-						_direction = _mMap.addPolyline(gd.getPolyline(doc, 8, Color.rgb(34, 51, 9)));
+					//remove directions polyline if it's already there
+					if(_direction != null){
+						_direction.remove();
 					}
+					_direction = _mMap.addPolyline(gd.getPolyline(doc, 6, Color.rgb(34, 51, 9)));
+
 					_showRoute = true;
 					_zoomInButton.setVisibility(View.INVISIBLE);
 					_zoomOutButton.setVisibility(View.INVISIBLE);
@@ -422,7 +424,7 @@ public class ActivityMap extends ActivityMenuBase {
 	        	
 			_routeText.setOnClickListener(new View.OnClickListener() {
 				public void onClick(View v) {
-					String requestUrl = gd.request(new LatLng(_userLat, _userLng), _selectedMarker.getPosition(), GoogleDirection.MODE_WALKING);
+					String requestUrl = _gd.request(new LatLng(_userLat, _userLng), _selectedMarker.getPosition(), GoogleDirection.MODE_WALKING);
 					_slidingUpPanel.expandPanel();
 				}
 			});
@@ -431,7 +433,7 @@ public class ActivityMap extends ActivityMenuBase {
 				public void onClick(View v) {
 					_slidingUpPanel.collapsePanel();
 					//request direction from userPosition to selectedMarker position
-					String requestUrl = gd.request(new LatLng(_userLat, _userLng), _selectedMarker.getPosition(), GoogleDirection.MODE_WALKING);
+					String requestUrl = _gd.request(new LatLng(_userLat, _userLng), _selectedMarker.getPosition(), GoogleDirection.MODE_WALKING);
 				}
 			});
 			
@@ -721,6 +723,15 @@ public class ActivityMap extends ActivityMenuBase {
 								main.moveToLocation(main.getCameraUpdateForClosestPOIBounds(10));
 								main.updatePOIMarkers();
 								main.setPeeerOnMap();
+							}
+							//redraw route if it's set
+							if(main._showRoute){
+								if(main._gd == null){
+									main._gd = new GoogleDirection(context);
+								}
+								if(main._selectedMarker != null){
+									String requestUrl = main._gd.request(new LatLng(main._userLat, main._userLng), main._selectedMarker.getPosition(), GoogleDirection.MODE_WALKING);
+								}
 							}
 						}
 					}    
