@@ -918,7 +918,7 @@ public class ActivityMap extends ActivityMenuBase {
 	        float d = poi.getDistanceToUser();
 	        NumberFormat numberFormat = new DecimalFormat("0.0");
 			numberFormat.setRoundingMode(RoundingMode.DOWN);
-			
+			//show distance rounded in kilometers if greater than 999 meters
 			String distance = d > 999 ? String.valueOf(numberFormat.format(d*0.001)) + " km" : String.valueOf((int) Math.round(d)) + " m";  
 	        //String distance = String.valueOf(d) + " m";  
 	        txtDistance = (TextView) findViewById(R.id.distance_detail);
@@ -947,14 +947,14 @@ public class ActivityMap extends ActivityMenuBase {
 	protected void updateSliderContentRoute(GoogleDirection gd, Document doc){
 		//set duration and distance from user to destination
 		int d = gd.getTotalDistanceValue(doc);
-		String duration = gd.getTotalDurationText(doc).replace("Minuten", "min").replace("Stunden", "h");
+		String duration = gd.getTotalDurationText(doc).replace("Minuten", "min").replace("Stunden", "h").replace("Stunde", "h");
 		
 		NumberFormat numberFormat = new DecimalFormat("0.0");
 		numberFormat.setRoundingMode(RoundingMode.DOWN);
-		
+		//show distance rounded in kilometers if greater than 999 meters
 		String distance = d > 999 ? String.valueOf(numberFormat.format(d*0.001)) + " km" : String.valueOf(d) + " m";  
         txtDistance = (TextView) findViewById(R.id.distance_detail);
-        txtDistance.setText(duration + "\n");
+        txtDistance.setText(duration.trim() + "\n");
         txtDistance.append(Html.fromHtml("(" + distance + ")"));
        
         //change name to start and destination, like: "Von: Aktuelle Position \n Nach: xxx"

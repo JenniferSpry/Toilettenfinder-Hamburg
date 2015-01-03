@@ -111,7 +111,7 @@
 		        android:layout_height="wrap_content"
 		        android:layout_alignParentRight="true"
 		        android:layout_marginLeft="5sp"
-			    android:gravity="right"
+			    android:gravity="center"
 			    android:textSize="@dimen/detail_text"/>
 		
 			<!-- Address -->
