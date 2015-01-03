@@ -7,6 +7,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import javax.xml.datatype.Duration;
+
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpRequestFactory;
 import org.w3c.dom.Document;
@@ -944,12 +946,14 @@ public class ActivityMap extends ActivityMenuBase {
 	 * Updates the slider with data about the route direction.
 	 */
 	protected void updateSliderContentRoute(GoogleDirection gd, Document doc){
-		//set distance from user to destination
+		//set duration and distance from user to destination
 		int d = gd.getTotalDistanceValue(doc);
+		String duration = gd.getTotalDurationText(doc).replace("Minuten", "min");
 		String distance = String.valueOf(d) + " m";  
         txtDistance = (TextView) findViewById(R.id.distance_detail);
-        txtDistance.setText(Html.fromHtml("<b>Distanz:</b>" + distance));
-        
+        txtDistance.setText(duration + "\n");
+        txtDistance.append(Html.fromHtml("(" + distance + ")"));
+       
         //change name to start and destination, like: "Von: Aktuelle Position \n Nach: xxx"
         txtName = (TextView) findViewById(R.id.name_detail);
         txtName.setText("Von:   Aktuelle Position" + " \nNach: " +  gd.getEndAddress(doc));
@@ -990,7 +994,6 @@ public class ActivityMap extends ActivityMenuBase {
         	}else{
         		txtDescription.append(htmlInstructions.get(i).trim());
         	}
-        	
         }
 	}
 
