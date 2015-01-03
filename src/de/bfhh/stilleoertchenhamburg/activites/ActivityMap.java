@@ -43,6 +43,7 @@ import de.bfhh.stilleoertchenhamburg.helpers.GoogleDirection.OnDirectionResponse
 import de.bfhh.stilleoertchenhamburg.helpers.POIHelper;
 import de.bfhh.stilleoertchenhamburg.helpers.GoogleDirection;
 import de.bfhh.stilleoertchenhamburg.models.POI;
+import de.bfhh.stilleoertchenhamburg.services.SendMailService;
 
 import android.text.Editable;
 import android.text.Html;
@@ -120,6 +121,8 @@ public class ActivityMap extends ActivityMenuBase {
 	private Button _routeMap; //show route on map as polyline
 	private GoogleDirection _gd;//Direction class from https://github.com/akexorcist/Android-GoogleDirectionAndPlaceLibrary/blob/master/library/src/main/java/app/akexorcist/gdaplibrary/GoogleDirection.java
 	private Polyline _direction; //Polyline on map representing direction
+	
+	private Button _buttonSendComment;
 	
 	//Slider plus content
 	private SlidingUpPanelLayout _slidingUpPanel;
@@ -203,6 +206,8 @@ public class ActivityMap extends ActivityMenuBase {
 		_routeText = (Button) findViewById(R.id.route_text);
 		_routeMap = (Button) findViewById(R.id.route_map);
 		_showRoute = false; //determines whether other markers apart from user and destination should be shown (false -> yes, true -> no)
+		
+		_buttonSendComment = (Button) findViewById(R.id.button_send_comment);
 		
 		//if landscape mode, hide zoom buttons entirely
 		orientation = getResources().getConfiguration().orientation;
@@ -434,6 +439,19 @@ public class ActivityMap extends ActivityMenuBase {
 					_slidingUpPanel.collapsePanel();
 					//request direction from userPosition to selectedMarker position
 					String requestUrl = _gd.request(new LatLng(_userLat, _userLng), _selectedMarker.getPosition(), GoogleDirection.MODE_WALKING);
+				}
+			});
+			
+			// TODO
+			_buttonSendComment.setOnClickListener(new View.OnClickListener() {
+				public void onClick(View v) {
+					Toast.makeText(getApplicationContext(), "pressed button", Toast.LENGTH_SHORT).show();
+					Log.d(TAG, "pressed button");
+					Intent i = new Intent(ActivityMap.this, SendMailService.class);
+			        i.putExtra(TagNames.EXTRA_NAME, "jennifer");
+			        i.putExtra(TagNames.EXTRA_E_MAIL, "mail@foo.com");
+			  	  	i.putExtra(TagNames.EXTRA_COMMENT, "this toilet stinks!");
+			  	    ActivityMap.this.startService(i);
 				}
 			});
 			

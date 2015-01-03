@@ -47,6 +47,11 @@
             android:enabled="true"
             android:exported="false" />
         
+        <!-- Send mail IntentService -->
+        <service android:name=".services.SendMailService" 
+            android:enabled="true"
+            android:exported="false" />
+        
         <!--  Splash screen Activity -->
         <activity
             android:name="de.bfhh.stilleoertchenhamburg.activites.ActivitySplashScreen"

@@ -66,6 +66,10 @@ public class AppController extends Application {
     	return properties.getProperty("URLToilets");
     }
     
+    public String getMailURL(){
+    	return properties.getProperty("URLMail");
+    }
+    
     public String getAuthKey(){
     	return properties.getProperty("AuthKey");
     }
