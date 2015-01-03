@@ -153,6 +153,8 @@ public class ActivityMap extends ActivityMenuBase {
 	//Display orientation
 	private int orientation;
 
+	protected boolean _showRoute;
+
 	/**
 	 * Initiate variables
 	 * fetch bundle contents
@@ -193,6 +195,7 @@ public class ActivityMap extends ActivityMenuBase {
 		
 		_routeText = (Button) findViewById(R.id.route_text);
 		_routeMap = (Button) findViewById(R.id.route_map);
+		_showRoute = false; //determines whether other markers apart from user and destination should be shown (false -> yes, true -> no)
 		
 		//if landscape mode, hide zoom buttons entirely
 		orientation = getResources().getConfiguration().orientation;
@@ -252,6 +255,7 @@ public class ActivityMap extends ActivityMenuBase {
 			//poi selected by user 
 			_selectedPoi = bundle.getParcelable(TagNames.EXTRA_POI); // may be null
 			cameraPosition = bundle.getParcelable(TagNames.EXTRA_CAMERA_POS); // may be null
+			_showRoute = bundle.getBoolean(TagNames.EXTRA_SHOW_ROUTE);
 		}   
 
 		if(_allPOIList != null){
@@ -285,7 +289,10 @@ public class ActivityMap extends ActivityMenuBase {
 				public void onCameraChange(CameraPosition pos) {
 					if(_mMap != null){
 						refreshMapBounds();
-						updatePOIMarkers();
+						//TODO: only refresh markers if boolean route is false
+						if(!_showRoute){
+							updatePOIMarkers();
+						}
 						Log.d(TAG + " camera changed to pos", pos.toString());
 					}
 				}			
@@ -309,6 +316,7 @@ public class ActivityMap extends ActivityMenuBase {
 						_zoomInButton.setVisibility(View.VISIBLE);
 						_zoomOutButton.setVisibility(View.VISIBLE);
 						showMarkersExceptUserAndDestination();
+						_showRoute = false;
 					}
 				}
 			});
@@ -323,6 +331,7 @@ public class ActivityMap extends ActivityMenuBase {
 						_zoomInButton.setVisibility(View.VISIBLE);
 						_zoomOutButton.setVisibility(View.VISIBLE);
 						showMarkersExceptUserAndDestination();
+						_showRoute = false;
 					}
 					//remove polyline if it's set
 					if(_direction != null){
@@ -394,28 +403,17 @@ public class ActivityMap extends ActivityMenuBase {
 			        	.include(new LatLng(_userLat,_userLng))
 			        	.include(_selectedMarker.getPosition())
 			        	.build();
-					_mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, 80));
+					_mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 80));
 					
-					//set distance from user to destination
-					int d = gd.getTotalDistanceValue(doc);
-					String distance = String.valueOf(d) + " m";  
-			        txtDistance = (TextView) findViewById(R.id.distance_detail);
-			        txtDistance.setText("Distanz:" + distance);
-			        
-			        //TODO: FROM and TO stext
-			        txtName = (TextView) findViewById(R.id.name_detail);
-			        txtName.setText("Von:   Aktuelle Position" + " \nNach: " +  gd.getEndAddress(doc));
-					
-			        txtAddress = (TextView) findViewById(R.id.address_detail);
-			        txtAddress.setText("");
-			        
-			        txtDescription = (TextView) findViewById(R.id.description_detail);
-			        txtDescription.setText("");
+					//update slider top to show start and destination plus distance in meters
+					updateSliderContentRoute(gd, doc);
 			        
 					//animateDirection() changed to return the polyline, so we can delete it again
-					_direction = gd.animateDirection(_mMap, gd.getDirection(doc), GoogleDirection.SPEED_VERY_FAST
+					/*_direction = gd.animateDirection(_mMap, gd.getDirection(doc), GoogleDirection.SPEED_VERY_FAST
 	        				, false, true, true, false, null, false, true, new PolylineOptions().width(8).color(Color.rgb(34, 51, 9)).zIndex(99999.0f));
-					
+					*/
+					_direction = _mMap.addPolyline(gd.getPolyline(doc, 8, Color.rgb(34, 51, 9)));
+					_showRoute = true;
 					_zoomInButton.setVisibility(View.INVISIBLE);
 					_zoomOutButton.setVisibility(View.INVISIBLE);
 					hideMarkersExceptUserAndDestination();
@@ -432,19 +430,13 @@ public class ActivityMap extends ActivityMenuBase {
 			
 			_routeMap.setOnClickListener(new View.OnClickListener() {
 				public void onClick(View v) {
-
-					//Toast.makeText(getApplicationContext(), "Map Route Click", Toast.LENGTH_LONG).show();
+					
 					_slidingUpPanel.collapsePanel();
-					//Get user and clicked marker position
-					LatLng userLatLng = new LatLng(_userLat, _userLng);
-					LatLng clickedLatLng = _selectedMarker.getPosition();
-					//request direction
-					gd.request(userLatLng, clickedLatLng, GoogleDirection.MODE_DRIVING);
+					//request direction from userPosition to selectedMarker position
+					gd.request(new LatLng(_userLat, _userLng), _selectedMarker.getPosition(), GoogleDirection.MODE_WALKING);
 				}
 			});
 			
-			 
-
 			_slidingUpPanel.setPanelSlideListener(new PanelSlideListener(){
 				private boolean firstCollapse = true;
 				private boolean firstAnchored = true;
@@ -472,8 +464,15 @@ public class ActivityMap extends ActivityMenuBase {
 					if(_selectedMarker != null){
 						//get distance between map center (gmaps) and clicked marker position
 						float d = getDistanceBewteen(getMapCenter(_mapBounds), _selectedMarker.getPosition());
-						//if panel collapsed for first time (== first shown) and d > 10 meter
-						moveToLocation(CameraUpdateFactory.newLatLng(_selectedMarker.getPosition()));
+						if(!_showRoute){ //only center on selected marker if no route is shown
+							moveToLocation(CameraUpdateFactory.newLatLng(_selectedMarker.getPosition()));
+						}else{
+							LatLngBounds bounds = new LatLngBounds.Builder()
+				        	.include(new LatLng(_userLat,_userLng))
+				        	.include(_selectedMarker.getPosition())
+				        	.build();
+							_mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 80));
+						}
 					}
 					firstCollapse = false;
 					firstAnchored = false;
@@ -494,8 +493,16 @@ public class ActivityMap extends ActivityMenuBase {
 						if(_selectedMarker != null){
 							LatLng markerPos = _selectedMarker.getPosition();
 							//move position to center map to down a bit
-							LatLng mPlusOffset = new LatLng(markerPos.latitude+0.001f, markerPos.longitude);
-							moveToLocation(CameraUpdateFactory.newLatLng(mPlusOffset));
+							if(!_showRoute){ //only center on selected marker if no route is shown
+								//LatLng mPlusOffset = new LatLng(markerPos.latitude, markerPos.longitude);
+								moveToLocation(CameraUpdateFactory.newLatLng(_selectedMarker.getPosition()));
+							}else{
+								LatLngBounds bounds = new LatLngBounds.Builder()
+					        	.include(new LatLng(_userLat,_userLng))
+					        	.include(_selectedMarker.getPosition())
+					        	.build();
+								_mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 80));
+							}
 						}
 						firstAnchored = true;
 					}
@@ -590,15 +597,19 @@ public class ActivityMap extends ActivityMenuBase {
 			//check whether Activity was started by onclick in List, if so _clickedPoi is set (see onNewIntent())
             if(_selectedPoi != null){                
                 if (_mMap != null){
-                	updateSliderContent(_selectedPoi);
+                	 if(!_showRoute){
+                     	_mMap.animateCamera(CameraUpdateFactory.newLatLng(_selectedPoi.getLatLng()));
+                     	updateSliderContent(_selectedPoi);
+                	 }
     				selectMarker(_selectedPoi);
                     //set distance to user, otherwise slider will show 0 m
                     if(_userLat != 0.0d && _userLng != 0.0d){
                     	_selectedPoi = POIHelper.setDistanceSinglePOIToUser(_selectedPoi, _userLat, _userLng);
                     }
-                    //center camera on marker
-                    _mMap.animateCamera(CameraUpdateFactory.newLatLng(_selectedPoi.getLatLng()));
-                    updateSliderContent(_selectedPoi);
+                    //center camera on marker if route was not shown before (-> _showRoute = false)
+                   
+                    //_mMap.animateCamera(CameraUpdateFactory.newLatLng(_selectedPoi.getLatLng()));
+                    //updateSliderContent(_selectedPoi);
                     Marker marker = null;
                     //marker not on map 
                     if(!_markerMap.containsKey(_selectedPoi.getId())){
@@ -921,8 +932,22 @@ public class ActivityMap extends ActivityMenuBase {
 		}
 	}
 	
-	protected void updateSliderContentRoute(GoogleDirection gd){
+	protected void updateSliderContentRoute(GoogleDirection gd, Document doc){
+		//set distance from user to destination
+		int d = gd.getTotalDistanceValue(doc);
+		String distance = String.valueOf(d) + " m";  
+        txtDistance = (TextView) findViewById(R.id.distance_detail);
+        txtDistance.setText("Distanz:" + distance);
+        
+        //TODO: FROM and TO stext
+        txtName = (TextView) findViewById(R.id.name_detail);
+        txtName.setText("Von:   Aktuelle Position" + " \nNach: " +  gd.getEndAddress(doc));
 		
+        txtAddress = (TextView) findViewById(R.id.address_detail);
+        txtAddress.setText("");
+        
+        txtDescription = (TextView) findViewById(R.id.description_detail);
+        txtDescription.setText("");
 	}
 
 
@@ -1002,7 +1027,7 @@ public class ActivityMap extends ActivityMenuBase {
 		savedInstanceState.putInt(TagNames.EXTRA_LOCATION_RESULT, _hasUserLocation ? -1 : 1);
 		savedInstanceState.putParcelable(TagNames.EXTRA_POI, _selectedPoi);
 		savedInstanceState.putParcelable(TagNames.EXTRA_CAMERA_POS, _mMap.getCameraPosition());
-
+		savedInstanceState.putBoolean(TagNames.EXTRA_SHOW_ROUTE, _showRoute);
 		// Always call the superclass so it can save the view hierarchy state
 		super.onSaveInstanceState(savedInstanceState);
 	}

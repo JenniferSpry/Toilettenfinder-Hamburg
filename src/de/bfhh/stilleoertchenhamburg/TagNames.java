@@ -22,7 +22,8 @@ public class TagNames {
 	public static final String EXTRA_POI = "com.bfhh.stilleoertchenhamburg.POI";
 	
 	public static final String EXTRA_CAMERA_POS = "com.bfhh.stilleoertchenhamburg.CameraPosition";
-
+	public static final String EXTRA_SHOW_ROUTE = "com.bfhh.stilleoertchenhamburg.showRoute";
+	
 	//Internet Connection Check
 	public static final String SETTINGS_WIFI = "com.bfhh.stilleoertchenhamburg.settingsWifi";
 	public static final String SETTINGS_MOBILE = "com.bfhh.stilleoertchenhamburg.settingsMobile";
