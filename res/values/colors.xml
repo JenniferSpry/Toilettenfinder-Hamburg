@@ -10,5 +10,6 @@
     <color name="bfhh_green">#BCD233</color>
     <color name="bfhh_green_dark">#7d9100</color>
     <color name="bfhh_green_gradient_light">#e1ff80</color>
+    <color name="bfhh_green_very_light">#f6ffea</color>
     
 </resources>

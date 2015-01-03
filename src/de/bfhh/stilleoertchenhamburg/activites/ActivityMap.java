@@ -19,6 +19,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnCameraChangeListener;
 import com.google.android.gms.maps.GoogleMap.OnMapClickListener;
 import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
+import com.google.android.gms.maps.Projection;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
@@ -49,6 +50,7 @@ import android.util.Log;
 import android.view.Display;
 import android.view.View;
 import android.view.ViewTreeObserver.OnGlobalLayoutListener;
+
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -123,10 +125,6 @@ public class ActivityMap extends ActivityMenuBase {
     TextView txtAddress;   
     TextView txtDescription;            
     TextView txtWebsite;
-    private ArrayList<EditText> _editTexts; //holds the edittext fields in slider
-    EditText editName;
-    EditText editEmail;
-    EditText editComment;
     
     //Marker maps and user marker
 	private Marker _personInNeedOfToilette; //person's marker
@@ -175,7 +173,7 @@ public class ActivityMap extends ActivityMenuBase {
 		super.onCreate(savedInstanceState);
 		Thread.currentThread().setContextClassLoader(ActivityMap.class.getClassLoader());
 		Log.d(TAG, "onCreate");
-		Toast.makeText(this, "onCreate", Toast.LENGTH_LONG).show();
+		//Toast.makeText(this, "onCreate", Toast.LENGTH_LONG).show();
 		
 		setContentView(R.layout.activity_main);
 		
@@ -212,14 +210,6 @@ public class ActivityMap extends ActivityMenuBase {
 		_slidingUpPanel.setOverlayed(true);
 		_slidingUpPanel.setPanelHeight((int) Math.ceil(PANEL_HEIGHT * _logicalDensity));//dp to px
 		_slidingUpPanel.hidePanel();
-		
-		_editTexts = new ArrayList<EditText>();
-		editName = (EditText) findViewById(R.id.name_field);
-		editEmail = (EditText) findViewById(R.id.email_field);
-		editComment = (EditText) findViewById(R.id.comment_field);
-		_editTexts.add(editName);
-		_editTexts.add(editEmail);
-		_editTexts.add(editComment);
 
 		//LocationUpdateReceiver
 		_locUpdReceiver = new LocationUpdateReceiver(new Handler());
@@ -361,10 +351,11 @@ public class ActivityMap extends ActivityMenuBase {
 					} else {
 						_slidingUpPanel.hidePanel();
 					}
+					
 					//center map on clicked marker
-					LatLng center = marker.getPosition();
-					moveToLocation(CameraUpdateFactory.newLatLng(center));
-					refreshMapBounds();
+					refreshMapBounds();	
+					LatLng markerLatLng = marker.getPosition();	
+					moveToLocation(CameraUpdateFactory.newLatLng(markerLatLng));
 					return true;
 				}
 			});
@@ -507,6 +498,7 @@ public class ActivityMap extends ActivityMenuBase {
 					        	.build();
 								_mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 80));
 							}
+
 						}
 						firstAnchored = true;
 					}
@@ -589,7 +581,7 @@ public class ActivityMap extends ActivityMenuBase {
 	@Override
 	protected void onResume() {
 		super.onResume();
-		Toast.makeText(this, "onResume", Toast.LENGTH_LONG).show();
+		//Toast.makeText(this, "onResume", Toast.LENGTH_LONG).show();
 		Log.d(TAG, "onResume");
 
 		if (checkPlayServices()){
@@ -1195,7 +1187,7 @@ public class ActivityMap extends ActivityMenuBase {
 	//overwrite back key behavior
 	@Override
 	public void onBackPressed() {		
-	   if(_slidingUpPanel.isPanelHidden()){
+	   if(_slidingUpPanel.isPanelHidden() || _selectedPoi == null){
 		   ActivityMap.super.onBackPressed();
 	   } else {
 		   //hide slider and put selected pin back to normal

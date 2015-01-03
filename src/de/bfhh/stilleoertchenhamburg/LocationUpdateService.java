@@ -8,7 +8,6 @@ import android.content.Intent;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
-import android.location.LocationProvider;
 import android.os.AsyncTask;
 import android.os.Binder;
 import android.os.Bundle;
@@ -279,20 +278,20 @@ public class LocationUpdateService extends Service {
 		  @Override
 		  public void onStatusChanged(String provider, int status, Bundle extras) {
 			  //int status: 0 -> out of service; 1 -> temporarily unavailable; 2 -> available
-			  //Toast.makeText(getApplicationContext(), provider + "'s status changed to "+status +"!",
-				//Toast.LENGTH_SHORT).show();
+//			  Toast.makeText(getApplicationContext(), provider + "'s status changed to "+status +"!",
+//				Toast.LENGTH_SHORT).show();
 		  }
 	
 		  @Override
 		  public void onProviderEnabled(String provider) {
-			  //Toast.makeText(getApplicationContext(), "Provider " + provider + " enabled!",
-		        //Toast.LENGTH_SHORT).show();	
+//			  Toast.makeText(getApplicationContext(), "Provider " + provider + " enabled!",
+//		        Toast.LENGTH_SHORT).show();	
 		  }
 	
 		  @Override
 		  public void onProviderDisabled(String provider) {
-			  //Toast.makeText(getApplicationContext(), "Provider " + provider + " disabled!",
-		        //Toast.LENGTH_SHORT).show();
+//			  Toast.makeText(getApplicationContext(), "Provider " + provider + " disabled!",
+//		        Toast.LENGTH_SHORT).show();
 		  }
 		  
 		  //TODO: Check here, whether providers are being disabled while the app

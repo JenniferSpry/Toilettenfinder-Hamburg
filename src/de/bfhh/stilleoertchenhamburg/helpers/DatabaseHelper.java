@@ -26,12 +26,13 @@ import android.util.Log;
  */
 public class DatabaseHelper extends SQLiteOpenHelper { 
 
+	private final String TAG = DatabaseHelper.class.getSimpleName();
+	
 	private static DatabaseHelper sInstance;
 
 	private final static String DATABASE_NAME = "toiletFinder";
 	private final static int DATABASE_VERSION = 1;
 	
-	//refresh Data if older than two hours
 	// TODO: set to two days
 	private final static Long MAX_TIME_DELTA = 2 * 60 * 60 * 1000L;
 		
@@ -66,7 +67,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 	
 	@Override
 	public void onCreate(SQLiteDatabase db) {
-		Log.d("DatabaseHelper", "onCreate");
+		Log.d(TAG, "onCreate");
 		final String CREATE_POI_TABLE = "CREATE TABLE IF NOT EXISTS " + TABLE_POIS + "(" + 
 				KEY_ID + " INTEGER PRIMARY KEY," + 
 				KEY_NAME + " TEXT," + 
@@ -86,16 +87,19 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 		onCreate(db);
 	}
 	
+	/**
+	 * is there data in the database and is it older than the set max age?
+	 */
 	public boolean isDataStillFresh(Context context){	
 		SharedPreferences pref = context.getApplicationContext().getSharedPreferences(PREF_FILE_NAME, 0); // 0 = private mode
 		int poisInDatabase = pref.getInt(PREF_KEY_POI_AMOUNT, 0);
-		Log.d("refreshAllPOI", "POI in DB: "+poisInDatabase);
+		Log.d( TAG, "isDataStillFresh: POI in DB: "+poisInDatabase);
 		if (poisInDatabase < 1){
 			return false;
 		}
 		Long lastRefreshTime = pref.getLong(PREF_KEY_DATA_AGE, 0L);
 		Long timeDelta = new Date().getTime() - lastRefreshTime;
-		Log.i("DatabaseHelper", "Last data refresh " + (timeDelta/(1000*60)) + " minutes ago");
+		Log.i(TAG, "isDataStillFresh: Last data refresh " + (timeDelta/(1000*60)) + " minutes ago");
 		if ((lastRefreshTime == null) || (timeDelta >= MAX_TIME_DELTA)) {
 			return false;
 		} else {
@@ -108,6 +112,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 		onCreate(db);
 	}
 	
+	/**
+	 * clear database and insert new data fetched from server
+	 */
 	public void refreshAllPOI(List<POI> pois, Context context) {
         SQLiteDatabase db = this.getWritableDatabase();
         clearData(db);
@@ -131,10 +138,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 		SharedPreferences pref = context.getApplicationContext().getSharedPreferences(PREF_FILE_NAME, 0); // 0 = private mode
 		Editor edit = pref.edit();
 		edit.putInt(PREF_KEY_POI_AMOUNT, pois.size());
-		Log.d("refreshAllPOI", "POI in DB: "+pois.size());
+		Log.d(TAG, "POI in DB: "+pois.size());
 		edit.putLong(PREF_KEY_DATA_AGE, new Date().getTime());
 		edit.apply();
-     }
+    }
 	
 	public ArrayList<POI> getAllPOI(){
 		ArrayList<POI> poiList = new ArrayList<POI>();
@@ -161,6 +168,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 		}
 		cursor.close();
 		db.close();
+		
+		Log.d(TAG, "getAllPOI: "+poiList.size());
 		
 		return poiList;
 	}
