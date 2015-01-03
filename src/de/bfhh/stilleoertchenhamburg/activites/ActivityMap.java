@@ -948,26 +948,22 @@ public class ActivityMap extends ActivityMenuBase {
 		int d = gd.getTotalDistanceValue(doc);
 		String distance = String.valueOf(d) + " m";  
         txtDistance = (TextView) findViewById(R.id.distance_detail);
-        txtDistance.setText("Distanz:" + distance);
+        txtDistance.setText(Html.fromHtml("<b>Distanz:</b>" + distance));
         
+        //change name to start and destination, like: "Von: Aktuelle Position \n Nach: xxx"
         txtName = (TextView) findViewById(R.id.name_detail);
         txtName.setText("Von:   Aktuelle Position" + " \nNach: " +  gd.getEndAddress(doc));
-		
+		//delete address field contents
         txtAddress = (TextView) findViewById(R.id.address_detail);
         txtAddress.setText("");
         
+        //get the text direction instructions and distance values
         ArrayList<String> htmlInstructions = gd.getHTMLInstructions(doc);
         int[] distances = gd.getDistanceValue(doc);
-        //make a String out of arrayList. turn commas into new line characters
-        String stringInstructions = "";
-        for(int i = 0; i < htmlInstructions.size()-1; i++){
-        	if(i > 0){
-        		stringInstructions += "<b>Nach " + String.valueOf(distances[i-1]) + " m: </b>";
-        	}
-        	stringInstructions += htmlInstructions.get(i) + ".<br>";
-        }
+
         txtDescription = (TextView) findViewById(R.id.description_detail);
         //Set scrollView back to top after textView contents have changed, so that user can see start of direction description
+        //Doesn't work the first time
         txtDescription.addTextChangedListener(new TextWatcher() {	
 			@Override
 			public void onTextChanged(CharSequence s, int start, int before, int count) {}
@@ -983,7 +979,19 @@ public class ActivityMap extends ActivityMenuBase {
 		      	scrollView.scrollTo(0,0);
 			}
 		});
-        txtDescription.setText(Html.fromHtml("<b>Wegbeschreibung: </b> <br><br>" + stringInstructions.trim()));  
+        
+        txtDescription.setText(Html.fromHtml("<b>Wegbeschreibung: </b> <br><br>"));
+        for(int i = 0; i < htmlInstructions.size(); i++){
+        	if(i > 0){
+        		txtDescription.append(Html.fromHtml("<b>Nach " + String.valueOf(distances[i-1]) + " m: </b>"));
+        	}
+        	if(i < htmlInstructions.size()-1){
+        		txtDescription.append(htmlInstructions.get(i) + ".\n");
+        	}else{
+        		txtDescription.append(htmlInstructions.get(i).trim());
+        	}
+        	
+        }
 	}
 
 
