@@ -289,7 +289,7 @@ public class ActivityMap extends ActivityMenuBase {
 				public void onCameraChange(CameraPosition pos) {
 					if(_mMap != null){
 						refreshMapBounds();
-						//TODO: only refresh markers if boolean route is false
+						//only refresh markers on map if no route is shown
 						if(!_showRoute){
 							updatePOIMarkers();
 						}
@@ -389,16 +389,13 @@ public class ActivityMap extends ActivityMenuBase {
 			});
 			
 			
-			//TODO: create new activity for route text (or put in slider?)
-			//find route from userpos -> clicked marker and display
-			
 			gd = new GoogleDirection(this);
+			//Called when we get a response with the direction from google
 	        gd.setOnDirectionResponseListener(new OnDirectionResponseListener() {
 	        	@Override
 	        	public void onResponse(String status, Document doc, GoogleDirection gd) {	
 					Toast.makeText(getApplicationContext(), status, Toast.LENGTH_SHORT).show();
 					
-					//TODO: hide all other markers except user and destination
 					LatLngBounds bounds = new LatLngBounds.Builder()
 			        	.include(new LatLng(_userLat,_userLng))
 			        	.include(_selectedMarker.getPosition())
@@ -407,11 +404,7 @@ public class ActivityMap extends ActivityMenuBase {
 					
 					//update slider top to show start and destination plus distance in meters
 					updateSliderContentRoute(gd, doc);
-			        
-					//animateDirection() changed to return the polyline, so we can delete it again
-					/*_direction = gd.animateDirection(_mMap, gd.getDirection(doc), GoogleDirection.SPEED_VERY_FAST
-	        				, false, true, true, false, null, false, true, new PolylineOptions().width(8).color(Color.rgb(34, 51, 9)).zIndex(99999.0f));
-					*/
+
 					_direction = _mMap.addPolyline(gd.getPolyline(doc, 8, Color.rgb(34, 51, 9)));
 					_showRoute = true;
 					_zoomInButton.setVisibility(View.INVISIBLE);
@@ -539,7 +532,13 @@ public class ActivityMap extends ActivityMenuBase {
 			//center map on marker, show slider
 			_selectedPoi = bundle.getParcelable(TagNames.EXTRA_POI);
 			_selectedMarker = _markerMap.get(_selectedPoi.getId());
-				
+			//if route was shown, then list view opened and list item clicked 
+			//-> go back to map but don't show route and restore all other markers
+			if(_showRoute && _direction != null){
+				_showRoute = false;
+				_direction.remove();
+				showMarkersExceptUserAndDestination();
+			}
 			if ((_selectedPoi != null) && (_mMap != null)) {
 				moveToLocation(CameraUpdateFactory.newLatLng(_selectedPoi.getLatLng()));
 				updateSliderContent(_selectedPoi);
@@ -592,8 +591,7 @@ public class ActivityMap extends ActivityMenuBase {
 			Log.d("Map onResume", "Service bound");	
 			
 			adjustLayoutToPanel(); // needed here because of strange slider behavior			
-			
-			
+						
 			//check whether Activity was started by onclick in List, if so _clickedPoi is set (see onNewIntent())
             if(_selectedPoi != null){                
                 if (_mMap != null){
@@ -939,7 +937,6 @@ public class ActivityMap extends ActivityMenuBase {
         txtDistance = (TextView) findViewById(R.id.distance_detail);
         txtDistance.setText("Distanz:" + distance);
         
-        //TODO: FROM and TO stext
         txtName = (TextView) findViewById(R.id.name_detail);
         txtName.setText("Von:   Aktuelle Position" + " \nNach: " +  gd.getEndAddress(doc));
 		
@@ -1069,7 +1066,6 @@ public class ActivityMap extends ActivityMenuBase {
 			unregisterReceiver(_locUpdReceiver);
 			_locUpdReceiverRegistered = false;
 		}
-		//TODO is this needed? after I deleted _instance some strange behavior vanished, maybe this too?
 		// set this to false so that when map is brought back to front a new location fix is received
 		_hasUserLocation = false;
 		// hide sliding panel
