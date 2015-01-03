@@ -38,6 +38,9 @@ import de.bfhh.stilleoertchenhamburg.helpers.POIHelper;
 import de.bfhh.stilleoertchenhamburg.helpers.GoogleDirection;
 import de.bfhh.stilleoertchenhamburg.models.POI;
 
+import android.text.Editable;
+import android.text.Html;
+import android.text.TextWatcher;
 import android.text.method.LinkMovementMethod;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -48,6 +51,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.RelativeLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.annotation.SuppressLint;
@@ -406,7 +410,7 @@ public class ActivityMap extends ActivityMenuBase {
 					
 					//update slider top to show start and destination plus distance in meters
 					updateSliderContentRoute(gd, doc);
-
+					
 					//only add directions polyline to map if it isn't already there
 					if(_direction == null){
 						_direction = _mMap.addPolyline(gd.getPolyline(doc, 8, Color.rgb(34, 51, 9)));
@@ -422,16 +426,16 @@ public class ActivityMap extends ActivityMenuBase {
 	        	
 			_routeText.setOnClickListener(new View.OnClickListener() {
 				public void onClick(View v) {
-					Toast.makeText(getApplicationContext(), "Text Route Click", Toast.LENGTH_LONG).show();
+					String requestUrl = gd.request(new LatLng(_userLat, _userLng), _selectedMarker.getPosition(), GoogleDirection.MODE_WALKING);
+					_slidingUpPanel.expandPanel();
 				}
 			});
 			
 			_routeMap.setOnClickListener(new View.OnClickListener() {
 				public void onClick(View v) {
-					
 					_slidingUpPanel.collapsePanel();
 					//request direction from userPosition to selectedMarker position
-					gd.request(new LatLng(_userLat, _userLng), _selectedMarker.getPosition(), GoogleDirection.MODE_WALKING);
+					String requestUrl = gd.request(new LatLng(_userLat, _userLng), _selectedMarker.getPosition(), GoogleDirection.MODE_WALKING);
 				}
 			});
 			
@@ -936,6 +940,9 @@ public class ActivityMap extends ActivityMenuBase {
 		}
 	}
 	
+	/*
+	 * Updates the slider with data about the route direction.
+	 */
 	protected void updateSliderContentRoute(GoogleDirection gd, Document doc){
 		//set distance from user to destination
 		int d = gd.getTotalDistanceValue(doc);
@@ -949,8 +956,34 @@ public class ActivityMap extends ActivityMenuBase {
         txtAddress = (TextView) findViewById(R.id.address_detail);
         txtAddress.setText("");
         
+        ArrayList<String> htmlInstructions = gd.getHTMLInstructions(doc);
+        int[] distances = gd.getDistanceValue(doc);
+        //make a String out of arrayList. turn commas into new line characters
+        String stringInstructions = "";
+        for(int i = 0; i < htmlInstructions.size()-1; i++){
+        	if(i > 0){
+        		stringInstructions += "<b>Nach " + String.valueOf(distances[i-1]) + " m: </b>";
+        	}
+        	stringInstructions += htmlInstructions.get(i) + ".<br>";
+        }
         txtDescription = (TextView) findViewById(R.id.description_detail);
-        txtDescription.setText("");
+        //Set scrollView back to top after textView contents have changed, so that user can see start of direction description
+        txtDescription.addTextChangedListener(new TextWatcher() {	
+			@Override
+			public void onTextChanged(CharSequence s, int start, int before, int count) {}
+			
+			@Override
+			public void beforeTextChanged(CharSequence s, int start, int count,
+					int after) {}
+			
+			@Override
+			public void afterTextChanged(Editable s) {
+				//get ScrollView to scroll to top
+		      	ScrollView scrollView = (ScrollView) findViewById(R.id.scroll);
+		      	scrollView.scrollTo(0,0);
+			}
+		});
+        txtDescription.setText(Html.fromHtml("<b>Wegbeschreibung: </b> <br><br>" + stringInstructions.trim()));  
 	}
 
 

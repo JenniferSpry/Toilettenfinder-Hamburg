@@ -107,10 +107,10 @@
 			<!-- Distance -->
 			<TextView
 			    android:id="@+id/distance_detail"
-				android:layout_width="70dp"
+				android:layout_width="75dp"
 		        android:layout_height="wrap_content"
 		        android:layout_alignParentRight="true"
-		        android:layout_marginLeft="10sp"
+		        android:layout_marginLeft="5sp"
 			    android:gravity="right"
 			    android:textSize="@dimen/detail_text"/>
 		
@@ -126,6 +126,7 @@
 		</RelativeLayout>
 		
 		<ScrollView
+		    android:id="@+id/scroll"
 			android:layout_width="fill_parent"
 			android:layout_height="wrap_content"
 			android:layout_below="@id/header_view"

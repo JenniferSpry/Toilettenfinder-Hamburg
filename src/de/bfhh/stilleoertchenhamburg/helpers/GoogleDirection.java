@@ -55,6 +55,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Handler;
+import android.text.Html;
 import android.util.DisplayMetrics;
 import android.util.Log;
 
@@ -115,7 +116,8 @@ public class GoogleDirection {
         final String url = "http://maps.googleapis.com/maps/api/directions/xml?"
                 + "origin=" + start.latitude + "," + start.longitude  
                 + "&destination=" + end.latitude + "," + end.longitude 
-                + "&sensor=false&units=metric&mode=" + mode;
+                + "&sensor=false&units=metric&mode=" + mode
+                + "&language=de";
 
    		if(isLogging)
    			Log.i("GoogleDirection", "URL : " + url);
@@ -327,6 +329,23 @@ public class GoogleDirection {
         }
         
         return listGeopoints;
+    }
+    
+    public ArrayList<String> getHTMLInstructions(Document doc){
+    	 NodeList nl1, nl2;
+    	 ArrayList<String> htmlInstructions = new ArrayList<String>();
+    	 nl1 = doc.getElementsByTagName("step");
+    	 if(nl1.getLength() > 0){
+    		 for (int i = 0; i < nl1.getLength(); i++) {
+    			 Node node1 = nl1.item(i);
+                 nl2 = node1.getChildNodes();
+                 
+                 Node htmlNode = nl2.item(getNodeIndex(nl2, "html_instructions"));
+                 String instruction = htmlNode.getTextContent();
+                 htmlInstructions.add(Html.fromHtml(instruction).toString());
+    		 }
+    	 }
+    	 return htmlInstructions;
     }
     
     public ArrayList<LatLng> getSection(Document doc) {
