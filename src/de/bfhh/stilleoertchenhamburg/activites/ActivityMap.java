@@ -311,6 +311,7 @@ public class ActivityMap extends ActivityMenuBase {
 					//remove polyline if it's set
 					if(_direction != null){
 						_direction.remove();
+						_direction = null;
 					}
 					if(_zoomInButton.getVisibility() == View.INVISIBLE && _zoomOutButton.getVisibility() == View.INVISIBLE){
 						_zoomInButton.setVisibility(View.VISIBLE);
@@ -336,6 +337,7 @@ public class ActivityMap extends ActivityMenuBase {
 					//remove polyline if it's set
 					if(_direction != null){
 						_direction.remove();
+						_direction = null;
 					}
 					
 					// set last selected marker back to unselected
@@ -405,7 +407,10 @@ public class ActivityMap extends ActivityMenuBase {
 					//update slider top to show start and destination plus distance in meters
 					updateSliderContentRoute(gd, doc);
 
-					_direction = _mMap.addPolyline(gd.getPolyline(doc, 8, Color.rgb(34, 51, 9)));
+					//only add directions polyline to map if it isn't already there
+					if(_direction == null){
+						_direction = _mMap.addPolyline(gd.getPolyline(doc, 8, Color.rgb(34, 51, 9)));
+					}
 					_showRoute = true;
 					_zoomInButton.setVisibility(View.INVISIBLE);
 					_zoomOutButton.setVisibility(View.INVISIBLE);
@@ -537,6 +542,7 @@ public class ActivityMap extends ActivityMenuBase {
 			if(_showRoute && _direction != null){
 				_showRoute = false;
 				_direction.remove();
+				_direction = null;
 				showMarkersExceptUserAndDestination();
 			}
 			if ((_selectedPoi != null) && (_mMap != null)) {
