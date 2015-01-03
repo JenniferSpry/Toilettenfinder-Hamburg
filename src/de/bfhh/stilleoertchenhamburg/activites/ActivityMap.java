@@ -1,6 +1,9 @@
 package de.bfhh.stilleoertchenhamburg.activites;
 
+import java.math.RoundingMode;
 import java.net.URL;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -912,8 +915,12 @@ public class ActivityMap extends ActivityMenuBase {
 			txtName = (TextView) findViewById(R.id.name_detail);
 	        txtName.setText(poi.getName());
 	        
-	        int d = (int) Math.round(poi.getDistanceToUser());
-	        String distance = String.valueOf(d) + " m";  
+	        float d = poi.getDistanceToUser();
+	        NumberFormat numberFormat = new DecimalFormat("0.0");
+			numberFormat.setRoundingMode(RoundingMode.DOWN);
+			
+			String distance = d > 999 ? String.valueOf(numberFormat.format(d*0.001)) + " km" : String.valueOf((int) Math.round(d)) + " m";  
+	        //String distance = String.valueOf(d) + " m";  
 	        txtDistance = (TextView) findViewById(R.id.distance_detail);
 	        txtDistance.setText(distance);
 	        
@@ -940,8 +947,12 @@ public class ActivityMap extends ActivityMenuBase {
 	protected void updateSliderContentRoute(GoogleDirection gd, Document doc){
 		//set duration and distance from user to destination
 		int d = gd.getTotalDistanceValue(doc);
-		String duration = gd.getTotalDurationText(doc).replace("Minuten", "min");
-		String distance = String.valueOf(d) + " m";  
+		String duration = gd.getTotalDurationText(doc).replace("Minuten", "min").replace("Stunden", "h");
+		
+		NumberFormat numberFormat = new DecimalFormat("0.0");
+		numberFormat.setRoundingMode(RoundingMode.DOWN);
+		
+		String distance = d > 999 ? String.valueOf(numberFormat.format(d*0.001)) + " km" : String.valueOf(d) + " m";  
         txtDistance = (TextView) findViewById(R.id.distance_detail);
         txtDistance.setText(duration + "\n");
         txtDistance.append(Html.fromHtml("(" + distance + ")"));
