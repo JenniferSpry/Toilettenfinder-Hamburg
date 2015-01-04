@@ -445,13 +445,22 @@ public class ActivityMap extends ActivityMenuBase {
 			// TODO
 			_buttonSendComment.setOnClickListener(new View.OnClickListener() {
 				public void onClick(View v) {
-					Toast.makeText(getApplicationContext(), "pressed button", Toast.LENGTH_SHORT).show();
-					Log.d(TAG, "pressed button");
-					Intent i = new Intent(ActivityMap.this, SendMailService.class);
-			        i.putExtra(TagNames.EXTRA_NAME, "jennifer");
-			        i.putExtra(TagNames.EXTRA_E_MAIL, "mail@foo.com");
-			  	  	i.putExtra(TagNames.EXTRA_COMMENT, "this toilet stinks!");
-			  	    ActivityMap.this.startService(i);
+					if (_selectedPoi != null) {
+						String emailText = ((EditText) findViewById(R.id.email_field)).getText().toString();
+						String nameText = ((EditText) findViewById(R.id.name_field)).getText().toString();
+						String commentText = ((EditText) findViewById(R.id.comment_field)).getText().toString();
+						
+						if (commentText != null && !commentText.equals("")){
+							Intent i = new Intent(ActivityMap.this, SendMailService.class);
+					        i.putExtra(TagNames.EXTRA_NAME, nameText);
+					        i.putExtra(TagNames.EXTRA_E_MAIL, emailText);
+					  	  	i.putExtra(TagNames.EXTRA_COMMENT, commentText);
+					  	  	i.putExtra(TagNames.EXTRA_POI, _selectedPoi);
+					  	    ActivityMap.this.startService(i);
+						} else {
+							Toast.makeText(getApplicationContext(), "Bitte füllen Sie das Kommentar-Feld aus.", Toast.LENGTH_LONG).show();
+						}
+					}
 				}
 			});
 			

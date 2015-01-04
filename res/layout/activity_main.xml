@@ -242,6 +242,7 @@
 			        android:ems="10"
 			        android:hint="E-Mail*"
 			        android:textColorHint="@color/grey"
+			        android:textColor="@color/grey"
 			        android:inputType="textEmailAddress" />
 			    
 			    <!-- Name Field -->
@@ -253,7 +254,8 @@
 			        android:ems="10"
 			        android:hint="Name*"
 			        android:textColorHint="@color/grey"
-			        android:inputType="textEmailAddress" />
+			        android:textColor="@color/grey"
+			        android:inputType="text" />
    
 			    
 			    <!-- Comment Field -->
@@ -266,6 +268,7 @@
 			        android:ems="5"
 			        android:hint="Kommentar"
 			        android:textColorHint="@color/grey"
+			        android:textColor="@color/grey"
 			        android:inputType="textMultiLine" >
 			    </EditText>		    
 			      
