@@ -373,13 +373,16 @@ public class ActivityMap extends ActivityMenuBase {
 				public void onClick(View v) {
 					//Only move to user location if it isn't the standardLocation
 					if (_hasUserLocation){
-						moveToLocation(getCameraUpdateForClosestPOIBounds(10));
-						updatePOIMarkers();
+						if(_showRoute){ //show user and selected marker
+							showUserLocationAndDestination();
+						}else{
+							moveToLocation(getCameraUpdateForClosestPOIBounds(10));
+							updatePOIMarkers();
+							showMarkersExceptUserAndDestination();	
+						}
 					} else {//show GPS Settings dialog
 						buildAlertMessageGPSSettings();
 					}
-					showMarkersExceptUserAndDestination();
-					
 				}
 			});
 			
@@ -403,11 +406,7 @@ public class ActivityMap extends ActivityMenuBase {
 	        	public void onResponse(String status, Document doc, GoogleDirection gd) {	
 					Toast.makeText(getApplicationContext(), status, Toast.LENGTH_SHORT).show();
 					
-					LatLngBounds bounds = new LatLngBounds.Builder()
-			        	.include(new LatLng(_userLat,_userLng))
-			        	.include(_selectedMarker.getPosition())
-			        	.build();
-					_mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 80));
+					showUserLocationAndDestination();
 					
 					//update slider top to show start and destination plus distance in meters
 					updateSliderContentRoute(gd, doc);
@@ -416,13 +415,13 @@ public class ActivityMap extends ActivityMenuBase {
 					if(_direction != null){
 						_direction.remove();
 					}
-					_direction = _mMap.addPolyline(gd.getPolyline(doc, 6, Color.rgb(34, 51, 9)));
+					//draw route
+					_direction = _mMap.addPolyline(gd.getPolyline(doc, 6, Color.rgb(105,127,188)));
 
 					_showRoute = true;
 					_zoomInButton.setVisibility(View.INVISIBLE);
 					_zoomOutButton.setVisibility(View.INVISIBLE);
 					hideMarkersExceptUserAndDestination();
-			
 	        	}
 
 			});
@@ -494,11 +493,7 @@ public class ActivityMap extends ActivityMenuBase {
 						if(!_showRoute){ //only center on selected marker if no route is shown
 							moveToLocation(CameraUpdateFactory.newLatLng(_selectedMarker.getPosition()));
 						}else{
-							LatLngBounds bounds = new LatLngBounds.Builder()
-				        	.include(new LatLng(_userLat,_userLng))
-				        	.include(_selectedMarker.getPosition())
-				        	.build();
-							_mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 80));
+							showUserLocationAndDestination();
 						}
 					}
 					firstCollapse = false;
@@ -524,11 +519,7 @@ public class ActivityMap extends ActivityMenuBase {
 								//LatLng mPlusOffset = new LatLng(markerPos.latitude, markerPos.longitude);
 								moveToLocation(CameraUpdateFactory.newLatLng(_selectedMarker.getPosition()));
 							}else{
-								LatLngBounds bounds = new LatLngBounds.Builder()
-					        	.include(new LatLng(_userLat,_userLng))
-					        	.include(_selectedMarker.getPosition())
-					        	.build();
-								_mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 80));
+								showUserLocationAndDestination();
 							}
 
 						}
@@ -767,6 +758,16 @@ public class ActivityMap extends ActivityMenuBase {
 		}
 	}//end LocationUpdateReceiver
 
+	
+	private void showUserLocationAndDestination(){
+		if(_selectedMarker != null && _mMap != null){
+			LatLngBounds bounds = new LatLngBounds.Builder()
+	    	.include(new LatLng(_userLat,_userLng))
+	    	.include(_selectedMarker.getPosition())
+	    	.build();
+		_mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 80));
+		}
+	}
 
 	private void moveToLocation(final CameraUpdate cu){
 		//this block has to be here because the map layout might not
