@@ -762,8 +762,16 @@ public class ActivityMap extends ActivityMenuBase {
 									main._gd = new GoogleDirection(context);
 								}
 								if(main._selectedMarker != null){
-									String requestUrl = main._gd.request(new LatLng(main._userLat, main._userLng), main._selectedMarker.getPosition(), GoogleDirection.MODE_WALKING);
+									int connecState = NetworkUtil.getConnectivityStatus(context);
+									if(connecState == TagNames.TYPE_NOT_CONNECTED){
+										String msg = "Deine Route konnte nicht neu berechnet werden, da Du keine Internetverbindung hast. Überprüfe bitte Deine Netzwerkeinstellungen!";
+										main.showAlertMessageNetworkSettings(msg);
+									}else if(connecState == TagNames.TYPE_MOBILE || connecState == TagNames.TYPE_WIFI){
+										String requestUrl = main._gd.request(new LatLng(main._userLat, main._userLng), main._selectedMarker.getPosition(), GoogleDirection.MODE_WALKING);	
+										Log.d("Position verändert", "Loc Upd und network an");
+									}	
 								}
+								
 							}
 						}
 					}    
@@ -1358,7 +1366,7 @@ public class ActivityMap extends ActivityMenuBase {
 	}
 	
 	/**
-	 * Set route buttons and text invisible
+	 * Set route buttons and text gone (so the layout elements don't take up space)
 	 */
 	private void setRouteOptionsInvisible(){
 		_routeMap.setVisibility(View.GONE);

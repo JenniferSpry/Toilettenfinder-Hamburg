@@ -130,7 +130,7 @@ public class ActivityBase extends ActionBarActivity {
 			_connecState = NetworkUtil.getConnectivityStatus(context);
 	        //when connected, call a method that needs to be overridden by every activity (specific behaviour)
 	        if(_connecState == TagNames.TYPE_MOBILE || _connecState == TagNames.TYPE_WIFI){
-	        	if(_connecState != _oldConnecState){
+	        	if(_connecState != _oldConnecState && _oldConnecState == TagNames.TYPE_NOT_CONNECTED){
 	        		Toast.makeText(context, "Verbindung mit dem Netzwerk hergestellt. Daten werden abgerufen, bitte warten...", Toast.LENGTH_LONG).show();	     
 		        	onNetworkConnected();
 		        	_oldConnecState = _connecState;
