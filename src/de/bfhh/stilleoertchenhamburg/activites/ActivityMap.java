@@ -1,7 +1,6 @@
 package de.bfhh.stilleoertchenhamburg.activites;
 
 import java.math.RoundingMode;
-import java.net.URL;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -10,10 +9,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import javax.xml.datatype.Duration;
-
-import org.apache.http.HttpRequest;
-import org.apache.http.HttpRequestFactory;
 import org.w3c.dom.Document;
 
 import com.google.android.gms.maps.CameraUpdate;
@@ -22,7 +17,6 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnCameraChangeListener;
 import com.google.android.gms.maps.GoogleMap.OnMapClickListener;
 import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
-import com.google.android.gms.maps.Projection;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
@@ -31,7 +25,6 @@ import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
-import com.google.android.gms.maps.model.PolylineOptions;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout.PanelSlideListener;
 
@@ -76,8 +69,6 @@ import android.graphics.Color;
 import android.graphics.Point;
 import android.location.Location;
 import android.location.LocationManager;
-import android.opengl.Visibility;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -94,7 +85,6 @@ import android.os.IBinder;
 /* TODO
  * 1. AUf Leaks testen
  * 2. ActivityResult von GPS check zurückgeben
- * 3. showroute -> back button
  * 4. toast when route is being prepared
  */
 
@@ -122,7 +112,7 @@ public class ActivityMap extends ActivityMenuBase {
 	private Button _routeText; //show route as text button
 	private Button _routeMap; //show route on map as polyline
 	private GoogleDirection _gd;//Direction class from https://github.com/akexorcist/Android-GoogleDirectionAndPlaceLibrary/blob/master/library/src/main/java/app/akexorcist/gdaplibrary/GoogleDirection.java
-	private Polyline _direction; //Polyline on map representing direction
+	private Polyline _route; //Polyline on map representing direction
 	
 	private Button _buttonSendComment;
 	
@@ -152,7 +142,6 @@ public class ActivityMap extends ActivityMenuBase {
 	private LocationUpdateReceiver _locUpdReceiver;
 	private boolean _locUpdReceiverRegistered;
 	public boolean _isLowUpdateInterval; //location updates less often
-	protected boolean _firstLocationPull; //first time location was received?
 
 	//Display dimensions
 	private int _displayHeight;
@@ -284,7 +273,7 @@ public class ActivityMap extends ActivityMenuBase {
 			
 			updatePOIMarkers();
 			if (_selectedPoi != null){
-				updateSliderContent(_selectedPoi);
+				updateSliderContentPOI(_selectedPoi);
 				selectMarker(_selectedPoi);
 			}
 			
@@ -315,16 +304,14 @@ public class ActivityMap extends ActivityMenuBase {
 					_selectedMarker = null;
 					_selectedPoi = null;
 					//remove polyline if it's set
-					if(_direction != null){
-						_direction.remove();
-						_direction = null;
+					if(_route != null){
+						_route.remove();
+						_route = null;
 					}
 					//if the zoom buttons were hidden, show them again
 					if(!isZoomVisible()){
 						setZoomVisible();
-						showMarkersExceptUserAndDestination();
-						refreshMapBounds();
-						updatePOIMarkers();
+						updateVisibleArea();
 						_showRoute = false;
 					}
 				}
@@ -336,20 +323,15 @@ public class ActivityMap extends ActivityMenuBase {
 				public boolean onMarkerClick(Marker marker) { 
 					//if the zoom buttons were hidden, show them again
 					if(!isZoomVisible() && !_selectedMarker.equals(marker) ){
-						Log.d("selected marker: ", ""+_selectedMarker.toString());
-						Log.d("clicked marker: ", ""+marker.toString());
 						setZoomVisible();
-						showMarkersExceptUserAndDestination();
-						refreshMapBounds();
-						updatePOIMarkers();
+						updateVisibleArea();
 						_showRoute = false;
 						//remove polyline if it's set
-						if(_direction != null){
-							_direction.remove();
-							_direction = null;
+						if(_route != null){
+							_route.remove();
+							_route = null;
 						}
 					}
-					
 					
 					// set last selected marker back to unselected
 					if (_selectedMarker != null & _selectedPoi != null) {
@@ -359,17 +341,15 @@ public class ActivityMap extends ActivityMenuBase {
 					if(_markerPOIIdMap.get(marker.getId()) != null){//is this markers id in the list (if not it is user marker)
 						_selectedPoi = POIHelper.getPoiByIdReference(_markerPOIIdMap, _allPOIList, marker.getId());
 						marker.setIcon(BitmapDescriptorFactory.fromResource(_selectedPoi.getActiveIcon()));
-						updateSliderContent(_selectedPoi);
+						updateSliderContentPOI(_selectedPoi);
 						_slidingUpPanel.showPanel();
 						_selectedMarker = marker;
 					} else {
 						_slidingUpPanel.hidePanel();
 					}
-					
-					//center map on clicked marker
+					//center map on clicked marker after getting new mapBounds
 					refreshMapBounds();	
-					LatLng markerLatLng = marker.getPosition();	
-					moveToLocation(CameraUpdateFactory.newLatLng(markerLatLng));
+					moveToLocation(CameraUpdateFactory.newLatLng(marker.getPosition()));
 					return true;
 				}
 			});
@@ -418,13 +398,13 @@ public class ActivityMap extends ActivityMenuBase {
 					updateSliderContentRoute(gd, doc);
 					
 					//remove directions polyline if it's already there
-					if(_direction != null){
-						_direction.remove();
+					if(_route != null){
+						_route.remove();
 					}
 					//draw route
-					_direction = _mMap.addPolyline(gd.getPolyline(doc, 6, Color.rgb(105,127,188)));
-
+					_route = _mMap.addPolyline(gd.getPolyline(doc, 6, Color.rgb(105,127,188)));
 					_showRoute = true;
+					//hide zoom buttons and all irrelevant markers
 					setZoomInvisible();
 					hideMarkersExceptUserAndDestination();
 	        	}
@@ -433,8 +413,9 @@ public class ActivityMap extends ActivityMenuBase {
 	        	
 			_routeText.setOnClickListener(new View.OnClickListener() {
 				public void onClick(View v) {
-					String requestUrl = _gd.request(new LatLng(_userLat, _userLng), _selectedMarker.getPosition(), GoogleDirection.MODE_WALKING);
 					_slidingUpPanel.expandPanel();
+					String requestUrl = _gd.request(new LatLng(_userLat, _userLng), _selectedMarker.getPosition(), GoogleDirection.MODE_WALKING);
+					
 				}
 			});
 			
@@ -469,7 +450,6 @@ public class ActivityMap extends ActivityMenuBase {
 			});
 			
 			_slidingUpPanel.setPanelSlideListener(new PanelSlideListener(){
-				private boolean firstCollapse = true;
 				private boolean firstAnchored = true;
 
 				@Override
@@ -479,6 +459,7 @@ public class ActivityMap extends ActivityMenuBase {
 					 * this doesn't work by only setting slidingUpPanel.setAnchorPoint(0.75f);)
 					 */
 					// TODO: noch mal testen, bei JS geht's auch ohne diesen code
+					//COMMENT: bei mir gehts ohne nicht, wenn man will dass der slider während dem sliden in der mitte stopp. beim klick geht es aber
 					if( Math.abs(slideOffset - 0.45f) < 0.02f ) {
 						_slidingUpPanel.expandPanel(0.45f);
 					}
@@ -493,15 +474,12 @@ public class ActivityMap extends ActivityMenuBase {
 						_selectedMarker = _markerMap.get(_selectedPoi.getId());
 					}
 					if(_selectedMarker != null){
-						//get distance between map center (gmaps) and clicked marker position
-						float d = getDistanceBewteen(getMapCenter(_mapBounds), _selectedMarker.getPosition());
 						if(!_showRoute){ //only center on selected marker if no route is shown
 							moveToLocation(CameraUpdateFactory.newLatLng(_selectedMarker.getPosition()));
 						}else{
 							showUserLocationAndDestination();
 						}
 					}
-					firstCollapse = false;
 					firstAnchored = false;
 					
 				}
@@ -518,24 +496,19 @@ public class ActivityMap extends ActivityMenuBase {
 							_selectedMarker = _markerMap.get(_selectedPoi.getId());
 						}
 						if(_selectedMarker != null){
-							LatLng markerPos = _selectedMarker.getPosition();
 							//move position to center map to down a bit
 							if(!_showRoute){ //only center on selected marker if no route is shown
-								//LatLng mPlusOffset = new LatLng(markerPos.latitude, markerPos.longitude);
 								moveToLocation(CameraUpdateFactory.newLatLng(_selectedMarker.getPosition()));
-							}else{
+							}else{//center on route
 								showUserLocationAndDestination();
 							}
-
 						}
 						firstAnchored = true;
 					}
-					
 				}
 
 				@Override
 				public void onPanelHidden(View panel) {
-					firstCollapse = true;
 					firstAnchored = true;
 					adjustLayoutToPanel();
 				}    	
@@ -558,22 +531,22 @@ public class ActivityMap extends ActivityMenuBase {
 		Log.d("onNewIntent Intent received? ", "intent: "+ intent);
 		Log.d("action ",  ""+ action);
 		
+		//intent from toilet list to show slider with info corresponding to list element that was clicked
 		if(action != null && action.equals(TagNames.ACTION_SHOW_SLIDER)){
-			Log.d("###**** intent from FragmentToiletList", "receeeeived");
 			//center map on marker, show slider
 			_selectedPoi = bundle.getParcelable(TagNames.EXTRA_POI);
 			_selectedMarker = _markerMap.get(_selectedPoi.getId());
 			//if route was shown, then list view opened and list item clicked 
 			//-> go back to map but don't show route and restore all other markers
-			if(_showRoute && _direction != null){
+			if(_showRoute && _route != null){
 				_showRoute = false;
-				_direction.remove();
-				_direction = null;
-				showMarkersExceptUserAndDestination();
+				_route.remove();
+				_route = null;
+				updateVisibleArea();
 			}
 			if ((_selectedPoi != null) && (_mMap != null)) {
 				moveToLocation(CameraUpdateFactory.newLatLng(_selectedPoi.getLatLng()));
-				updateSliderContent(_selectedPoi);
+				updateSliderContentPOI(_selectedPoi);
 				selectMarker(_selectedPoi);
 				_slidingUpPanel.showPanel();
 			}
@@ -629,7 +602,7 @@ public class ActivityMap extends ActivityMenuBase {
                 if (_mMap != null){
                 	 if(!_showRoute){
                      	_mMap.animateCamera(CameraUpdateFactory.newLatLng(_selectedPoi.getLatLng()));
-                     	updateSliderContent(_selectedPoi);
+                     	updateSliderContentPOI(_selectedPoi);
                 	 }
     				selectMarker(_selectedPoi);
                     //set distance to user, otherwise slider will show 0 m
@@ -919,13 +892,15 @@ public class ActivityMap extends ActivityMenuBase {
 					//poi is not destination (or user)
 					if(poi.getId() != _selectedPoi.getId()){
 						_markerMap.get(poi.getId()).setVisible(false);
-						//_markerMap.remove(poi.getId());
 					}
 				}
 			}
 		}
 	}
 	
+	/*
+	 * Set all markers that are in _markerMap visible.
+	 */
 	private void showMarkersExceptUserAndDestination(){
 		if(_mMap != null){
 			//Loop through all poi
@@ -937,7 +912,19 @@ public class ActivityMap extends ActivityMenuBase {
 		}
 	}
 	
+	/*
+	 * Show all previously visible markers, refresh the visible mapBounds and
+	 * show all markers that are within the new bounds.
+	 */
+	private void updateVisibleArea(){
+		showMarkersExceptUserAndDestination();
+		refreshMapBounds();
+		updatePOIMarkers();
+	}
 	
+	/**
+	 * Returns the distance between to LatLng in "meters" (which is not true again, thanks Google...)
+	 */
 	private float getDistanceBewteen(LatLng a, LatLng b){
 		float[] res = new float[1];
 		Location.distanceBetween(a.latitude, a.longitude, b.latitude, b.longitude, res);
@@ -957,8 +944,12 @@ public class ActivityMap extends ActivityMenuBase {
 	
 	/** ----- SLIDING PANEL ----**/		
 	
-	//Update info displayed in sliding panel
-	protected void updateSliderContent(POI poi) {
+	/**
+	 * Update info displayed in sliding panel with data from POI.
+	 * 
+	 * @param poi
+	 */
+	protected void updateSliderContentPOI(POI poi) {
 		if (poi != null){
 			txtName = (TextView) findViewById(R.id.name_detail);
 	        txtName.setText(Html.fromHtml("<b>"+poi.getName()+"</b>"));
@@ -989,11 +980,11 @@ public class ActivityMap extends ActivityMenuBase {
 		}
 	}
 	
-	/*
-	 * Updates the slider with data about the route direction.
+	/**
+	 * Updates the slider with data about a requested route.
 	 */
 	protected void updateSliderContentRoute(GoogleDirection gd, Document doc){
-		//set duration and distance from user to destination
+		//get duration and distance from user to destination
 		int d = gd.getTotalDistanceValue(doc);
 		//1 Stunde 30 Minuten -> 1 h 30 min
 		String duration = gd.getTotalDurationText(doc).replace("Minuten", "min").replace("Stunden", "h").replace("Stunde", "h");
@@ -1002,7 +993,8 @@ public class ActivityMap extends ActivityMenuBase {
 		numberFormat.setRoundingMode(RoundingMode.DOWN);
 		//show distance rounded in kilometers if greater than 999 meters
 		String distance = d > 999 ? String.valueOf(numberFormat.format(d*0.001)) + " km" : String.valueOf(d) + " m";  
-        txtDistance = (TextView) findViewById(R.id.distance_detail);
+        
+		txtDistance = (TextView) findViewById(R.id.distance_detail);
         txtDistance.setText(duration.trim() + "\n");
         txtDistance.append(Html.fromHtml("(" + distance + ")"));
        
@@ -1036,6 +1028,7 @@ public class ActivityMap extends ActivityMenuBase {
 			}
 		});
         
+        //Put directions in the description text view field
         txtDescription.setText(Html.fromHtml("<b>Wegbeschreibung: </b> <br><br>"));
         for(int i = 0; i < htmlInstructions.size(); i++){
         	if(i > 0){
@@ -1048,7 +1041,12 @@ public class ActivityMap extends ActivityMenuBase {
         	}
         }
 	}
-
+	/**
+	 * Returns the map center of the passed mapBounds as LatLng.
+	 * 
+	 * @param mapBounds
+	 * @return mapCenter
+	 */
 
 	private LatLng getMapCenter(LatLngBounds mapBounds){
 		LatLng mapCenter = null;
@@ -1061,7 +1059,7 @@ public class ActivityMap extends ActivityMenuBase {
 	}
 	
 	/**
-	 * Set user icon on map, if there is no user icon yet, otherwise change its position
+	 * Set user icon on map if there is no user icon yet, otherwise change its position
 	 */
 	private void setPeeerOnMap() {
 		Log.d(TAG, "setPeeerOnMap");
@@ -1087,7 +1085,7 @@ public class ActivityMap extends ActivityMenuBase {
 		if (_slidingUpPanel.isPanelAnchored()){
 			height = (int) (_displayHeight/2);//height in pixels
 			_buttonsContainer.setVisibility(View.INVISIBLE);
-		} else if (!_slidingUpPanel.isPanelHidden()){
+		}else if (!_slidingUpPanel.isPanelHidden()){
 			height = PANEL_HEIGHT;
 			_buttonsContainer.setVisibility(View.VISIBLE);
 			//NOTE: this is to convert dp to pixels
@@ -1104,6 +1102,12 @@ public class ActivityMap extends ActivityMenuBase {
 	    _buttonsContainer.setLayoutParams(params);
 	}
 
+	/**
+	 * Updates the user location variables.
+	 * 
+	 * @param lat
+	 * @param lng
+	 */
 	private void setUserLocation(double lat, double lng){
 		_userLat = lat;
 		_userLng = lng;
@@ -1114,6 +1118,8 @@ public class ActivityMap extends ActivityMenuBase {
 	}
 
 	/**
+	 * Save all relevant data needed to restore the map to previous 
+	 * look and layout.
 	 * is called before activity is destroyed to save state (non-Javadoc)
 	 * @see android.support.v4.app.FragmentActivity#onSaveInstanceState(android.os.Bundle)
 	 */
@@ -1174,10 +1180,19 @@ public class ActivityMap extends ActivityMenuBase {
 		_slidingUpPanel.hidePanel();
 	}
 
-	private void callForLocationUpdates(int gpsInterval, float gpsDistanceChange, int networkInterval, float networkDistanceChange){
+	/**
+	 * Change the location update interval by canceling old update calls and
+	 * setting new time and distance parameters.
+	 * 
+	 * @param gpsTimeInterval
+	 * @param gpsDistanceChange
+	 * @param networkTimeInterval
+	 * @param networkDistanceChange
+	 */
+	private void callForLocationUpdates(int gpsTimeInterval, float gpsDistanceChange, int networkTimeInterval, float networkDistanceChange){
 		if(_locUpdateService != null){
 			_locUpdateService.stopLocationUpdates();
-			_locUpdateService.updateLocation(gpsInterval, gpsDistanceChange, networkInterval, networkDistanceChange );
+			_locUpdateService.updateLocation(gpsTimeInterval, gpsDistanceChange, networkTimeInterval, networkDistanceChange );
 		}
 	}
 	
@@ -1187,18 +1202,16 @@ public class ActivityMap extends ActivityMenuBase {
 	private ServiceConnection _mConnection = new ServiceConnection() {
 
 		public void onServiceConnected(ComponentName className, IBinder binder) {
-			//boolean to see whether the location is pulled for the first time after service reconnect or not
-			_firstLocationPull = true;
 			LocationUpdateService.ServiceBinder b = (LocationUpdateService.ServiceBinder) binder;
 			_locUpdateService = b.getLocService();
-			//Toast.makeText(ActivityMap.this, "LocService Connected", Toast.LENGTH_SHORT).show();
 			Location loc = _locUpdateService.getCurrentUserLocation();
 			Log.d("##### userLocation", ""+_userLat + ", "+ _userLng);
-			//beim ersten mal öfter location updates fordern
 			if(_locUpdateService.isProviderEnabled(LocationManager.GPS_PROVIDER) || _locUpdateService.isProviderEnabled(LocationManager.NETWORK_PROVIDER)){
 				loc = _locUpdateService.getLastKnownLocation();
 			}
-			if(_userLocation.getLatitude() == AppController.getInstance().getStandardLocation().getLatitude() && _userLocation.getLongitude() == AppController.getInstance().getStandardLocation().getLongitude() ) {
+			if(_userLocation.getLatitude() == AppController.getInstance().getStandardLocation().getLatitude() 
+					&& _userLocation.getLongitude() == AppController.getInstance().getStandardLocation().getLongitude() ) {
+				
 				callForLocationUpdates(60000, 3.0f, 5000, 1.0f );
 				Log.d("******onServiceConnected", "updateLocation call, HIGH update interval");
 				_isLowUpdateInterval = false;
@@ -1213,7 +1226,6 @@ public class ActivityMap extends ActivityMenuBase {
 		public void onServiceDisconnected(ComponentName className) {
 			_locUpdateService.stopLocationUpdates();
 			_locUpdateService = null;
-			//Toast.makeText(ActivityMap.this, "LocService Disconnected", Toast.LENGTH_SHORT).show();
 		}
 	};
 
@@ -1227,12 +1239,12 @@ public class ActivityMap extends ActivityMenuBase {
 	};
 
 	DialogInterface.OnClickListener onCancelListener = new DialogInterface.OnClickListener() {
-		public void onClick(final DialogInterface dialog, final int id) {
-
-		}
+		public void onClick(final DialogInterface dialog, final int id) {}
 	};
 
-	/** show alert dialog with option to change gps settings */
+	/** 
+	 * Show alert dialog with option to change gps settings 
+	 */
 	private void buildAlertMessageGPSSettings() {
 		final AlertDialog.Builder builder = new AlertDialog.Builder(ActivityMap.this);
 		builder.setMessage("Dein GPS ist ausgestellt, möchtest du es jetzt anstellen?")
@@ -1244,9 +1256,13 @@ public class ActivityMap extends ActivityMenuBase {
 		//TODO: check if user has turned location services on (onActivityResult)
 	}
 	
-	//overwrite back key behavior
+	/**
+	 * Overwrite behaviour of back button press.
+	 * 
+	 */
 	@Override
 	public void onBackPressed() {		
+	   //if sliding panel is hidden or no poi selected -> standard behaviour 
 	   if(_slidingUpPanel.isPanelHidden() || _selectedPoi == null){
 		   ActivityMap.super.onBackPressed();
 	   } else {
@@ -1257,14 +1273,12 @@ public class ActivityMap extends ActivityMenuBase {
 			}
 			_selectedMarker = null;
 			_selectedPoi = null;
-			//if there is a route shown, remove it and show all markers in  mapBounds
-			if(_showRoute && _direction != null){
-				_direction.remove();
-				_direction = null;
+			//if there is a route shown, remove it and show all markers in mapBounds
+			if(_showRoute && _route != null){
+				_route.remove();
+				_route = null;
 				_showRoute = false;
-				showMarkersExceptUserAndDestination();
-				refreshMapBounds();
-				updatePOIMarkers();
+				updateVisibleArea();
 				if(!isZoomVisible()){
 					setZoomVisible();
 				}
@@ -1272,6 +1286,11 @@ public class ActivityMap extends ActivityMenuBase {
 	   }
 	}
 	
+	/**
+	 * Adjusts the visibility of the zoom buttons to the device's orientation.
+	 * 
+	 * @param orientation: 2 = landscape; 1 = portrait
+	 */
 	private void adjustZoomVisibilityByOrientation(int orientation){
 		if(orientation == Configuration.ORIENTATION_LANDSCAPE){
 			setZoomInvisible();
@@ -1280,18 +1299,24 @@ public class ActivityMap extends ActivityMenuBase {
 		}
 	}
 	
-	/*
+	/**
 	 * Returns true if zoom buttons are visible, otherwise false;
 	 */
 	private boolean isZoomVisible(){
 		return _zoomInButton.getVisibility() == View.VISIBLE && _zoomOutButton.getVisibility() == View.VISIBLE;
 	}
 	
+	/**
+	 * Show zoom buttons.
+	 */
 	private void setZoomVisible(){
 		_zoomInButton.setVisibility(View.VISIBLE);
 		_zoomOutButton.setVisibility(View.VISIBLE);
 	}
 	
+	/**
+	 * Hide zoom buttons.
+	 */
 	private void setZoomInvisible(){
 		_zoomInButton.setVisibility(View.INVISIBLE);
 		_zoomOutButton.setVisibility(View.INVISIBLE);
