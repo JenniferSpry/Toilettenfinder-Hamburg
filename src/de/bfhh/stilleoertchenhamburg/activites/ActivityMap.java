@@ -94,6 +94,7 @@ import android.os.IBinder;
 /* TODO
  * 1. AUf Leaks testen
  * 2. ActivityResult von GPS check zurückgeben
+ * 3. showroute -> back button
  */
 
 public class ActivityMap extends ActivityMenuBase {
@@ -317,6 +318,7 @@ public class ActivityMap extends ActivityMenuBase {
 						_direction.remove();
 						_direction = null;
 					}
+					//if the buttons were hidden, show it again
 					if(_zoomInButton.getVisibility() == View.INVISIBLE && _zoomOutButton.getVisibility() == View.INVISIBLE){
 						_zoomInButton.setVisibility(View.VISIBLE);
 						_zoomOutButton.setVisibility(View.VISIBLE);
@@ -330,7 +332,7 @@ public class ActivityMap extends ActivityMenuBase {
 			_mMap.setOnMarkerClickListener(new OnMarkerClickListener(){
 				@Override
 				public boolean onMarkerClick(Marker marker) { 
-					//if the buttonsContainer was hidden, show it again
+					//if the buttons were hidden, show it again
 					if(_zoomInButton.getVisibility() == View.INVISIBLE && _zoomOutButton.getVisibility() == View.INVISIBLE
 							&& _selectedMarker != marker){
 						_zoomInButton.setVisibility(View.VISIBLE);
@@ -731,16 +733,20 @@ public class ActivityMap extends ActivityMenuBase {
 								main._isLowUpdateInterval = true;
 								Toast.makeText(context, "Position wird bestimmt...",
 										Toast.LENGTH_LONG).show();
-								main.moveToLocation(main.getCameraUpdateForClosestPOIBounds(10));
-								main.updatePOIMarkers();
 								main.setPeeerOnMap();
+								if(!main._showRoute){
+									main.moveToLocation(main.getCameraUpdateForClosestPOIBounds(10));
+									main.updatePOIMarkers();
+								}
 							}else if(main._userLocation.distanceTo(oldLocation) > 84.0 && main._isLowUpdateInterval){
 								Log.d("+++++++++ ", "higher update interval frequency");
 								main.callForLocationUpdates(60000, 3.0f, 5000, 1.0f );
 								main._isLowUpdateInterval = false;
-								main.moveToLocation(main.getCameraUpdateForClosestPOIBounds(10));
-								main.updatePOIMarkers();
 								main.setPeeerOnMap();
+								if(!main._showRoute){
+									main.moveToLocation(main.getCameraUpdateForClosestPOIBounds(10));
+									main.updatePOIMarkers();
+								}
 							}
 							//redraw route if it's set
 							if(main._showRoute){
@@ -952,7 +958,7 @@ public class ActivityMap extends ActivityMenuBase {
 	protected void updateSliderContent(POI poi) {
 		if (poi != null){
 			txtName = (TextView) findViewById(R.id.name_detail);
-	        txtName.setText(poi.getName());
+	        txtName.setText(Html.fromHtml("<b>"+poi.getName()+"</b>"));
 	        
 	        float d = poi.getDistanceToUser();
 	        NumberFormat numberFormat = new DecimalFormat("0.0");
@@ -986,8 +992,9 @@ public class ActivityMap extends ActivityMenuBase {
 	protected void updateSliderContentRoute(GoogleDirection gd, Document doc){
 		//set duration and distance from user to destination
 		int d = gd.getTotalDistanceValue(doc);
+		//1 Stunde 30 Minuten -> 1 h 30 min
 		String duration = gd.getTotalDurationText(doc).replace("Minuten", "min").replace("Stunden", "h").replace("Stunde", "h");
-		
+		//round distance
 		NumberFormat numberFormat = new DecimalFormat("0.0");
 		numberFormat.setRoundingMode(RoundingMode.DOWN);
 		//show distance rounded in kilometers if greater than 999 meters
@@ -998,7 +1005,7 @@ public class ActivityMap extends ActivityMenuBase {
        
         //change name to start and destination, like: "Von: Aktuelle Position \n Nach: xxx"
         txtName = (TextView) findViewById(R.id.name_detail);
-        txtName.setText("Von:   Aktuelle Position" + " \nNach: " +  gd.getEndAddress(doc));
+        txtName.setText(Html.fromHtml("<b>Von:</b>   Aktuelle Position" + " <br><b>Nach:</b> " +  gd.getEndAddress(doc)));
 		//delete address field contents
         txtAddress = (TextView) findViewById(R.id.address_detail);
         txtAddress.setText("");
@@ -1247,6 +1254,11 @@ public class ActivityMap extends ActivityMenuBase {
 			}
 			_selectedMarker = null;
 			_selectedPoi = null;
+			if(_showRoute && _direction != null){
+				_direction.remove();
+				_direction = null;
+				_showRoute = false;
+			}
 	   }
 	}
 	

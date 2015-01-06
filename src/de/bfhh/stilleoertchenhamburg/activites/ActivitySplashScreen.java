@@ -45,6 +45,10 @@ public class ActivitySplashScreen extends ActivityBase {
 
 	protected boolean _mapActivityStarted; //shows whether MapActivity was started already or not
 
+	protected boolean _locationReceived;
+
+	protected boolean _poiReceived;
+
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -109,12 +113,16 @@ public class ActivitySplashScreen extends ActivityBase {
         			_lat = bundle.getDouble(TagNames.EXTRA_LAT);
         			_lng = bundle.getDouble(TagNames.EXTRA_LONG);
         			_locationResult = bundle.getInt(TagNames.EXTRA_LOCATION_RESULT);
+        			_locationReceived = true;
         		} else if(action.equals(TagNames.BROADC_POIS)){
         			// get PoiList
         			Log.d(TAG, "Recieved Broadcast poi list");
         			_poiList = intent.getParcelableArrayListExtra(TagNames.EXTRA_POI_LIST);
+        			_poiReceived = true;
         		}
-        		startMapActivity(); //start Map
+        		if(_poiReceived && _locationReceived){
+            		startMapActivity(); //start Map
+        		}
         	}
         }
     };

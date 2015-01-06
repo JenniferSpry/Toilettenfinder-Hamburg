@@ -101,8 +101,7 @@
 		        android:layout_height="wrap_content"
 		        android:layout_alignParentLeft="true"
 		        android:layout_toLeftOf="@+id/distance_detail"
-		        android:textSize="@dimen/detail_text"
-		        android:textStyle="bold" />
+		        android:textSize="@dimen/detail_text" />
 		
 			<!-- Distance -->
 			<TextView
