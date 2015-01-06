@@ -95,6 +95,7 @@ import android.os.IBinder;
  * 1. AUf Leaks testen
  * 2. ActivityResult von GPS check zurückgeben
  * 3. showroute -> back button
+ * 4. toast when route is being prepared
  */
 
 public class ActivityMap extends ActivityMenuBase {
@@ -212,7 +213,7 @@ public class ActivityMap extends ActivityMenuBase {
 		
 		//if landscape mode, hide zoom buttons entirely
 		orientation = getResources().getConfiguration().orientation;
-		adjustZoomVisibility(orientation);
+		adjustZoomVisibilityByOrientation(orientation);
 		
 		_slidingUpPanel = (SlidingUpPanelLayout) findViewById(R.id.sliding_layout);
 		_slidingUpPanel.setAnchorPoint(0.45f);
@@ -318,11 +319,12 @@ public class ActivityMap extends ActivityMenuBase {
 						_direction.remove();
 						_direction = null;
 					}
-					//if the buttons were hidden, show it again
-					if(_zoomInButton.getVisibility() == View.INVISIBLE && _zoomOutButton.getVisibility() == View.INVISIBLE){
-						_zoomInButton.setVisibility(View.VISIBLE);
-						_zoomOutButton.setVisibility(View.VISIBLE);
+					//if the zoom buttons were hidden, show them again
+					if(!isZoomVisible()){
+						setZoomVisible();
 						showMarkersExceptUserAndDestination();
+						refreshMapBounds();
+						updatePOIMarkers();
 						_showRoute = false;
 					}
 				}
@@ -332,26 +334,28 @@ public class ActivityMap extends ActivityMenuBase {
 			_mMap.setOnMarkerClickListener(new OnMarkerClickListener(){
 				@Override
 				public boolean onMarkerClick(Marker marker) { 
-					//if the buttons were hidden, show it again
-					if(_zoomInButton.getVisibility() == View.INVISIBLE && _zoomOutButton.getVisibility() == View.INVISIBLE
-							&& _selectedMarker != marker){
-						_zoomInButton.setVisibility(View.VISIBLE);
-						_zoomOutButton.setVisibility(View.VISIBLE);
+					//if the zoom buttons were hidden, show them again
+					if(!isZoomVisible() && !_selectedMarker.equals(marker) ){
+						Log.d("selected marker: ", ""+_selectedMarker.toString());
+						Log.d("clicked marker: ", ""+marker.toString());
+						setZoomVisible();
 						showMarkersExceptUserAndDestination();
+						refreshMapBounds();
+						updatePOIMarkers();
 						_showRoute = false;
+						//remove polyline if it's set
+						if(_direction != null){
+							_direction.remove();
+							_direction = null;
+						}
 					}
-					//remove polyline if it's set
-					if(_direction != null){
-						_direction.remove();
-						_direction = null;
-					}
+					
 					
 					// set last selected marker back to unselected
 					if (_selectedMarker != null & _selectedPoi != null) {
 						_selectedMarker.setIcon(BitmapDescriptorFactory.fromResource(_selectedPoi.getIcon()));
 					}
 					
-
 					if(_markerPOIIdMap.get(marker.getId()) != null){//is this markers id in the list (if not it is user marker)
 						_selectedPoi = POIHelper.getPoiByIdReference(_markerPOIIdMap, _allPOIList, marker.getId());
 						marker.setIcon(BitmapDescriptorFactory.fromResource(_selectedPoi.getActiveIcon()));
@@ -421,8 +425,7 @@ public class ActivityMap extends ActivityMenuBase {
 					_direction = _mMap.addPolyline(gd.getPolyline(doc, 6, Color.rgb(105,127,188)));
 
 					_showRoute = true;
-					_zoomInButton.setVisibility(View.INVISIBLE);
-					_zoomOutButton.setVisibility(View.INVISIBLE);
+					setZoomInvisible();
 					hideMarkersExceptUserAndDestination();
 	        	}
 
@@ -1254,22 +1257,44 @@ public class ActivityMap extends ActivityMenuBase {
 			}
 			_selectedMarker = null;
 			_selectedPoi = null;
+			//if there is a route shown, remove it and show all markers in  mapBounds
 			if(_showRoute && _direction != null){
 				_direction.remove();
 				_direction = null;
 				_showRoute = false;
+				showMarkersExceptUserAndDestination();
+				refreshMapBounds();
+				updatePOIMarkers();
+				if(!isZoomVisible()){
+					setZoomVisible();
+				}
 			}
 	   }
 	}
 	
-	private void adjustZoomVisibility(int orientation){
+	private void adjustZoomVisibilityByOrientation(int orientation){
 		if(orientation == Configuration.ORIENTATION_LANDSCAPE){
-			_zoomInButton.setVisibility(View.GONE);
-			_zoomOutButton.setVisibility(View.GONE);
+			setZoomInvisible();
 		}else{
-			_zoomInButton.setVisibility(View.VISIBLE);
-			_zoomOutButton.setVisibility(View.VISIBLE);
+			setZoomVisible();
 		}
+	}
+	
+	/*
+	 * Returns true if zoom buttons are visible, otherwise false;
+	 */
+	private boolean isZoomVisible(){
+		return _zoomInButton.getVisibility() == View.VISIBLE && _zoomOutButton.getVisibility() == View.VISIBLE;
+	}
+	
+	private void setZoomVisible(){
+		_zoomInButton.setVisibility(View.VISIBLE);
+		_zoomOutButton.setVisibility(View.VISIBLE);
+	}
+	
+	private void setZoomInvisible(){
+		_zoomInButton.setVisibility(View.INVISIBLE);
+		_zoomOutButton.setVisibility(View.INVISIBLE);
 	}
 
 
