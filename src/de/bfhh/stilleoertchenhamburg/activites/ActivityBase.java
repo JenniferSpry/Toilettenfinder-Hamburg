@@ -47,7 +47,7 @@ public class ActivityBase extends ActionBarActivity {
 		_connecState = NetworkUtil.getConnectivityStatus(this);
 		if(_connecState == TagNames.TYPE_NOT_CONNECTED){
 			//AND: POI data older than 2 days
-			showAlertMessageNetworkSettings();
+			showAlertMessageNetworkSettings(null);
 		}
 		_oldConnecState = _connecState;
 		
@@ -120,7 +120,9 @@ public class ActivityBase extends ActionBarActivity {
 	  super.onActivityResult(requestCode, resultCode, data);
 	}
 	
-	/** connection checks**/
+	/**
+	 *  Network connection checks
+	 */
 
 	private BroadcastReceiver networkChangeReceiver = new BroadcastReceiver(){
 		@Override
@@ -200,14 +202,17 @@ public class ActivityBase extends ActionBarActivity {
 	};
 
 	/** show alert dialog with option to change network settings */
-	private void showAlertMessageNetworkSettings() {
+	protected void showAlertMessageNetworkSettings(String msg) {
 		final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-		builder.setMessage("Du hast keine Internetverbindung. Bitte überprüfe Deine Netzwerkeinstellungen!")
-		.setCancelable(false)
-		.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-			public void onClick(final DialogInterface dialog, final int id) {}
-		});
- 		
+		builder.setCancelable(false)
+				.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+					public void onClick(final DialogInterface dialog, final int id) {}
+				});
+		if(msg == null){
+			builder.setMessage("Du hast keine Internetverbindung. Bitte überprüfe Deine Netzwerkeinstellungen!");
+		}else{
+			builder.setMessage(msg);
+		}
 		final AlertDialog alert = builder.create();
 		alert.show();
 	}

@@ -87,7 +87,7 @@ public class ActivitySplashScreen extends ActivityBase {
         	//No connection at the moment, but connecting
         	if(status == TagNames.TYPE_NOT_CONNECTED && _oldConnecState != _connecState){
         		//show toast that we are connecting to network
-        		Toast.makeText(this, "Connecting to network, please wait...", Toast.LENGTH_LONG).show();
+        		Toast.makeText(this, "Netzwerkverbindung wird hergestellt, bitte warten...", Toast.LENGTH_LONG).show();
         	}else if(status == TagNames.TYPE_MOBILE || status == TagNames.TYPE_WIFI){
         		onNetworkConnected();
         	}

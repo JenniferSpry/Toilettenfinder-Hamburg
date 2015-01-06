@@ -33,6 +33,7 @@ import de.bfhh.stilleoertchenhamburg.LocationUpdateService;
 import de.bfhh.stilleoertchenhamburg.R;
 import de.bfhh.stilleoertchenhamburg.TagNames;
 import de.bfhh.stilleoertchenhamburg.helpers.GoogleDirection.OnDirectionResponseListener;
+import de.bfhh.stilleoertchenhamburg.helpers.NetworkUtil;
 import de.bfhh.stilleoertchenhamburg.helpers.POIHelper;
 import de.bfhh.stilleoertchenhamburg.helpers.GoogleDirection;
 import de.bfhh.stilleoertchenhamburg.models.POI;
@@ -407,23 +408,34 @@ public class ActivityMap extends ActivityMenuBase {
 					hideMarkersExceptUserAndDestination();
 	        	}
 			});
-	        	
-			_routeText.setOnClickListener(new View.OnClickListener() {
+	        
+	        /**
+	         * Listener for route / direction buttons.
+	         */
+	        View.OnClickListener routeListener = new View.OnClickListener() {
 				public void onClick(View v) {
-					_slidingUpPanel.expandPanel();
-					String requestUrl = _gd.request(new LatLng(_userLat, _userLng), _selectedMarker.getPosition(), GoogleDirection.MODE_WALKING);	
-					Toast.makeText(getApplicationContext(), "Die Route wird berechnet. Bitte warten...", Toast.LENGTH_SHORT).show();
+					switch(v.getId()) {
+				        case R.id.route_text:
+				        	_slidingUpPanel.expandPanel();
+				        	break;
+				        case R.id.route_map:
+				        	_slidingUpPanel.collapsePanel();
+				        	break;
+				    }
+					//TODO: Check network connection
+					int connecState = NetworkUtil.getConnectivityStatus(getApplicationContext());
+					if(connecState == TagNames.TYPE_NOT_CONNECTED){
+						String msg = "Du hast keine Internetverbindung. Um eine Route anzeigen zu lassen, überprüfe bitte Deine Netzwerkeinstellungen!";
+						showAlertMessageNetworkSettings(msg);
+					}else if(connecState == TagNames.TYPE_MOBILE || connecState == TagNames.TYPE_WIFI){
+						String requestUrl = _gd.request(new LatLng(_userLat, _userLng), _selectedMarker.getPosition(), GoogleDirection.MODE_WALKING);	
+						Toast.makeText(getApplicationContext(), "Die Route wird berechnet. Bitte warten...", Toast.LENGTH_SHORT).show();
+					}	
 				}
-			});
-			
-			_routeMap.setOnClickListener(new View.OnClickListener() {
-				public void onClick(View v) {
-					_slidingUpPanel.collapsePanel();
-					//request direction from userPosition to selectedMarker position
-					String requestUrl = _gd.request(new LatLng(_userLat, _userLng), _selectedMarker.getPosition(), GoogleDirection.MODE_WALKING);
-					Toast.makeText(getApplicationContext(), "Die Route wird berechnet. Bitte warten...", Toast.LENGTH_SHORT).show();
-				}
-			});
+			};
+	        
+			_routeText.setOnClickListener(routeListener);
+			_routeMap.setOnClickListener(routeListener);
 			
 			// TODO
 			_buttonSendComment.setOnClickListener(new View.OnClickListener() {
@@ -441,7 +453,7 @@ public class ActivityMap extends ActivityMenuBase {
 					  	  	i.putExtra(TagNames.EXTRA_POI, _selectedPoi);
 					  	    ActivityMap.this.startService(i);
 						} else {
-							Toast.makeText(getApplicationContext(), "Bitte füllen Sie das Kommentar-Feld aus.", Toast.LENGTH_LONG).show();
+							Toast.makeText(getApplicationContext(), "Bitte fülle das Kommentar-Feld aus.", Toast.LENGTH_LONG).show();
 						}
 					}
 				}
@@ -667,10 +679,7 @@ public class ActivityMap extends ActivityMenuBase {
 					int result = bundle.getInt(TagNames.EXTRA_LOCATION_RESULT);
 					
 					Log.d("ActivityMap LocationUpdateReceiver", "Location received from "+ provider + ": " + lat  + ", " + lng);
-					//Toast to show updates
-					//Toast.makeText(context, "Location Update from provider: " + provider + ", Location: LAT " + lat + ", LNG " + lng,
-						//	Toast.LENGTH_LONG).show();
-					
+
 					//Result_ok -> true, Result_cancelled -> false
 					main._hasUserLocation =  result == -1;
 
