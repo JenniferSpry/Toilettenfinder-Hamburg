@@ -85,7 +85,6 @@ import android.os.IBinder;
 /* TODO
  * 1. AUf Leaks testen
  * 2. ActivityResult von GPS check zurückgeben
- * 4. toast when route is being prepared
  */
 
 public class ActivityMap extends ActivityMenuBase {
@@ -384,17 +383,14 @@ public class ActivityMap extends ActivityMenuBase {
 				}
 			});
 			
-			
+			//instance of class that deals with directions from Google
 			_gd = new GoogleDirection(this);
-			//Called when we get a response with the direction from google
+			
+			//Called when we get a response with the direction from Google
 	        _gd.setOnDirectionResponseListener(new OnDirectionResponseListener() {
 	        	@Override
-	        	public void onResponse(String status, Document doc, GoogleDirection gd) {	
-					Toast.makeText(getApplicationContext(), status, Toast.LENGTH_SHORT).show();
-					
-					showUserLocationAndDestination();
-					
-					//update slider top to show start and destination plus distance in meters
+	        	public void onResponse(String status, Document doc, GoogleDirection gd) {		
+					//update slider top to show start and destination plus distance in meters and duration
 					updateSliderContentRoute(gd, doc);
 					
 					//remove directions polyline if it's already there
@@ -404,18 +400,19 @@ public class ActivityMap extends ActivityMenuBase {
 					//draw route
 					_route = _mMap.addPolyline(gd.getPolyline(doc, 6, Color.rgb(105,127,188)));
 					_showRoute = true;
+					showUserLocationAndDestination(); //show route
+					
 					//hide zoom buttons and all irrelevant markers
 					setZoomInvisible();
 					hideMarkersExceptUserAndDestination();
 	        	}
-
 			});
 	        	
 			_routeText.setOnClickListener(new View.OnClickListener() {
 				public void onClick(View v) {
 					_slidingUpPanel.expandPanel();
-					String requestUrl = _gd.request(new LatLng(_userLat, _userLng), _selectedMarker.getPosition(), GoogleDirection.MODE_WALKING);
-					
+					String requestUrl = _gd.request(new LatLng(_userLat, _userLng), _selectedMarker.getPosition(), GoogleDirection.MODE_WALKING);	
+					Toast.makeText(getApplicationContext(), "Die Route wird berechnet. Bitte warten...", Toast.LENGTH_SHORT).show();
 				}
 			});
 			
@@ -424,6 +421,7 @@ public class ActivityMap extends ActivityMenuBase {
 					_slidingUpPanel.collapsePanel();
 					//request direction from userPosition to selectedMarker position
 					String requestUrl = _gd.request(new LatLng(_userLat, _userLng), _selectedMarker.getPosition(), GoogleDirection.MODE_WALKING);
+					Toast.makeText(getApplicationContext(), "Die Route wird berechnet. Bitte warten...", Toast.LENGTH_SHORT).show();
 				}
 			});
 			
