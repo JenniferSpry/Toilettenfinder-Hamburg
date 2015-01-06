@@ -90,6 +90,9 @@ public class ActivitySplashScreen extends ActivityBase {
         		Toast.makeText(this, "Netzwerkverbindung wird hergestellt, bitte warten...", Toast.LENGTH_LONG).show();
         	}else if(status == TagNames.TYPE_MOBILE || status == TagNames.TYPE_WIFI){
         		onNetworkConnected();
+        	}else if(status == TagNames.TYPE_NOT_CONNECTED){
+        		String msg = "Du hast keine Internetverbindung. Um die Routenfunktion benutzen zu können, überprüfe bitte Deine Netzwerkeinstellungen!";
+        		showAlertMessageNetworkSettings(msg, true);
         	}
     	}
     }

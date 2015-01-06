@@ -4,6 +4,7 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 
 import de.bfhh.stilleoertchenhamburg.TagNames;
+import de.bfhh.stilleoertchenhamburg.helpers.DatabaseHelper;
 import de.bfhh.stilleoertchenhamburg.helpers.NetworkUtil;
 
 import android.app.AlertDialog;
@@ -21,6 +22,9 @@ import android.widget.Toast;
 
 /**
  * @author Jenne
+ * 
+ * TODO: check what happens when poi data is older than 2 hours
+ * -> assumption: two dialogs, one from onCreate, and one from onresume 
  */
 
 public class ActivityBase extends ActionBarActivity {
@@ -45,9 +49,10 @@ public class ActivityBase extends ActionBarActivity {
 		
 		_oldConnecState = TagNames.TYPE_NOT_CONNECTED;
 		_connecState = NetworkUtil.getConnectivityStatus(this);
-		if(_connecState == TagNames.TYPE_NOT_CONNECTED){
+		if(_connecState == TagNames.TYPE_NOT_CONNECTED &&
+				!DatabaseHelper.getInstance(getApplicationContext()).isDataStillFresh(getApplicationContext())){
 			//AND: POI data older than 2 days
-			showAlertMessageNetworkSettings(null);
+			showAlertMessageNetworkSettings(null, false);
 		}
 		_oldConnecState = _connecState;
 		
@@ -202,12 +207,21 @@ public class ActivityBase extends ActionBarActivity {
 	};
 
 	/** show alert dialog with option to change network settings */
-	protected void showAlertMessageNetworkSettings(String msg) {
-		final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-		builder.setCancelable(false)
-				.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-					public void onClick(final DialogInterface dialog, final int id) {}
-				});
+	protected void showAlertMessageNetworkSettings(String msg, boolean callOnNetworkConnected) {
+		final AlertDialog.Builder builder = new AlertDialog.Builder(this);		
+		builder.setCancelable(false);
+		if(!callOnNetworkConnected){
+			builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+				public void onClick(final DialogInterface dialog, final int id) {}
+			});
+		}else{
+			builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+				public void onClick(final DialogInterface dialog, final int id) {
+					onNetworkConnected();
+				}
+			});
+		}
+		
 		if(msg == null){
 			builder.setMessage("Du hast keine Internetverbindung. Bitte überprüfe Deine Netzwerkeinstellungen!");
 		}else{

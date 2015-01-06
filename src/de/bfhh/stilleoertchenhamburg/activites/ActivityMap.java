@@ -450,7 +450,7 @@ public class ActivityMap extends ActivityMenuBase {
 					int connecState = NetworkUtil.getConnectivityStatus(getApplicationContext());
 					if(connecState == TagNames.TYPE_NOT_CONNECTED){
 						String msg = "Du hast keine Internetverbindung. Um eine Route anzeigen zu lassen, überprüfe bitte Deine Netzwerkeinstellungen!";
-						showAlertMessageNetworkSettings(msg);
+						showAlertMessageNetworkSettings(msg, false);
 					}else if(connecState == TagNames.TYPE_MOBILE || connecState == TagNames.TYPE_WIFI){
 						//TODO: think of a way of only calling this once for the same pin
 						String requestUrl = _gd.request(new LatLng(_userLat, _userLng), _selectedMarker.getPosition(), GoogleDirection.MODE_WALKING);	
@@ -584,6 +584,8 @@ public class ActivityMap extends ActivityMenuBase {
 				updateSliderContentPOI(_selectedPoi);
 				selectMarker(_selectedPoi);
 				_slidingUpPanel.showPanel();
+				if(isRouteOptionsVisible())
+					setRouteOptionsVisible();
 			}
 			moveToLocation(CameraUpdateFactory.newLatLng(_selectedMarker.getPosition()));
 		} else {
@@ -765,7 +767,7 @@ public class ActivityMap extends ActivityMenuBase {
 									int connecState = NetworkUtil.getConnectivityStatus(context);
 									if(connecState == TagNames.TYPE_NOT_CONNECTED){
 										String msg = "Deine Route konnte nicht neu berechnet werden, da Du keine Internetverbindung hast. Überprüfe bitte Deine Netzwerkeinstellungen!";
-										main.showAlertMessageNetworkSettings(msg);
+										main.showAlertMessageNetworkSettings(msg, false);
 									}else if(connecState == TagNames.TYPE_MOBILE || connecState == TagNames.TYPE_WIFI){
 										String requestUrl = main._gd.request(new LatLng(main._userLat, main._userLng), main._selectedMarker.getPosition(), GoogleDirection.MODE_WALKING);	
 										Log.d("Position verändert", "Loc Upd und network an");
@@ -1363,6 +1365,14 @@ public class ActivityMap extends ActivityMenuBase {
 	private void setZoomInvisible(){
 		_zoomInButton.setVisibility(View.INVISIBLE);
 		_zoomOutButton.setVisibility(View.INVISIBLE);
+	}
+	
+	/**
+	 * 
+	 */
+	private boolean isRouteOptionsVisible(){
+		return _routeMap.getVisibility() == View.GONE && _routeText.getVisibility() == View.GONE 
+				&& _lineAboveFindRoute.getVisibility() == View.GONE && _findRouteText.getVisibility() == View.GONE;
 	}
 	
 	/**
