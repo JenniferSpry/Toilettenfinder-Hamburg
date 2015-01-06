@@ -154,7 +154,17 @@ public class ActivityMap extends ActivityMenuBase {
 	//Display orientation
 	private int orientation;
 
-	protected boolean _showRoute;
+	private boolean _showRoute;
+
+	private String endAddress;
+
+	private String startAddress;
+
+	private ScrollView _scrollView;
+
+	private TextView _findRouteText;
+
+	private View _lineAboveFindRoute;
 
 	/**
 	 * Initiate variables
@@ -196,6 +206,8 @@ public class ActivityMap extends ActivityMenuBase {
 		
 		_routeText = (Button) findViewById(R.id.route_text);
 		_routeMap = (Button) findViewById(R.id.route_map);
+		_findRouteText = (TextView) findViewById(R.id.find_route);
+		_lineAboveFindRoute = (View) findViewById(R.id.separator_1);
 		_showRoute = false; //determines whether other markers apart from user and destination should be shown (false -> yes, true -> no)
 		
 		_buttonSendComment = (Button) findViewById(R.id.button_send_comment);
@@ -307,6 +319,7 @@ public class ActivityMap extends ActivityMenuBase {
 					if(_route != null){
 						_route.remove();
 						_route = null;
+						setRouteOptionsVisible();
 					}
 					//if the zoom buttons were hidden, show them again
 					if(!isZoomVisible()){
@@ -321,8 +334,9 @@ public class ActivityMap extends ActivityMenuBase {
 			_mMap.setOnMarkerClickListener(new OnMarkerClickListener(){
 				@Override
 				public boolean onMarkerClick(Marker marker) { 
-					//if the zoom buttons were hidden, show them again
-					if(!isZoomVisible() && !_selectedMarker.equals(marker) ){
+					//if route is displayed, a different marker is selected and that marker is not the user's:
+					//display zoom buttons, update pins on map and remove route.
+					if(_showRoute && !_selectedMarker.equals(marker) && _markerPOIIdMap.get(marker.getId()) != null ){
 						setZoomVisible();
 						updateVisibleArea();
 						_showRoute = false;
@@ -330,22 +344,24 @@ public class ActivityMap extends ActivityMenuBase {
 						if(_route != null){
 							_route.remove();
 							_route = null;
+							setRouteOptionsVisible();//display route buttons
 						}
 					}
 					
-					// set last selected marker back to unselected
-					if (_selectedMarker != null & _selectedPoi != null) {
-						_selectedMarker.setIcon(BitmapDescriptorFactory.fromResource(_selectedPoi.getIcon()));
-					}
+					
 					
 					if(_markerPOIIdMap.get(marker.getId()) != null){//is this markers id in the list (if not it is user marker)
+						// set last selected marker back to unselected
+						if (_selectedMarker != null & _selectedPoi != null) {
+							_selectedMarker.setIcon(BitmapDescriptorFactory.fromResource(_selectedPoi.getIcon()));
+						}
 						_selectedPoi = POIHelper.getPoiByIdReference(_markerPOIIdMap, _allPOIList, marker.getId());
 						marker.setIcon(BitmapDescriptorFactory.fromResource(_selectedPoi.getActiveIcon()));
-						updateSliderContentPOI(_selectedPoi);
+						if(!_showRoute) 
+							updateSliderContentPOI(_selectedPoi);
 						_slidingUpPanel.showPanel();
 						_selectedMarker = marker;
-					} else {
-						_slidingUpPanel.hidePanel();
+						
 					}
 					//center map on clicked marker after getting new mapBounds
 					refreshMapBounds();	
@@ -406,6 +422,9 @@ public class ActivityMap extends ActivityMenuBase {
 					//hide zoom buttons and all irrelevant markers
 					setZoomInvisible();
 					hideMarkersExceptUserAndDestination();
+					
+					//hide route buttons
+					setRouteOptionsInvisible();
 	        	}
 			});
 	        
@@ -413,10 +432,15 @@ public class ActivityMap extends ActivityMenuBase {
 	         * Listener for route / direction buttons.
 	         */
 	        View.OnClickListener routeListener = new View.OnClickListener() {
+	        	
 				public void onClick(View v) {
 					switch(v.getId()) {
 				        case R.id.route_text:
 				        	_slidingUpPanel.expandPanel();
+				        	if(_scrollView == null){
+								_scrollView = (ScrollView) findViewById(R.id.scroll);
+							}
+					      	_scrollView.scrollTo(0,0);
 				        	break;
 				        case R.id.route_map:
 				        	_slidingUpPanel.collapsePanel();
@@ -428,6 +452,7 @@ public class ActivityMap extends ActivityMenuBase {
 						String msg = "Du hast keine Internetverbindung. Um eine Route anzeigen zu lassen, überprüfe bitte Deine Netzwerkeinstellungen!";
 						showAlertMessageNetworkSettings(msg);
 					}else if(connecState == TagNames.TYPE_MOBILE || connecState == TagNames.TYPE_WIFI){
+						//TODO: think of a way of only calling this once for the same pin
 						String requestUrl = _gd.request(new LatLng(_userLat, _userLng), _selectedMarker.getPosition(), GoogleDirection.MODE_WALKING);	
 						Toast.makeText(getApplicationContext(), "Die Route wird berechnet. Bitte warten...", Toast.LENGTH_SHORT).show();
 					}	
@@ -453,7 +478,7 @@ public class ActivityMap extends ActivityMenuBase {
 					  	  	i.putExtra(TagNames.EXTRA_POI, _selectedPoi);
 					  	    ActivityMap.this.startService(i);
 						} else {
-							Toast.makeText(getApplicationContext(), "Bitte fülle das Kommentar-Feld aus.", Toast.LENGTH_LONG).show();
+							Toast.makeText(getApplicationContext(), "Bitte fülle das Kommentarfeld aus.", Toast.LENGTH_LONG).show();
 						}
 					}
 				}
@@ -1030,8 +1055,10 @@ public class ActivityMap extends ActivityMenuBase {
 			@Override
 			public void afterTextChanged(Editable s) {
 				//get ScrollView to scroll to top
-		      	ScrollView scrollView = (ScrollView) findViewById(R.id.scroll);
-		      	scrollView.scrollTo(0,0);
+				if(_scrollView == null){
+					_scrollView = (ScrollView) findViewById(R.id.scroll);
+				}
+		      	_scrollView.scrollTo(0,0);
 			}
 		});
         
@@ -1289,6 +1316,7 @@ public class ActivityMap extends ActivityMenuBase {
 				if(!isZoomVisible()){
 					setZoomVisible();
 				}
+				setRouteOptionsVisible();
 			}
 	   }
 	}
@@ -1327,6 +1355,23 @@ public class ActivityMap extends ActivityMenuBase {
 	private void setZoomInvisible(){
 		_zoomInButton.setVisibility(View.INVISIBLE);
 		_zoomOutButton.setVisibility(View.INVISIBLE);
+	}
+	
+	/**
+	 * Set route buttons and text invisible
+	 */
+	private void setRouteOptionsInvisible(){
+		_routeMap.setVisibility(View.GONE);
+		_routeText.setVisibility(View.GONE);
+		_findRouteText.setVisibility(View.GONE);
+		_lineAboveFindRoute.setVisibility(View.GONE);
+	}
+	
+	private void setRouteOptionsVisible(){
+		_routeMap.setVisibility(View.VISIBLE);
+		_routeText.setVisibility(View.VISIBLE);
+		_findRouteText.setVisibility(View.VISIBLE);
+		_lineAboveFindRoute.setVisibility(View.VISIBLE);
 	}
 
 
