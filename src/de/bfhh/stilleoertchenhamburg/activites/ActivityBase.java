@@ -3,9 +3,9 @@ package de.bfhh.stilleoertchenhamburg.activites;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 
-import de.bfhh.stilleoertchenhamburg.TagNames;
 import de.bfhh.stilleoertchenhamburg.helpers.DatabaseHelper;
 import de.bfhh.stilleoertchenhamburg.helpers.NetworkUtil;
+import de.bfhh.stilleoertchenhamburg.helpers.TagNames;
 
 import android.app.AlertDialog;
 import android.content.BroadcastReceiver;

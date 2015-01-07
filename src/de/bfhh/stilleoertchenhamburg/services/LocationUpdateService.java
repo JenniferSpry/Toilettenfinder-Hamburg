@@ -1,6 +1,9 @@
-package de.bfhh.stilleoertchenhamburg;
+package de.bfhh.stilleoertchenhamburg.services;
 
 import java.util.List;
+
+import de.bfhh.stilleoertchenhamburg.AppController;
+import de.bfhh.stilleoertchenhamburg.helpers.TagNames;
 
 import android.app.Activity;
 import android.app.Service;

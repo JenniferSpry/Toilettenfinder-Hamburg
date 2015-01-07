@@ -29,14 +29,14 @@ import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout.PanelSlideListener;
 
 import de.bfhh.stilleoertchenhamburg.AppController;
-import de.bfhh.stilleoertchenhamburg.LocationUpdateService;
 import de.bfhh.stilleoertchenhamburg.R;
-import de.bfhh.stilleoertchenhamburg.TagNames;
 import de.bfhh.stilleoertchenhamburg.helpers.GoogleDirection.OnDirectionResponseListener;
 import de.bfhh.stilleoertchenhamburg.helpers.NetworkUtil;
 import de.bfhh.stilleoertchenhamburg.helpers.POIHelper;
 import de.bfhh.stilleoertchenhamburg.helpers.GoogleDirection;
+import de.bfhh.stilleoertchenhamburg.helpers.TagNames;
 import de.bfhh.stilleoertchenhamburg.models.POI;
+import de.bfhh.stilleoertchenhamburg.services.LocationUpdateService;
 import de.bfhh.stilleoertchenhamburg.services.SendMailService;
 
 import android.text.Editable;

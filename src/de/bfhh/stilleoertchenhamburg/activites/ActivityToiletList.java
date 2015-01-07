@@ -2,13 +2,13 @@ package de.bfhh.stilleoertchenhamburg.activites;
 
 import java.util.ArrayList;
 
-import de.bfhh.stilleoertchenhamburg.LocationUpdateService;
-import de.bfhh.stilleoertchenhamburg.POIUpdateService;
 import de.bfhh.stilleoertchenhamburg.R;
-import de.bfhh.stilleoertchenhamburg.TagNames;
 import de.bfhh.stilleoertchenhamburg.fragments.FragmentToiletList;
 import de.bfhh.stilleoertchenhamburg.helpers.POIHelper;
+import de.bfhh.stilleoertchenhamburg.helpers.TagNames;
 import de.bfhh.stilleoertchenhamburg.models.POI;
+import de.bfhh.stilleoertchenhamburg.services.LocationUpdateService;
+import de.bfhh.stilleoertchenhamburg.services.POIUpdateService;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;

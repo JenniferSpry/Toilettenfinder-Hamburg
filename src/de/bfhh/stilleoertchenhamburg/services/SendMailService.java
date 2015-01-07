@@ -18,7 +18,7 @@ import com.android.volley.VolleyError;
 import com.android.volley.VolleyLog;
 import com.android.volley.toolbox.JsonObjectRequest;
 import de.bfhh.stilleoertchenhamburg.AppController;
-import de.bfhh.stilleoertchenhamburg.TagNames;
+import de.bfhh.stilleoertchenhamburg.helpers.TagNames;
 import de.bfhh.stilleoertchenhamburg.models.POI;
 
 /**

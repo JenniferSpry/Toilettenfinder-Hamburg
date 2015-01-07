@@ -38,12 +38,12 @@
         
         <!-- Location Service -->
         <service 
-            android:name=".LocationUpdateService" 
+            android:name="de.bfhh.stilleoertchenhamburg.services.LocationUpdateService" 
             android:enabled="true"
             android:exported="false" /> <!-- lets no other applications use our service -->
             
         <!-- POI Update IntentService -->
-        <service android:name=".POIUpdateService" 
+        <service android:name="de.bfhh.stilleoertchenhamburg.services.POIUpdateService" 
             android:enabled="true"
             android:exported="false" />
         

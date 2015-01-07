@@ -1,4 +1,4 @@
-package de.bfhh.stilleoertchenhamburg;
+package de.bfhh.stilleoertchenhamburg.services;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -18,7 +18,9 @@ import com.android.volley.VolleyError;
 import com.android.volley.VolleyLog;
 import com.android.volley.toolbox.JsonArrayRequest;
 
+import de.bfhh.stilleoertchenhamburg.AppController;
 import de.bfhh.stilleoertchenhamburg.helpers.DatabaseHelper;
+import de.bfhh.stilleoertchenhamburg.helpers.TagNames;
 import de.bfhh.stilleoertchenhamburg.models.POI;
 
 /**

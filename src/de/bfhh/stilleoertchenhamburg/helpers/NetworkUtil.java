@@ -1,6 +1,5 @@
 package de.bfhh.stilleoertchenhamburg.helpers;
 
-import de.bfhh.stilleoertchenhamburg.TagNames;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
