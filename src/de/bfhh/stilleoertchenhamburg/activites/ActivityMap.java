@@ -455,7 +455,7 @@ public class ActivityMap extends ActivityMenuBase {
 						//TODO: think of a way of only calling this once for the same pin
 						String requestUrl = _gd.request(new LatLng(_userLat, _userLng), _selectedMarker.getPosition(), GoogleDirection.MODE_WALKING);	
 						Toast.makeText(getApplicationContext(), "Die Route wird berechnet. Bitte warten...", Toast.LENGTH_SHORT).show();
-					}	
+					}
 				}
 			};
 	        
@@ -786,10 +786,10 @@ public class ActivityMap extends ActivityMenuBase {
 	private void showUserLocationAndDestination(){
 		if(_selectedMarker != null && _mMap != null){
 			LatLngBounds bounds = new LatLngBounds.Builder()
-	    	.include(new LatLng(_userLat,_userLng))
-	    	.include(_selectedMarker.getPosition())
-	    	.build();
-		_mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 80));
+		    	.include(new LatLng(_userLat,_userLng))
+		    	.include(_selectedMarker.getPosition())
+		    	.build();
+			_mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 15));
 		}
 	}
 
@@ -1073,7 +1073,7 @@ public class ActivityMap extends ActivityMenuBase {
         		txtDescription.append(Html.fromHtml("<b>Nach " + String.valueOf(distances[i-1]) + " m: </b>"));
         	}
         	if(i < htmlInstructions.size()-1){
-        		txtDescription.append(htmlInstructions.get(i) + ".\n");
+        		txtDescription.append(htmlInstructions.get(i) + ".\n\n");
         	}else{
         		txtDescription.append(htmlInstructions.get(i).trim());
         	}
