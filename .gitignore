@@ -27,3 +27,5 @@ proguard/
 
 # Project properties
 project.properties
+
+db_config.php
