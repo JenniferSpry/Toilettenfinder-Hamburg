@@ -995,15 +995,9 @@ public class ActivityMap extends ActivityMenuBase {
 		if (poi != null){
 			txtName = (TextView) findViewById(R.id.name_detail);
 	        txtName.setText(Html.fromHtml("<b>"+poi.getName()+"</b>"));
-	        
-	        float d = poi.getDistanceToUser();
-	        NumberFormat numberFormat = new DecimalFormat("0.0");
-			numberFormat.setRoundingMode(RoundingMode.DOWN);
-			//show distance rounded in kilometers if greater than 999 meters
-			String distance = d > 999 ? String.valueOf(numberFormat.format(d*0.001)) + " km" : String.valueOf((int) Math.round(d)) + " m";  
-	        //String distance = String.valueOf(d) + " m";  
+	         
 	        txtDistance = (TextView) findViewById(R.id.distance_detail);
-	        txtDistance.setText(distance);
+	        txtDistance.setText(poi.getDistanceToUserString());
 	        
 	        txtAddress = (TextView) findViewById(R.id.address_detail);
 	        txtAddress.setText(poi.getAddress());

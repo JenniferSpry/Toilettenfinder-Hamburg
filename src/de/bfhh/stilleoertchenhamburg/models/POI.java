@@ -1,5 +1,9 @@
 package de.bfhh.stilleoertchenhamburg.models;
 
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
+
 import com.google.android.gms.maps.model.LatLng;
 
 import de.bfhh.stilleoertchenhamburg.R;
@@ -26,6 +30,7 @@ public class POI implements Parcelable{
 	private boolean isWheelchairAccessible;
 	
 	private float distanceToUser; //distance to user's current position in meters
+	private String distanceText;
 	
 
 	public POI(int id, String name, String address, String description, String website, double lat, double lng){
@@ -36,6 +41,7 @@ public class POI implements Parcelable{
 		this.website = website;
 		this.lat = lat;
 		this.lng = lng;
+		this.distanceText = "";
 		
 		this.location = new Location("");
 		location.setLatitude(this.lat);
@@ -71,7 +77,15 @@ public class POI implements Parcelable{
 	//-> Listener?? and save userlocation in here as instance variable?
 	public void setDistanceToUser(Location userLocation){
 		this.distanceToUser = this.location.distanceTo(userLocation);
+		
+		NumberFormat numberFormat = new DecimalFormat("0.0");
+		numberFormat.setRoundingMode(RoundingMode.DOWN);
+		//show distance rounded in kilometers if greater than 999 meters
+		this.distanceText = this.distanceToUser > 999 ? 
+					String.valueOf(numberFormat.format(this.distanceToUser*0.001)) + " km" : 
+					String.valueOf((int) Math.round(this.distanceToUser)) + " m";
 	}
+	
 	//returns distance to user in meters (float)
 	public float getDistanceToUser(){
 		return distanceToUser;
@@ -79,6 +93,10 @@ public class POI implements Parcelable{
 	//returns distance to user in meters (int)
 	public int getDistanceToUserInt(){
 		return (int) distanceToUser;
+	}
+	//returns distance to user as text
+	public String getDistanceToUserString(){
+		return distanceText;
 	}
 
 	@Override
@@ -96,6 +114,7 @@ public class POI implements Parcelable{
 		this.lat = in.readDouble();
 		this.lng = in.readDouble();
 		this.distanceToUser = in.readFloat();
+		this.distanceText = in.readString();
 		
 		this.location = new Location("");
 		location.setLatitude(this.lat);
@@ -115,6 +134,7 @@ public class POI implements Parcelable{
 	    dest.writeDouble(lat);
 	    dest.writeDouble(lng);
 	    dest.writeFloat(distanceToUser);
+	    dest.writeString(distanceText);
 	}
 	
 	public static final Parcelable.Creator<POI> CREATOR = new Parcelable.Creator<POI>() {

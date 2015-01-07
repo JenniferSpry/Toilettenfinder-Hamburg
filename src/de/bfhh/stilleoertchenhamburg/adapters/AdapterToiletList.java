@@ -62,13 +62,9 @@ public class AdapterToiletList extends BaseAdapter {
                 
         TextView txtAddress = (TextView) convertView.findViewById(R.id.toilet_address);
         txtAddress.setText(poi.getAddress());      
-        
-        //distance in int
-        int d = (int) Math.round(poi.getDistanceToUser());
-        String distance = String.valueOf(d) + " m";  
+         
         TextView txtDistance = (TextView) convertView.findViewById(R.id.toilet_distance);
-        txtDistance.setText(distance);
-        txtDistance.setGravity(Gravity.CENTER);
+        txtDistance.setText(poi.getDistanceToUserString());
          
         if (poi.isWheelchairAccessible()){
         	ImageView imagePin = (ImageView) convertView.findViewById(R.id.icon);
