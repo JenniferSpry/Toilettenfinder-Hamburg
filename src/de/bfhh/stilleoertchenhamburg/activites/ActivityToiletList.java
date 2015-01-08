@@ -137,6 +137,7 @@ public class ActivityToiletList extends ActivityMenuBase {
 			args.putParcelableArrayList(TagNames.EXTRA_POI_LIST, pois);
 			_fragment = new FragmentToiletList();
 			_fragment.setArguments(args);
+			_fragment.setTotalPOIAmount(_poiList.size());
 			Log.d("fragment: ", ""+_fragment.getId());
 	
 			FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
@@ -148,8 +149,8 @@ public class ActivityToiletList extends ActivityMenuBase {
 	
 	public void extendFragmentList(){
 		int amount = _amountDisplayed + 20;
-		if(_amountDisplayed >= _poiList.size()){
-			_amountDisplayed = _poiList.size();
+		if(amount >= _poiList.size()){
+			amount = _poiList.size();
 		}
 		Log.d("ActivityToiletList extendfragmentList", "***********+");
 		if (_lat != null && _lng != null && _poiList != null){

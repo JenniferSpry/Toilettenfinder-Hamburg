@@ -836,7 +836,7 @@ public class ActivityMap extends ActivityMenuBase {
 		    	.include(new LatLng(_userLat,_userLng))
 		    	.include(_selectedMarker.getPosition())
 		    	.build();
-			_mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 70));
+			_mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 15));
 		}
 	}
 

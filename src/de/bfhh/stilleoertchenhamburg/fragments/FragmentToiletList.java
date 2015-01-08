@@ -30,6 +30,7 @@ public class FragmentToiletList extends ListFragment {
 	private ListView _listView;
 	private Button _loadMoreButton;
 	private ActivityToiletList activityToiletList;
+	private int _poiAmount; //total amount of poi
 	
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -70,10 +71,12 @@ public class FragmentToiletList extends ListFragment {
 					// item is fully visible.
 					final int lastItem = firstVisibleItem + visibleItemCount;
 					if(lastItem == totalItemCount) {
-						//to avoid multiple calls for last item
-							Log.d("Last", "Last");
+						//only show load more button if there is more to load
+						if(totalItemCount != _poiAmount){
+							Log.d("visible item cound", ""+totalItemCount);
+							Log.d("_poiAmount", ""+_poiAmount);
 							_loadMoreButton.setVisibility(View.VISIBLE);
-						
+						}
 					}else{
 						_loadMoreButton.setVisibility(View.GONE);
 					}
@@ -106,21 +109,25 @@ public class FragmentToiletList extends ListFragment {
   	  	startActivity(i); //start ActivityMap
     }
     
+    //updated poi list from activity toilet list
     public void addArguments(Bundle bundle){
         if(bundle != null){
         	ArrayList<POI> poiList = bundle.getParcelableArrayList(TagNames.EXTRA_POI_LIST);
         	if(adapter != null){
         		adapter.updatePOIList(poiList);
         		setListAdapter(adapter);
-        		
         	}
-    	   
         }
     }
     
+    //selected a certain entry to be shown 
     public void setPOISelected(int selectedID){
     	getListView().setSelection(selectedID);
     }
     
+    //sets instance variable to total amount of poi from db
+    public void setTotalPOIAmount(int poiAmount){
+    	this._poiAmount = poiAmount;
+    }
 
 }
