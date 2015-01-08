@@ -13,6 +13,13 @@
         android:layout_alignParentTop="true"
         android:divider="@null" >
     </ListView>
+    
+    <Button
+            android:id="@+id/load_more"
+            android:layout_width="fill_parent"
+            android:layout_height="60dp"
+            android:text="Mehr Laden" 
+            android:layout_alignParentBottom="true"/>
 
 </RelativeLayout>
 

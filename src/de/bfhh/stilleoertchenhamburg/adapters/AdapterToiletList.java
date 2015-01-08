@@ -43,6 +43,7 @@ public class AdapterToiletList extends BaseAdapter {
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
+    	Log.d("AdapterToiletList getView", "dddddddddddddddds");
 
         if (convertView == null) {
             LayoutInflater mInflater = (LayoutInflater) context
@@ -72,6 +73,11 @@ public class AdapterToiletList extends BaseAdapter {
         }        
 
         return convertView;
+    }
+    
+    public void updatePOIList(List<POI> pois){
+    	Log.d("AdapterToiletList updatePOIList", "ffffffffffffffffffffff");
+    	this.pois = pois;
     }
     
 

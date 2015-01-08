@@ -21,6 +21,9 @@ import android.os.IBinder;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.ActionBar;
 import android.util.Log;
+import android.widget.AbsListView;
+import android.widget.AbsListView.OnScrollListener;
+import android.widget.ListView;
 import android.widget.Toast;
 
 /**
@@ -38,6 +41,8 @@ public class ActivityToiletList extends ActivityMenuBase {
 	private Double _lng;
 	private ArrayList<POI> _poiList;
 	
+	private FragmentToiletList _fragment;
+	private int _amountDisplayed;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -114,7 +119,10 @@ public class ActivityToiletList extends ActivityMenuBase {
         }
     };
 
-    
+
+
+
+
     /** 
      * called on both receive actions
      * only does something once all data is received
@@ -123,14 +131,42 @@ public class ActivityToiletList extends ActivityMenuBase {
 		if (_lat != null && _lng != null && _poiList != null){
 			_poiList = POIHelper.setDistancePOIToUser(_poiList, _lat, _lng);
 			ArrayList<POI> pois = POIHelper.getClosestPOI(_poiList, 20);
+			_amountDisplayed = pois.size();
 			
 			Bundle args = new Bundle();  
 			args.putParcelableArrayList(TagNames.EXTRA_POI_LIST, pois);
-			FragmentToiletList fragment = new FragmentToiletList();
-			fragment.setArguments(args);
+			_fragment = new FragmentToiletList();
+			_fragment.setArguments(args);
+			Log.d("fragment: ", ""+_fragment.getId());
 	
 			FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-			ft.replace(R.id.fragmentToiletList, fragment);
+			ft.replace(R.id.fragmentToiletList, _fragment);
+			ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
+			ft.commit();
+		}
+	}
+	
+	public void extendFragmentList(){
+		int amount = _amountDisplayed + 20;
+		if(_amountDisplayed >= _poiList.size()){
+			_amountDisplayed = _poiList.size();
+		}
+		Log.d("ActivityToiletList extendfragmentList", "***********+");
+		if (_lat != null && _lng != null && _poiList != null){
+			
+			_poiList = POIHelper.setDistancePOIToUser(_poiList, _lat, _lng);
+			ArrayList<POI> pois = POIHelper.getClosestPOI(_poiList, amount);
+			
+			Bundle args = new Bundle();  
+			args.putParcelableArrayList(TagNames.EXTRA_POI_LIST, pois);
+			_fragment.addArguments(args);
+			_fragment.setPOISelected(_amountDisplayed-3);
+			Log.d("fragment: ", ""+_fragment.getId());
+			
+			_amountDisplayed = pois.size();
+	
+			FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+			ft.replace(R.id.fragmentToiletList, _fragment);
 			ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
 			ft.commit();
 		}
