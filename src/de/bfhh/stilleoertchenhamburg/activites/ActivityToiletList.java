@@ -21,10 +21,6 @@ import android.os.IBinder;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.ActionBar;
 import android.util.Log;
-import android.widget.AbsListView;
-import android.widget.AbsListView.OnScrollListener;
-import android.widget.ListView;
-import android.widget.Toast;
 
 /**
  * TODO: Vernünftige Fehlermeldung, wenn die Daten nicht kommen
@@ -34,7 +30,13 @@ import android.widget.Toast;
 public class ActivityToiletList extends ActivityMenuBase {
 	
 	private static final String TAG = ActivityToiletList.class.getSimpleName();
-        
+	
+	/** amount of list elements when list is created */
+	private final int INITIAL_POI_AMOUNT = 15;
+	
+	/** amount of list elements to add on button click */
+	private final int POI_AMOUNT_TO_ADD = 10;
+       
     private LocationUpdateService _service;
     
     private Double _lat;
@@ -90,12 +92,6 @@ public class ActivityToiletList extends ActivityMenuBase {
 	            _lat = bundle.getDouble(TagNames.EXTRA_LAT);
 	            _lng = bundle.getDouble(TagNames.EXTRA_LONG);
 	            int locationResult = bundle.getInt(TagNames.EXTRA_LOCATION_RESULT);
-	            //lat, lng and resultcode received successfully
-	            if (locationResult == RESULT_CANCELED) {
-	            	//if RESULT_CANCELLED or lat and long are standard location then no location was received from locationManager in LocationUpdateService
-	            	  Toast.makeText(ActivityToiletList.this, "Last user location not received. Standard Location is set",
-	            		  Toast.LENGTH_LONG).show();    
-	            } 
 	            unregisterReceiver(locationReceiver);
             	unbindService(mConnection);
             	fillFragmentList();
@@ -120,9 +116,6 @@ public class ActivityToiletList extends ActivityMenuBase {
     };
 
 
-
-
-
     /** 
      * called on both receive actions
      * only does something once all data is received
@@ -130,15 +123,14 @@ public class ActivityToiletList extends ActivityMenuBase {
 	private void fillFragmentList(){
 		if (_lat != null && _lng != null && _poiList != null){
 			_poiList = POIHelper.setDistancePOIToUser(_poiList, _lat, _lng);
-			ArrayList<POI> pois = POIHelper.getClosestPOI(_poiList, 20);
+			
+			ArrayList<POI> pois = POIHelper.getClosestPOI(_poiList, INITIAL_POI_AMOUNT);
 			_amountDisplayed = pois.size();
 			
 			Bundle args = new Bundle();  
 			args.putParcelableArrayList(TagNames.EXTRA_POI_LIST, pois);
 			_fragment = new FragmentToiletList();
 			_fragment.setArguments(args);
-			_fragment.setTotalPOIAmount(_poiList.size());
-			Log.d("fragment: ", ""+_fragment.getId());
 	
 			FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
 			ft.replace(R.id.fragmentToiletList, _fragment);
@@ -148,21 +140,17 @@ public class ActivityToiletList extends ActivityMenuBase {
 	}
 	
 	public void extendFragmentList(){
-		int amount = _amountDisplayed + 20;
+		int amount = _amountDisplayed + POI_AMOUNT_TO_ADD;
 		if(amount >= _poiList.size()){
 			amount = _poiList.size();
 		}
-		Log.d("ActivityToiletList extendfragmentList", "***********+");
-		if (_lat != null && _lng != null && _poiList != null){
-			
-			_poiList = POIHelper.setDistancePOIToUser(_poiList, _lat, _lng);
+		if (_poiList != null){
 			ArrayList<POI> pois = POIHelper.getClosestPOI(_poiList, amount);
 			
 			Bundle args = new Bundle();  
 			args.putParcelableArrayList(TagNames.EXTRA_POI_LIST, pois);
 			_fragment.addArguments(args);
 			_fragment.setPOISelected(_amountDisplayed-3);
-			Log.d("fragment: ", ""+_fragment.getId());
 			
 			_amountDisplayed = pois.size();
 	
@@ -181,7 +169,6 @@ public class ActivityToiletList extends ActivityMenuBase {
     		Log.d(TAG, "onServiceConnected");
     		LocationUpdateService.ServiceBinder b = (LocationUpdateService.ServiceBinder) binder;
     		_service = b.getLocService();
-    		Toast.makeText(ActivityToiletList.this, "LocService Connected", Toast.LENGTH_SHORT).show();
     		Location loc = _service.getCurrentUserLocation();
     		Location oldLoc = null;
     		if (_lat != null & _lng != null){
@@ -199,7 +186,6 @@ public class ActivityToiletList extends ActivityMenuBase {
     		Log.d(TAG, "onServiceDisconnected");
     		_service.stopLocationUpdates();
     		_service = null;
-    		Toast.makeText(ActivityToiletList.this, "LocService Disconnected", Toast.LENGTH_SHORT).show();
     	}
     };
     

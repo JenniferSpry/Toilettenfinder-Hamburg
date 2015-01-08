@@ -6,14 +6,11 @@ import de.bfhh.stilleoertchenhamburg.R;
 import de.bfhh.stilleoertchenhamburg.models.POI;
 import android.app.Activity;
 import android.content.Context;
-import android.util.Log;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
-import android.widget.ListView;
 import android.widget.TextView;
 
 public class AdapterToiletList extends BaseAdapter {
@@ -43,8 +40,6 @@ public class AdapterToiletList extends BaseAdapter {
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
-    	Log.d("AdapterToiletList getView", "dddddddddddddddds");
-
         if (convertView == null) {
             LayoutInflater mInflater = (LayoutInflater) context
                     .getSystemService(Activity.LAYOUT_INFLATER_SERVICE);
@@ -76,7 +71,6 @@ public class AdapterToiletList extends BaseAdapter {
     }
     
     public void updatePOIList(List<POI> pois){
-    	Log.d("AdapterToiletList updatePOIList", "ffffffffffffffffffffff");
     	this.pois = pois;
     }
     

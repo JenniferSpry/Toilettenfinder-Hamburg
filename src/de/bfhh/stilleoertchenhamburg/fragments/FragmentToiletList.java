@@ -2,27 +2,22 @@ package de.bfhh.stilleoertchenhamburg.fragments;
 
 import java.util.ArrayList;
 
-import android.support.v4.app.FragmentTransaction;
 import android.support.v4.app.ListFragment;
 import de.bfhh.stilleoertchenhamburg.R;
 import de.bfhh.stilleoertchenhamburg.activites.ActivityMap;
 import de.bfhh.stilleoertchenhamburg.activites.ActivityToiletList;
 import de.bfhh.stilleoertchenhamburg.adapters.AdapterToiletList;
-import de.bfhh.stilleoertchenhamburg.helpers.POIHelper;
 import de.bfhh.stilleoertchenhamburg.helpers.TagNames;
 import de.bfhh.stilleoertchenhamburg.models.POI;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
-import android.webkit.WebView.FindListener;
-import android.widget.AbsListView;
 import android.widget.Button;
 import android.widget.ListView;
-import android.widget.AbsListView.OnScrollListener;
 
 public class FragmentToiletList extends ListFragment {
 
@@ -30,7 +25,6 @@ public class FragmentToiletList extends ListFragment {
 	private ListView _listView;
 	private Button _loadMoreButton;
 	private ActivityToiletList activityToiletList;
-	private int _poiAmount; //total amount of poi
 	
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -39,48 +33,18 @@ public class FragmentToiletList extends ListFragment {
     
     @Override
     public void onViewCreated (View view, Bundle savedInstanceState){
-		Log.d("FragmentToiletList onViewCreated", "***********+");
     	activityToiletList = (ActivityToiletList) getActivity();
     	
-    	//hide the button
+    	_listView = this.getListView();
+    	
+    	View footerView = ((LayoutInflater) getActivity().getSystemService(Context.LAYOUT_INFLATER_SERVICE)).inflate(R.layout.toilet_list_footer, null, false);
+    	_listView.addFooterView(footerView);
+    	
     	_loadMoreButton = (Button) view.findViewById(R.id.load_more);
-    	_loadMoreButton.setVisibility(View.GONE);
     	_loadMoreButton.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				//TODO: refactor
 				activityToiletList.extendFragmentList();
-			}
-		});
-    	_listView = this.getListView();
-    	_listView.setOnScrollListener(new OnScrollListener() {	
-
-			@Override
-			public void onScrollStateChanged(AbsListView view, int scrollState) {}
-			
-			@Override
-			public void onScroll(AbsListView view, int firstVisibleItem,
-					int visibleItemCount, int totalItemCount) {
-				switch(view.getId()) {
-					case android.R.id.list:     
-
-					// Make your calculation stuff here. You have all your
-					// needed info from the parameters of this function.
-
-					// Sample calculation to determine if the last 
-					// item is fully visible.
-					final int lastItem = firstVisibleItem + visibleItemCount;
-					if(lastItem == totalItemCount) {
-						//only show load more button if there is more to load
-						if(totalItemCount != _poiAmount){
-							Log.d("visible item cound", ""+totalItemCount);
-							Log.d("_poiAmount", ""+_poiAmount);
-							_loadMoreButton.setVisibility(View.VISIBLE);
-						}
-					}else{
-						_loadMoreButton.setVisibility(View.GONE);
-					}
-				}
 			}
 		});
     }
@@ -98,7 +62,7 @@ public class FragmentToiletList extends ListFragment {
         
     }
     
-    //start ActivityMap onclick (with extra to open slider)
+    /** start ActivityMap onclick (with extra to open slider) */
     @Override 
     public void onListItemClick(ListView l, View v, int position, long id) {
     	Intent i = new Intent(getActivity(), ActivityMap.class);
@@ -109,7 +73,7 @@ public class FragmentToiletList extends ListFragment {
   	  	startActivity(i); //start ActivityMap
     }
     
-    //updated poi list from activity toilet list
+    /** updated poi list from activity toilet list */
     public void addArguments(Bundle bundle){
         if(bundle != null){
         	ArrayList<POI> poiList = bundle.getParcelableArrayList(TagNames.EXTRA_POI_LIST);
@@ -120,14 +84,8 @@ public class FragmentToiletList extends ListFragment {
         }
     }
     
-    //selected a certain entry to be shown 
+    /** selected a certain entry to be shown */
     public void setPOISelected(int selectedID){
     	getListView().setSelection(selectedID);
     }
-    
-    //sets instance variable to total amount of poi from db
-    public void setTotalPOIAmount(int poiAmount){
-    	this._poiAmount = poiAmount;
-    }
-
 }
