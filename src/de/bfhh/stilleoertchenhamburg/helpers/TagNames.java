@@ -27,7 +27,11 @@ public class TagNames {
 	
 	public static final String EXTRA_CAMERA_POS = "com.bfhh.stilleoertchenhamburg.CameraPosition";
 	public static final String EXTRA_SHOW_ROUTE = "com.bfhh.stilleoertchenhamburg.showRoute";
-	
+	public static final String EXTRA_ROUTE_SECTIONS = "com.bfhh.stilleoertchenhamburg.routeSections";
+	public static final String EXTRA_ROUTE_DESCRIPTION = "com.bfhh.stilleoertchenhamburg.routeDescription";
+	public static final String EXTRA_ROUTE_FROM_TO = "com.bfhh.stilleoertchenhamburg.routeFromTo";
+	public static final String EXTRA_ROUTE_DUR_DIST = "com.bfhh.stilleoertchenhamburg.routeDurationDistance";
+
 	//Internet Connection Check
 	public static final String SETTINGS_WIFI = "com.bfhh.stilleoertchenhamburg.settingsWifi";
 	public static final String SETTINGS_MOBILE = "com.bfhh.stilleoertchenhamburg.settingsMobile";
@@ -36,5 +40,8 @@ public class TagNames {
 	public static final int TYPE_WIFI = 1;
     public static final int TYPE_MOBILE = 2;
     public static final int TYPE_NOT_CONNECTED = 0;
+	
+	
+	
 
 }

@@ -25,6 +25,7 @@ import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout.PanelSlideListener;
 
@@ -94,7 +95,7 @@ public class ActivityMap extends ActivityMenuBase {
 	
 	//Heights and paddings in dp
 	private final int PANEL_HEIGHT = 110;
-	private final int MAP_PADDING = 5;
+	private final int MAP_PADDING = 10;
 	private final int BUTTONS_PADDING = 10;
 
 	//Google map instance
@@ -165,6 +166,14 @@ public class ActivityMap extends ActivityMenuBase {
 	private TextView _findRouteText;
 
 	private View _lineAboveFindRoute;
+
+	protected ArrayList<LatLng> _routeSections;
+
+	private CharSequence _routeDescription;
+
+	private CharSequence _routeDurationDistance;
+
+	private CharSequence _routeFromTo;
 
 	/**
 	 * Initiate variables
@@ -263,6 +272,10 @@ public class ActivityMap extends ActivityMenuBase {
 			_selectedPoi = bundle.getParcelable(TagNames.EXTRA_POI); // may be null
 			cameraPosition = bundle.getParcelable(TagNames.EXTRA_CAMERA_POS); // may be null
 			_showRoute = bundle.getBoolean(TagNames.EXTRA_SHOW_ROUTE);
+			_routeSections = bundle.getParcelableArrayList(TagNames.EXTRA_ROUTE_SECTIONS);
+			_routeDescription = bundle.getCharSequence(TagNames.EXTRA_ROUTE_DESCRIPTION);
+			_routeDurationDistance = bundle.getCharSequence(TagNames.EXTRA_ROUTE_DUR_DIST);
+			_routeFromTo = bundle.getCharSequence(TagNames.EXTRA_ROUTE_FROM_TO);
 		}   
 
 		if(_allPOIList != null){
@@ -284,12 +297,37 @@ public class ActivityMap extends ActivityMenuBase {
 			}
 			
 			updatePOIMarkers();
+			
+			setPeeerOnMap();
+			
 			if (_selectedPoi != null){
 				updateSliderContentPOI(_selectedPoi);
 				selectMarker(_selectedPoi);
+				//draw route if there is one and add route description (text)
+				if(_routeSections != null && _routeDescription!= null && _routeDescription.length() != 0
+						&& _routeDurationDistance != null && _routeFromTo != null){
+					//redraw polyline
+					PolylineOptions polylineOptions = new PolylineOptions();
+					polylineOptions.width(6)
+						.color(Color.rgb(105,127,188));
+					polylineOptions.addAll(_routeSections);
+					Log.d(".......routeSectionns: ", ""+_routeSections.toString());
+					_route = _mMap.addPolyline(polylineOptions);
+					//add description
+					txtDescription = (TextView) findViewById(R.id.description_detail);
+			        txtDescription.setText(_routeDescription);
+			        //add slider head info: from - to and distance + duration
+			        txtDistance = (TextView) findViewById(R.id.distance_detail);
+			        txtDistance.setText(_routeDurationDistance);
+			       
+			        //change name to start and destination, like: "Von: Aktuelle Position \n Nach: xxx"
+			        txtName = (TextView) findViewById(R.id.name_detail);
+			        txtName.setText(_routeFromTo);
+			        
+			        txtAddress = (TextView) findViewById(R.id.address_detail);
+			        txtAddress.setText("");
+				}
 			}
-			
-			setPeeerOnMap();
 
 			_mMap.setOnCameraChangeListener(new OnCameraChangeListener() {
 				@Override
@@ -319,10 +357,11 @@ public class ActivityMap extends ActivityMenuBase {
 					if(_route != null){
 						_route.remove();
 						_route = null;
+						_routeDescription = null;
 						setRouteOptionsVisible();
 					}
 					//if the zoom buttons were hidden, show them again
-					if(!isZoomVisible()){
+					if(_showRoute){
 						setZoomVisible();
 						updateVisibleArea();
 						_showRoute = false;
@@ -336,6 +375,10 @@ public class ActivityMap extends ActivityMenuBase {
 				public boolean onMarkerClick(Marker marker) { 
 					//if route is displayed, a different marker is selected and that marker is not the user's:
 					//display zoom buttons, update pins on map and remove route.
+					Log.d("showroute", ""+_showRoute);
+					Log.d("_selectedmarker", ""+_selectedMarker);
+					Log.d("_markerPOIIdMap", ""+_markerPOIIdMap);
+
 					if(_showRoute && !_selectedMarker.equals(marker) && _markerPOIIdMap.get(marker.getId()) != null ){
 						setZoomVisible();
 						updateVisibleArea();
@@ -344,6 +387,7 @@ public class ActivityMap extends ActivityMenuBase {
 						if(_route != null){
 							_route.remove();
 							_route = null;
+							_routeDescription = null;
 							setRouteOptionsVisible();//display route buttons
 						}
 					}
@@ -416,6 +460,8 @@ public class ActivityMap extends ActivityMenuBase {
 					}
 					//draw route
 					_route = _mMap.addPolyline(gd.getPolyline(doc, 6, Color.rgb(105,127,188)));
+					_routeSections = new ArrayList<LatLng>();
+					_routeSections = gd.getDirection(doc);
 					_showRoute = true;
 					showUserLocationAndDestination(); //show route
 					
@@ -577,6 +623,7 @@ public class ActivityMap extends ActivityMenuBase {
 				_showRoute = false;
 				_route.remove();
 				_route = null;
+				_routeDescription = null;
 				updateVisibleArea();
 			}
 			if ((_selectedPoi != null) && (_mMap != null)) {
@@ -789,7 +836,7 @@ public class ActivityMap extends ActivityMenuBase {
 		    	.include(new LatLng(_userLat,_userLng))
 		    	.include(_selectedMarker.getPosition())
 		    	.build();
-			_mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 15));
+			_mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 70));
 		}
 	}
 
@@ -1170,7 +1217,16 @@ public class ActivityMap extends ActivityMenuBase {
 		savedInstanceState.putInt(TagNames.EXTRA_LOCATION_RESULT, _hasUserLocation ? -1 : 1);
 		savedInstanceState.putParcelable(TagNames.EXTRA_POI, _selectedPoi);
 		savedInstanceState.putParcelable(TagNames.EXTRA_CAMERA_POS, _mMap.getCameraPosition());
-		savedInstanceState.putBoolean(TagNames.EXTRA_SHOW_ROUTE, _showRoute);
+		if(_showRoute){
+			savedInstanceState.putBoolean(TagNames.EXTRA_SHOW_ROUTE, _showRoute);
+			savedInstanceState.putParcelableArrayList(TagNames.EXTRA_ROUTE_SECTIONS, _routeSections);
+			Log.d(".......routeSectionns savedinst: ", ""+_routeSections.toString());
+			savedInstanceState.putCharSequence(TagNames.EXTRA_ROUTE_DESCRIPTION, txtDescription.getText());
+			//save header info in slider txtName txtDistance
+			savedInstanceState.putCharSequence(TagNames.EXTRA_ROUTE_FROM_TO, txtName.getText());
+			savedInstanceState.putCharSequence(TagNames.EXTRA_ROUTE_DUR_DIST, txtDistance.getText());		
+		}
+
 		// Always call the superclass so it can save the view hierarchy state
 		super.onSaveInstanceState(savedInstanceState);
 	}
@@ -1315,6 +1371,7 @@ public class ActivityMap extends ActivityMenuBase {
 			if(_showRoute && _route != null){
 				_route.remove();
 				_route = null;
+				_routeDescription = null;
 				_showRoute = false;
 				updateVisibleArea();
 				if(!isZoomVisible()){
