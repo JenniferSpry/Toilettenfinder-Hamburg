@@ -13,11 +13,10 @@ import android.location.Location;
 
 import de.bfhh.stilleoertchenhamburg.models.POI;
 
-/*
+/**
  * @author: Steffi
  * Helper class for all POI and POI-list needs
  */
-
 public class POIHelper {
 	
 	/**
@@ -27,7 +26,6 @@ public class POIHelper {
 		Location loc = new Location("");
 		loc.setLatitude(userLat);
 		loc.setLongitude(userLng);
-		//set distance to current user position for every POI in the List
 		for(int i=0; i < poiList.size(); i++){
 			poiList.get(i).setDistanceToUser(loc);	
 		}
@@ -43,7 +41,7 @@ public class POIHelper {
 	}
 	
 	/**
-	 * returns the closest ten POI to the user's current location
+	 * returns the closest n POI to the user's current location
 	 */
 	public static ArrayList<POI> getClosestPOI(ArrayList<POI> poiList, int amount){
 		ArrayList<POI> closestPOI = new ArrayList<POI>();

@@ -22,7 +22,7 @@ import android.os.IBinder;
 import android.util.Log;
 import android.widget.Toast;
  
-/*
+/**
  * This is the Activity that is always shown when one starts the Application.
  * It shows a SplashScreen with the bf-hh Logo and their website URL.
  * In the background, this Activity starts the LocationUpdateService and POIUpdateService
@@ -39,14 +39,11 @@ public class ActivitySplashScreen extends ActivityBase {
 	private int _locationResult = Activity.RESULT_CANCELED;
 	private ArrayList<POI> _poiList;
 
-    private boolean _isReceiverRegistered = false;//is the receiver registered?
+    private boolean _isReceiverRegistered = false;
     private boolean _locServiceBound = false;    
+    
 	protected boolean _networkConnected;
-
-	protected boolean _mapActivityStarted; //shows whether MapActivity was started already or not
-
 	protected boolean _locationReceived;
-
 	protected boolean _poiReceived;
 
     
@@ -54,7 +51,6 @@ public class ActivitySplashScreen extends ActivityBase {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
-        _mapActivityStarted = false;
     }
     
     @Override
@@ -156,7 +152,6 @@ public class ActivitySplashScreen extends ActivityBase {
         public void onServiceConnected(ComponentName className, IBinder binder) {
         	LocationUpdateService.ServiceBinder b = (LocationUpdateService.ServiceBinder) binder;
         	service = b.getLocService();
-        	//Toast.makeText(ActivitySplashScreen.this, "LocService Connected", Toast.LENGTH_SHORT).show();
         	Location loc = service.getCurrentUserLocation();
         	if (loc == null){
         		service.updateLocation(60000, 3.0f, 5000, 1.0f);//calls AsyncTask and publishes results
@@ -166,7 +161,6 @@ public class ActivitySplashScreen extends ActivityBase {
         public void onServiceDisconnected(ComponentName className) {
         	service.stopLocationUpdates();
         	service = null;
-          	//Toast.makeText(ActivitySplashScreen.this, "LocService Disconnected", Toast.LENGTH_SHORT).show();
         }
     };
     

@@ -33,14 +33,14 @@ public class POIUpdateService extends IntentService {
 	private static final String TAG = POIUpdateService.class.getSimpleName();
 	
 	public POIUpdateService() {
-		super("POI Update Service");
+		super(TAG);
 	}
 
 	@Override
 	protected void onHandleIntent(Intent intent) {
 		if (DatabaseHelper.getInstance(getApplicationContext()).isDataStillFresh(getApplicationContext())) {
 			ArrayList<POI> poiList = DatabaseHelper.getInstance(getApplicationContext()).getAllPOI();
-			Log.i("POIUpdateService", "got Data from Database");
+			Log.i(TAG, "got Data from Database");
 			broadcastPoiList(poiList);
 		} else {
 			refreshDatabaseAndBroadcast();
@@ -58,7 +58,7 @@ public class POIUpdateService extends IntentService {
 	}
 	
 	
-	private void refreshDatabaseAndBroadcast() {		
+	private void refreshDatabaseAndBroadcast() {	
 		
 		JsonArrayRequest req = new JsonArrayRequest(AppController.getInstance().getToiletsURL(),
 			new Response.Listener<JSONArray>() {
@@ -90,7 +90,6 @@ public class POIUpdateService extends IntentService {
 								c.getDouble(LAT),
 								c.getDouble(LNG));
 						
-						// adding HashMap to ArrayList
 						poiList.add(poi);
 					}					
 		            

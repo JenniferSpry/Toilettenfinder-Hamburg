@@ -9,26 +9,24 @@ import com.android.volley.toolbox.Volley;
 import de.bfhh.stilleoertchenhamburg.helpers.AssetsPropertyReader;
 
 import android.app.Application;
-import android.content.Context;
 import android.location.Location;
 import android.text.TextUtils;
 
 public class AppController extends Application {
 	
+	public static final String TAG = AppController.class.getSimpleName();  
+	
 	// to load config.properties
 	private AssetsPropertyReader assetsPropertyReader;
 	private Properties properties;
-    private Context context;
-
-	public static final String TAG = AppController.class.getSimpleName();  
+	
     private RequestQueue mRequestQueue;
     private static AppController mInstance;
   
     @Override
     public void onCreate() {
         super.onCreate();
-        context = this;
-        assetsPropertyReader = new AssetsPropertyReader(context);
+        assetsPropertyReader = new AssetsPropertyReader(this);
         properties = assetsPropertyReader.getProperties("config.properties");
         
         mInstance = this;
@@ -38,6 +36,9 @@ public class AppController extends Application {
         return mInstance;
     }
   
+    
+    /** volley methods */
+    
     public RequestQueue getRequestQueue() {
         if (mRequestQueue == null) {
             mRequestQueue = Volley.newRequestQueue(getApplicationContext());
@@ -62,6 +63,9 @@ public class AppController extends Application {
         }
     }
     
+    
+    /** getter for global variables */
+    
     public String getToiletsURL(){
     	return properties.getProperty("URLToilets");
     }
@@ -83,7 +87,6 @@ public class AppController extends Application {
         	return hamburg;
     	} else {
     	    throw new IllegalArgumentException("String " + properties.getProperty("Hamburg") + " does not contain ,");
-    	}
-    	
+    	}	
     }
 }

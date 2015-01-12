@@ -16,7 +16,6 @@ import android.os.Binder;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
-import android.widget.Toast;
 
 public class LocationUpdateService extends Service {
 	
@@ -64,7 +63,6 @@ public class LocationUpdateService extends Service {
 	}
 	
 	/**
-	 * 
 	 * @param gpsInterval how often to ask for gps update in milliseconds
 	 * @param gpsDistanceChange minimum distance between location gps updates, in meters
 	 * @param networkInterval gpsInterval how often to ask for network update in milliseconds
@@ -148,7 +146,7 @@ public class LocationUpdateService extends Service {
 	    stopSelf();
 	}
 	
-	/*
+	/**
 	 * The three types used by an asynchronous task are the following:
 
 		Params: the type of the parameters sent to the task upon execution.
@@ -188,11 +186,6 @@ public class LocationUpdateService extends Service {
 				}
 				
 			}
-        	//Toast that location was received
-        	//Toast.makeText(getApplicationContext(),
-	          //        "Location successfully received.  LAT: " + Double.valueOf(userLocation.getLatitude()) + ", LNG: " + Double.valueOf(userLocation.getLongitude()),
-	            //      Toast.LENGTH_LONG).show();
-        	
         }
 
         @Override
@@ -279,25 +272,14 @@ public class LocationUpdateService extends Service {
 		  }
 	
 		  @Override
-		  public void onStatusChanged(String provider, int status, Bundle extras) {
-			  //int status: 0 -> out of service; 1 -> temporarily unavailable; 2 -> available
-//			  Toast.makeText(getApplicationContext(), provider + "'s status changed to "+status +"!",
-//				Toast.LENGTH_SHORT).show();
-		  }
+		  public void onStatusChanged(String provider, int status, Bundle extras) {}
 	
 		  @Override
-		  public void onProviderEnabled(String provider) {
-//			  Toast.makeText(getApplicationContext(), "Provider " + provider + " enabled!",
-//		        Toast.LENGTH_SHORT).show();	
-		  }
+		  public void onProviderEnabled(String provider) {}
 	
 		  @Override
-		  public void onProviderDisabled(String provider) {
-//			  Toast.makeText(getApplicationContext(), "Provider " + provider + " disabled!",
-//		        Toast.LENGTH_SHORT).show();
-		  }
+		  public void onProviderDisabled(String provider) {}
 		  
-		  //TODO: Check here, whether providers are being disabled while the app
     }
 }
 

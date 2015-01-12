@@ -20,13 +20,6 @@ import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.widget.Toast;
 
-/**
- * @author Jenne
- * 
- * TODO: check what happens when poi data is older than 2 hours
- * -> assumption: two dialogs, one from onCreate, and one from onresume 
- */
-
 public class ActivityBase extends ActionBarActivity {
 	
 	static final int REQUEST_CODE_RECOVER_PLAY_SERVICES = 1001;
@@ -51,7 +44,6 @@ public class ActivityBase extends ActionBarActivity {
 		_connecState = NetworkUtil.getConnectivityStatus(this);
 		if(_connecState == TagNames.TYPE_NOT_CONNECTED &&
 				!DatabaseHelper.getInstance(getApplicationContext()).isDataStillFresh(getApplicationContext())){
-			//AND: POI data older than 2 days
 			showAlertMessageNetworkSettings(null, false);
 		}
 		_oldConnecState = _connecState;
@@ -87,9 +79,9 @@ public class ActivityBase extends ActionBarActivity {
     	}
 	}
 	
-	//Method that is called when there is a network connection of some kind
+	/** Method that is called when there is a network connection of some kind */
 	protected void onNetworkConnected(){
-		Log.d("ActivityBase onNetworkConnected", "yeah!");
+		Log.d("ActivityBase", "onNetworkConnected");
 	}
 	
 	protected boolean checkPlayServices() {
@@ -153,46 +145,6 @@ public class ActivityBase extends ActionBarActivity {
         _wifiInfo = _connecMan.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
         return _mobileInfo.isConnected() || _wifiInfo.isConnected();
     }
-    
-    /*
-    protected boolean isConnectingToNetwork(Context ctx) {
-    	_mobileInfo = _connecMan.getNetworkInfo(ConnectivityManager.TYPE_MOBILE);
-        _wifiInfo = _connecMan.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
-        boolean mobileConnec = _mobileInfo.isConnectedOrConnecting();
-        boolean wifiConnec = _wifiInfo.isConnectedOrConnecting();
-        if(!mobileConnec && !wifiConnec){
-        	Log.d("......isConnectingToNetwork", "Not connecting");
-        	return false;
-        }else{
-        	if(mobileConnec){
-        		Log.d("......isConnectingToNetwork", "Connecting to Mobile");
-        	}else if (wifiConnec){
-        		Log.d("......isConnectingToNetwork", "Connecting to Wifi");
-        	}
-        	return true;
-        }
-	}
-    
-    protected boolean isWifiAvailable(Context ctx){
-    	_wifiInfo = _connecMan.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
-    	Log.d("_wifiInfo: ", _wifiInfo.toString());
-    	if(_wifiInfo.isAvailable()){
-    		return true;
-    	}else{
-    		return false;
-    	}
-    }
-    
-    protected boolean isMobileNetworkAvailable(Context ctx){
-    	_mobileInfo = _connecMan.getNetworkInfo(ConnectivityManager.TYPE_MOBILE);
-    	Log.d("_mobileInfo: ", _mobileInfo.toString());
-    	if(_mobileInfo.isAvailable()){
-    		return true;
-    	}else{
-    		return false;
-    	}
-    }
-    */
 	
 	DialogInterface.OnClickListener onWifiOkListener = new DialogInterface.OnClickListener() {
 		public void onClick(final DialogInterface dialog, final int id) {

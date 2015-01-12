@@ -23,7 +23,6 @@ import android.support.v7.app.ActionBar;
 import android.util.Log;
 
 /**
- * TODO: Vernünftige Fehlermeldung, wenn die Daten nicht kommen
  * @author Jenne
  */
 

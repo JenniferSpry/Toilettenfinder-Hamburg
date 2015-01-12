@@ -12,7 +12,11 @@ import android.location.Location;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-public class POI implements Parcelable{
+/**
+ * Point of interest
+ * (Toilet locations)
+ */
+public class POI implements Parcelable {
 		
 	private final int id;
 	private final String name;
@@ -22,14 +26,15 @@ public class POI implements Parcelable{
 	private final double lat;
 	private final double lng;
 	
-	private final Location location; //location (lat lng)
+	private final Location location;
 	private final LatLng latLng;
 	
 	private int icon;
 	private int activeIcon;
 	private boolean isWheelchairAccessible;
 	
-	private float distanceToUser; //distance to user's current position in meters
+	//distance to user's current position in meters
+	private float distanceToUser;
 	private String distanceText;
 	
 
@@ -37,7 +42,7 @@ public class POI implements Parcelable{
 		this.id = id;
 		this.name = name;
 		this.address = address;
-		this.description = description;
+		this.description = description.trim();
 		this.website = website;
 		this.lat = lat;
 		this.lng = lng;
@@ -61,7 +66,6 @@ public class POI implements Parcelable{
 			this.activeIcon = R.drawable.yellow_pin_active;
 			isWheelchairAccessible = false;
 		}
-
 	}
 	
 	public boolean isWheelchairAccessible(){
@@ -72,9 +76,6 @@ public class POI implements Parcelable{
 		return location;	
 	}
 	
-	//so if the user's position changes, every instance of poi/toilet needs to be updated
-	//-> isn't that inefficient? 
-	//-> Listener?? and save userlocation in here as instance variable?
 	public void setDistanceToUser(Location userLocation){
 		this.distanceToUser = this.location.distanceTo(userLocation);
 		
@@ -86,15 +87,15 @@ public class POI implements Parcelable{
 					String.valueOf((int) Math.round(this.distanceToUser)) + " m";
 	}
 	
-	//returns distance to user in meters (float)
+	/** returns distance to user in meters (float) */
 	public float getDistanceToUser(){
 		return distanceToUser;
 	}
-	//returns distance to user in meters (int)
+	/** returns distance to user in meters (int) */
 	public int getDistanceToUserInt(){
 		return (int) distanceToUser;
 	}
-	//returns distance to user as text
+	/** returns distance to user as text */
 	public String getDistanceToUserString(){
 		return distanceText;
 	}

@@ -52,8 +52,7 @@ public class AdapterToiletList extends BaseAdapter {
         txtName.setText(poi.getName());
         
         TextView txtDescription = (TextView) convertView.findViewById(R.id.toilet_description);
-        //trim end of line characters off description text
-        String descr = poi.getDescription().trim();
+        String descr = poi.getDescription();
         txtDescription.setText(descr);
                 
         TextView txtAddress = (TextView) convertView.findViewById(R.id.toilet_address);

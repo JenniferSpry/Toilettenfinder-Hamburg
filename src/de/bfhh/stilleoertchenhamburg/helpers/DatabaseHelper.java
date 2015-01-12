@@ -33,8 +33,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 	private final static String DATABASE_NAME = "toiletFinder";
 	private final static int DATABASE_VERSION = 1;
 	
-	// TODO: set to two days
-	private final static Long MAX_TIME_DELTA = 2 * 60 * 60 * 1000L;
+	/** two days */
+	private final static Long MAX_TIME_DELTA = 2 * 24 * 60 * 60 * 1000L;
 		
 	private final static String PREF_FILE_NAME = "DataAgeSettings";
 	private final static String PREF_KEY_DATA_AGE = "age_of_data";
@@ -83,6 +83,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 	
 	@Override
 	public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+		Log.d(TAG, "onUpgrade");
 		clearData(db);
 		onCreate(db);
 	}
@@ -93,7 +94,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 	public boolean isDataStillFresh(Context context){	
 		SharedPreferences pref = context.getApplicationContext().getSharedPreferences(PREF_FILE_NAME, 0); // 0 = private mode
 		int poisInDatabase = pref.getInt(PREF_KEY_POI_AMOUNT, 0);
-		Log.d( TAG, "isDataStillFresh: POI in DB: "+poisInDatabase);
+		Log.i(TAG, "isDataStillFresh: POI in DB: "+poisInDatabase);
 		if (poisInDatabase < 1){
 			return false;
 		}
@@ -134,7 +135,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         
         db.close();
         
-        // Time of last Update and POI amount in DB tp sharedPreferences
+        // Time of last Update and POI amount in DB to sharedPreferences
 		SharedPreferences pref = context.getApplicationContext().getSharedPreferences(PREF_FILE_NAME, 0); // 0 = private mode
 		Editor edit = pref.edit();
 		edit.putInt(PREF_KEY_POI_AMOUNT, pois.size());

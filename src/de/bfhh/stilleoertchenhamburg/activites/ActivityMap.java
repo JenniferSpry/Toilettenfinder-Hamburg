@@ -78,15 +78,10 @@ import android.os.IBinder;
 
 
 /**
- * This activity is started by the ActivitySpashScreen after the IntentService 
- * has finished its task of retrieving a list of POI from the bf-hh server via JSON.
+ * This activity is started by the ActivitySpashScreen after the Service 
+ * has finished its task of retrieving a list of POI from the bf-hh server via JSON or the Database.
  * This list is also sent to this activity via the starting Intent, as well as
  * the user's current position (retrieved by LocationUpdateService).
- */
-
-/* TODO
- * 1. AUf Leaks testen
- * 2. ActivityResult von GPS check zurückgeben
  */
 
 public class ActivityMap extends ActivityMenuBase {
@@ -112,7 +107,8 @@ public class ActivityMap extends ActivityMenuBase {
 	
 	private Button _routeText; //show route as text button
 	private Button _routeMap; //show route on map as polyline
-	private GoogleDirection _gd;//Direction class from https://github.com/akexorcist/Android-GoogleDirectionAndPlaceLibrary/blob/master/library/src/main/java/app/akexorcist/gdaplibrary/GoogleDirection.java
+	//Direction class from https://github.com/akexorcist/Android-GoogleDirectionAndPlaceLibrary/blob/master/library/src/main/java/app/akexorcist/gdaplibrary/GoogleDirection.java
+	private GoogleDirection _gd;
 	private Polyline _route; //Polyline on map representing direction
 	
 	private Button _buttonSendComment;
@@ -156,10 +152,6 @@ public class ActivityMap extends ActivityMenuBase {
 	private int orientation;
 
 	private boolean _showRoute;
-
-	private String endAddress;
-
-	private String startAddress;
 
 	private ScrollView _scrollView;
 
@@ -390,9 +382,7 @@ public class ActivityMap extends ActivityMenuBase {
 							_routeDescription = null;
 							setRouteOptionsVisible();//display route buttons
 						}
-					}
-					
-					
+					}	
 					
 					if(_markerPOIIdMap.get(marker.getId()) != null){//is this markers id in the list (if not it is user marker)
 						// set last selected marker back to unselected
@@ -492,14 +482,12 @@ public class ActivityMap extends ActivityMenuBase {
 				        	_slidingUpPanel.collapsePanel();
 				        	break;
 				    }
-					//TODO: Check network connection
 					int connecState = NetworkUtil.getConnectivityStatus(getApplicationContext());
 					if(connecState == TagNames.TYPE_NOT_CONNECTED){
 						String msg = "Du hast keine Internetverbindung. Um eine Route anzeigen zu lassen, überprüfe bitte Deine Netzwerkeinstellungen!";
 						showAlertMessageNetworkSettings(msg, false);
 					}else if(connecState == TagNames.TYPE_MOBILE || connecState == TagNames.TYPE_WIFI){
-						//TODO: think of a way of only calling this once for the same pin
-						String requestUrl = _gd.request(new LatLng(_userLat, _userLng), _selectedMarker.getPosition(), GoogleDirection.MODE_WALKING);	
+						_gd.request(new LatLng(_userLat, _userLng), _selectedMarker.getPosition(), GoogleDirection.MODE_WALKING);	
 						Toast.makeText(getApplicationContext(), "Die Route wird berechnet. Bitte warten...", Toast.LENGTH_SHORT).show();
 					}
 				}
@@ -508,7 +496,6 @@ public class ActivityMap extends ActivityMenuBase {
 			_routeText.setOnClickListener(routeListener);
 			_routeMap.setOnClickListener(routeListener);
 			
-			// TODO
 			_buttonSendComment.setOnClickListener(new View.OnClickListener() {
 				public void onClick(View v) {
 					if (_selectedPoi != null) {
@@ -524,7 +511,7 @@ public class ActivityMap extends ActivityMenuBase {
 					  	  	i.putExtra(TagNames.EXTRA_POI, _selectedPoi);
 					  	    ActivityMap.this.startService(i);
 						} else {
-							Toast.makeText(getApplicationContext(), "Bitte fülle das Kommentarfeld aus.", Toast.LENGTH_LONG).show();
+							Toast.makeText(getApplicationContext(), "Bitte fülle das Kommentarfeld aus.", Toast.LENGTH_SHORT).show();
 						}
 					}
 				}
@@ -539,8 +526,6 @@ public class ActivityMap extends ActivityMenuBase {
 					 * (at 0.75f), expand the panel to that anchorPoint (for some reason
 					 * this doesn't work by only setting slidingUpPanel.setAnchorPoint(0.75f);)
 					 */
-					// TODO: noch mal testen, bei JS geht's auch ohne diesen code
-					//COMMENT: bei mir gehts ohne nicht, wenn man will dass der slider während dem sliden in der mitte stopp. beim klick geht es aber
 					if( Math.abs(slideOffset - 0.45f) < 0.02f ) {
 						_slidingUpPanel.expandPanel(0.45f);
 					}
@@ -666,7 +651,6 @@ public class ActivityMap extends ActivityMenuBase {
 	@Override
 	protected void onResume() {
 		super.onResume();
-		//Toast.makeText(this, "onResume", Toast.LENGTH_LONG).show();
 		Log.d(TAG, "onResume");
 
 		if (checkPlayServices()){
@@ -692,11 +676,7 @@ public class ActivityMap extends ActivityMenuBase {
                     //set distance to user, otherwise slider will show 0 m
                     if(_userLat != 0.0d && _userLng != 0.0d){
                     	_selectedPoi = POIHelper.setDistanceSinglePOIToUser(_selectedPoi, _userLat, _userLng);
-                    }
-                    //center camera on marker if route was not shown before (-> _showRoute = false)
-                   
-                    //_mMap.animateCamera(CameraUpdateFactory.newLatLng(_selectedPoi.getLatLng()));
-                    //updateSliderContent(_selectedPoi);
+                    }                   
                     Marker marker = null;
                     //marker not on map 
                     if(!_markerMap.containsKey(_selectedPoi.getId())){
@@ -770,7 +750,6 @@ public class ActivityMap extends ActivityMenuBase {
 					main._allPOIList = POIHelper.setDistancePOIToUser(main._allPOIList, lat, lng);
 					
 					Log.d("userlocation 2", ""+main._userLocation.getLatitude());
-					//TODO: Testing
 					//old userLocation == standardLocation and distance to newly received location is greater 10m -> move camera
 					if(main._hasUserLocation){					
 						if(main._userLocation.distanceTo(oldLocation) < 10.0 ){
@@ -816,7 +795,7 @@ public class ActivityMap extends ActivityMenuBase {
 										String msg = "Deine Route konnte nicht neu berechnet werden, da Du keine Internetverbindung hast. Überprüfe bitte Deine Netzwerkeinstellungen!";
 										main.showAlertMessageNetworkSettings(msg, false);
 									}else if(connecState == TagNames.TYPE_MOBILE || connecState == TagNames.TYPE_WIFI){
-										String requestUrl = main._gd.request(new LatLng(main._userLat, main._userLng), main._selectedMarker.getPosition(), GoogleDirection.MODE_WALKING);	
+										main._gd.request(new LatLng(main._userLat, main._userLng), main._selectedMarker.getPosition(), GoogleDirection.MODE_WALKING);	
 										Log.d("Position verändert", "Loc Upd und network an");
 									}	
 								}
@@ -987,7 +966,7 @@ public class ActivityMap extends ActivityMenuBase {
 		}
 	}
 	
-	/*
+	/**
 	 * Set all markers that are in _markerMap visible.
 	 */
 	private void showMarkersExceptUserAndDestination(){
@@ -1001,7 +980,7 @@ public class ActivityMap extends ActivityMenuBase {
 		}
 	}
 	
-	/*
+	/**
 	 * Show all previously visible markers, refresh the visible mapBounds and
 	 * show all markers that are within the new bounds.
 	 */
@@ -1009,15 +988,6 @@ public class ActivityMap extends ActivityMenuBase {
 		showMarkersExceptUserAndDestination();
 		refreshMapBounds();
 		updatePOIMarkers();
-	}
-	
-	/**
-	 * Returns the distance between to LatLng in "meters" (which is not true again, thanks Google...)
-	 */
-	private float getDistanceBewteen(LatLng a, LatLng b){
-		float[] res = new float[1];
-		Location.distanceBetween(a.latitude, a.longitude, b.latitude, b.longitude, res);
-		return res[0];
 	}
 	
 	/**
@@ -1126,22 +1096,7 @@ public class ActivityMap extends ActivityMenuBase {
         	}
         }
 	}
-	/**
-	 * Returns the map center of the passed mapBounds as LatLng.
-	 * 
-	 * @param mapBounds
-	 * @return mapCenter
-	 */
-
-	private LatLng getMapCenter(LatLngBounds mapBounds){
-		LatLng mapCenter = null;
-		if(mapBounds != null){
-			mapCenter = mapBounds.getCenter();
-		}else{
-			Log.d("ActivityMap getMapCenter()", "mapBounds is null");
-		}
-		return mapCenter; //may be null
-	}
+	
 	
 	/**
 	 * Set user icon on map if there is no user icon yet, otherwise change its position
@@ -1347,7 +1302,6 @@ public class ActivityMap extends ActivityMenuBase {
 		.setNegativeButton("Nein", onCancelListener);
 		final AlertDialog alert = builder.create();
 		alert.show();
-		//TODO: check if user has turned location services on (onActivityResult)
 	}
 	
 	/**
@@ -1418,9 +1372,6 @@ public class ActivityMap extends ActivityMenuBase {
 		_zoomOutButton.setVisibility(View.INVISIBLE);
 	}
 	
-	/**
-	 * 
-	 */
 	private boolean isRouteOptionsVisible(){
 		return _routeMap.getVisibility() == View.GONE && _routeText.getVisibility() == View.GONE 
 				&& _lineAboveFindRoute.getVisibility() == View.GONE && _findRouteText.getVisibility() == View.GONE;
