@@ -12,12 +12,12 @@ public class ActivityImpressum extends ActivityMenuBase {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_impressum);
-		
+
 		TextView t2 = (TextView) findViewById(R.id.impressum_link);
-	    t2.setMovementMethod(LinkMovementMethod.getInstance());
-	    
-	    ActionBar actionBar = getSupportActionBar();
-	    actionBar.setDisplayHomeAsUpEnabled(true);
+		t2.setMovementMethod(LinkMovementMethod.getInstance());
+
+		ActionBar actionBar = getSupportActionBar();
+		actionBar.setDisplayHomeAsUpEnabled(true);
 	}
 
 }

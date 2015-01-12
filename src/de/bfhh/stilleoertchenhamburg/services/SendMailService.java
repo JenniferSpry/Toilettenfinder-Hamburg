@@ -22,17 +22,16 @@ import de.bfhh.stilleoertchenhamburg.helpers.TagNames;
 import de.bfhh.stilleoertchenhamburg.models.POI;
 
 /**
- * This class makes a JSON request to the bf-hh Server, 
- * where an e-mail will be sent to whoever is in charge of comments.
+ * This class makes a JSON request to the bf-hh Server, where an e-mail will be
+ * sent to whoever is in charge of comments.
  */
 public class SendMailService extends IntentService {
-	
+
 	private static final String TAG = SendMailService.class.getSimpleName();
-	
+
 	private final String COMMENT_SENT = "Kommentar gesendet!";
 	private final String COMMENT_NOT_SENT = "Komentar konnte nicht versendet werden.";
-	
-	
+
 	public SendMailService() {
 		super("Send mail Service");
 	}
@@ -40,61 +39,64 @@ public class SendMailService extends IntentService {
 	@Override
 	protected void onHandleIntent(Intent intent) {
 		Bundle bundle = intent.getExtras();
-		sendMail(
-				(String)bundle.get(TagNames.EXTRA_E_MAIL),
-				(String)bundle.get(TagNames.EXTRA_NAME),
-				(String)bundle.get(TagNames.EXTRA_COMMENT),
-				(POI)bundle.getParcelable(TagNames.EXTRA_POI));
+		sendMail((String) bundle.get(TagNames.EXTRA_E_MAIL),
+				(String) bundle.get(TagNames.EXTRA_NAME),
+				(String) bundle.get(TagNames.EXTRA_COMMENT),
+				(POI) bundle.getParcelable(TagNames.EXTRA_POI));
 	}
-	
-	
-	private void sendMail(String eMail, String name, String comment, POI poi) {	
-		
+
+	private void sendMail(String eMail, String name, String comment, POI poi) {
+
 		HashMap<String, String> params = new HashMap<String, String>();
 		params.put("name", name);
 		params.put("emailaddress", eMail);
 		params.put("content", comment);
-		params.put("poiId", poi.getId()+"");
+		params.put("poiId", poi.getId() + "");
 		params.put("poiName", poi.getName());
 		params.put("poiAddress", poi.getAddress());
-		
-		JsonObjectRequest req = new JsonObjectRequest(AppController.getInstance().getMailURL(), new JSONObject(params), 
-			new Response.Listener<JSONObject>() {
-				@Override
-				public void onResponse(JSONObject json) {
-					VolleyLog.d("Response received");
-					Log.d(TAG, json.toString());
-					try {
-						int success = json.getInt("success");
-						if (success == 1) {
-							Toast.makeText(getApplicationContext(), COMMENT_SENT, Toast.LENGTH_LONG).show();
-						} else {
-							Toast.makeText(getApplicationContext(), COMMENT_NOT_SENT, Toast.LENGTH_LONG).show();
+
+		JsonObjectRequest req = new JsonObjectRequest(AppController
+				.getInstance().getMailURL(), new JSONObject(params),
+				new Response.Listener<JSONObject>() {
+					@Override
+					public void onResponse(JSONObject json) {
+						VolleyLog.d("Response received");
+						Log.d(TAG, json.toString());
+						try {
+							int success = json.getInt("success");
+							if (success == 1) {
+								Toast.makeText(getApplicationContext(),
+										COMMENT_SENT, Toast.LENGTH_LONG).show();
+							} else {
+								Toast.makeText(getApplicationContext(),
+										COMMENT_NOT_SENT, Toast.LENGTH_LONG)
+										.show();
+							}
+						} catch (JSONException e) {
+							e.printStackTrace();
+							Toast.makeText(getApplicationContext(),
+									COMMENT_NOT_SENT, Toast.LENGTH_LONG).show();
 						}
-					} catch (JSONException e) {
-						e.printStackTrace();
-						Toast.makeText(getApplicationContext(), COMMENT_NOT_SENT, Toast.LENGTH_LONG).show();
+						stopSelf();
 					}
-					stopSelf();
-			}
-		}, new Response.ErrorListener() {
+				}, new Response.ErrorListener() {
+					@Override
+					public void onErrorResponse(VolleyError error) {
+						VolleyLog.d("Error: " + error.getMessage());
+						Toast.makeText(getApplicationContext(),
+								COMMENT_NOT_SENT, Toast.LENGTH_LONG).show();
+						stopSelf();
+					}
+				}) {
 			@Override
-			public void onErrorResponse(VolleyError error) {
-					VolleyLog.d("Error: " + error.getMessage());
-					Toast.makeText(getApplicationContext(), COMMENT_NOT_SENT, Toast.LENGTH_LONG).show();
-					stopSelf();
-				}
-			}
-		){     
-			@Override
-			public Map<String, String> getHeaders() throws AuthFailureError { 
+			public Map<String, String> getHeaders() throws AuthFailureError {
 				Map<String, String> headers = new HashMap<String, String>();
 				headers.put("Content-Type", "application/json");
 				headers.put("authKey", AppController.getInstance().getAuthKey());
 				return headers;
 			};
 		};
-	
+
 		AppController.getInstance().addToRequestQueue(req);
 	}
 }
