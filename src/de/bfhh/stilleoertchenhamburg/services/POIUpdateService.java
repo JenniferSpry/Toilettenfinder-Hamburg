@@ -11,12 +11,12 @@ import org.json.JSONObject;
 import android.app.IntentService;
 import android.content.Intent;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
-import com.android.volley.VolleyLog;
-import com.android.volley.toolbox.JsonArrayRequest;
+import com.android.volley.toolbox.JsonObjectRequest;
 
 import de.bfhh.stilleoertchenhamburg.AppController;
 import de.bfhh.stilleoertchenhamburg.helpers.DatabaseHelper;
@@ -30,6 +30,8 @@ import de.bfhh.stilleoertchenhamburg.models.POI;
 public class POIUpdateService extends IntentService {
 
 	private static final String TAG = POIUpdateService.class.getSimpleName();
+	
+	private final String TOAST_ERROR = "Es konnten keine Daten abgerufen werden.";
 
 	public POIUpdateService() {
 		super(TAG);
@@ -59,10 +61,11 @@ public class POIUpdateService extends IntentService {
 
 	private void refreshDatabaseAndBroadcast() {
 
-		JsonArrayRequest req = new JsonArrayRequest(AppController.getInstance()
-				.getToiletsURL(), new Response.Listener<JSONArray>() {
+		JsonObjectRequest req = new JsonObjectRequest(AppController.getInstance().getToiletsURL(),
+				null,
+				new Response.Listener<JSONObject>() {
 			@Override
-			public void onResponse(JSONArray json) {
+			public void onResponse(JSONObject json) {
 
 				final String ID = "id";
 				final String NAME = "name";
@@ -74,33 +77,52 @@ public class POIUpdateService extends IntentService {
 
 				try {
 					Log.d(TAG, json.toString());
+					
+					int success = json.getInt("success");
+					
+					Log.i(TAG, "success= "+success);
+					
+					if (success == 0) {
+						// no data retrieved
+						Toast.makeText(getApplicationContext(),
+								json.getString("message"), Toast.LENGTH_LONG).show();
+						Log.e(TAG, json.getString("error"));
+					} else {
+						ArrayList<POI> poiList = new ArrayList<POI>();
+						JSONArray data = json.getJSONArray("data");
+						Log.d(TAG, data.toString());
 
-					ArrayList<POI> poiList = new ArrayList<POI>();
+						for (int i = 0; i < data.length(); i++) {
+							JSONObject c = data.getJSONObject(i);
 
-					for (int i = 0; i < json.length(); i++) {
-						JSONObject c = json.getJSONObject(i);
+							POI poi = new POI(c.getInt(ID), c.getString(NAME), c
+									.getString(ADDRESS).trim(), c.getString(DESCR)
+									.trim(), c.getString(WEBSITE),
+									c.getDouble(LAT), c.getDouble(LNG));
 
-						POI poi = new POI(c.getInt(ID), c.getString(NAME), c
-								.getString(ADDRESS).trim(), c.getString(DESCR)
-								.trim(), c.getString(WEBSITE),
-								c.getDouble(LAT), c.getDouble(LNG));
+							poiList.add(poi);
+						}
 
-						poiList.add(poi);
+						DatabaseHelper.getInstance(getApplicationContext())
+								.refreshAllPOI(poiList, getApplicationContext());
+						
+						broadcastPoiList(poiList);
 					}
-
-					DatabaseHelper.getInstance(getApplicationContext())
-							.refreshAllPOI(poiList, getApplicationContext());
-					broadcastPoiList(poiList);
 
 				} catch (JSONException e) {
 					e.printStackTrace();
+					Toast.makeText(getApplicationContext(),
+							TOAST_ERROR, Toast.LENGTH_LONG).show();
+					Log.e(TAG, "Error: " + e.getMessage());
 				}
 
 			}
 		}, new Response.ErrorListener() {
 			@Override
 			public void onErrorResponse(VolleyError error) {
-				VolleyLog.d("Error: " + error.getMessage());
+				Log.e(TAG, "Error: " + error.getMessage());
+				Toast.makeText(getApplicationContext(),
+						TOAST_ERROR, Toast.LENGTH_LONG).show();
 			}
 		}) {
 			@Override
@@ -112,7 +134,6 @@ public class POIUpdateService extends IntentService {
 			};
 		};
 
-		Log.d("REQUEST", req.toString());
 		AppController.getInstance().addToRequestQueue(req);
 	}
 
