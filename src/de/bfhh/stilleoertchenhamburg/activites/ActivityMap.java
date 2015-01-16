@@ -87,6 +87,8 @@ import android.os.IBinder;
 public class ActivityMap extends ActivityMenuBase {
 
 	private final String TAG = ActivityMap.class.getSimpleName();
+	
+	private final int MIN_POI_IN_VIEW = 5;
 
 	// Heights and paddings in dp
 	private final int PANEL_HEIGHT = 110;
@@ -303,7 +305,7 @@ public class ActivityMap extends ActivityMenuBase {
 						.newCameraPosition(cameraPosition));
 				_mMap.getUiSettings().setZoomControlsEnabled(false);
 			} else {
-				moveToLocation(getCameraUpdateForClosestPOIBounds(10));
+				moveToLocation(getCameraUpdateForClosestPOIBounds(MIN_POI_IN_VIEW));
 			}
 
 			updatePOIMarkers();
@@ -410,16 +412,8 @@ public class ActivityMap extends ActivityMenuBase {
 						}
 					}
 
-					if (_markerPOIIdMap.get(marker.getId()) != null) {// is this
-																		// markers
-																		// id in
-																		// the
-																		// list
-																		// (if
-																		// not
-																		// it is
-																		// user
-																		// marker)
+					// is this markers id on the list (if not it is user marker)
+					if (_markerPOIIdMap.get(marker.getId()) != null) {
 						// set last selected marker back to unselected
 						if (_selectedMarker != null & _selectedPoi != null) {
 							_selectedMarker.setIcon(BitmapDescriptorFactory
@@ -452,7 +446,7 @@ public class ActivityMap extends ActivityMenuBase {
 						if (_showRoute) { // show user and selected marker
 							showUserLocationAndDestination();
 						} else {
-							moveToLocation(getCameraUpdateForClosestPOIBounds(10));
+							moveToLocation(getCameraUpdateForClosestPOIBounds(MIN_POI_IN_VIEW));
 							updatePOIMarkers();
 							showMarkersExceptUserAndDestination();
 						}
@@ -872,7 +866,7 @@ public class ActivityMap extends ActivityMenuBase {
 								main.setPeeerOnMap();
 								if (!main._showRoute) {
 									main.moveToLocation(main
-											.getCameraUpdateForClosestPOIBounds(10));
+											.getCameraUpdateForClosestPOIBounds(main.MIN_POI_IN_VIEW));
 									main.updatePOIMarkers();
 								}
 							} else if (main._userLocation
@@ -886,7 +880,7 @@ public class ActivityMap extends ActivityMenuBase {
 								main.setPeeerOnMap();
 								if (!main._showRoute) {
 									main.moveToLocation(main
-											.getCameraUpdateForClosestPOIBounds(10));
+											.getCameraUpdateForClosestPOIBounds(main.MIN_POI_IN_VIEW));
 									main.updatePOIMarkers();
 								}
 							}
@@ -1000,11 +994,8 @@ public class ActivityMap extends ActivityMenuBase {
 							// We check which build version we are using.
 							@Override
 							public void onGlobalLayout() {
-								if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) { // below
-																								// API
-																								// Level
-																								// 16
-																								// ?
+								// below API Level 16 ?
+								if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
 									mapView.getViewTreeObserver()
 											.removeGlobalOnLayoutListener(this);
 								} else {
